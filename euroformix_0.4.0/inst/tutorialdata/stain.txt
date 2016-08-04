@@ -1,0 +1,12 @@
+Sample Name	Marker	Allele 1	Allele 2	Allele 3	Allele 4	Allele 5	Allele 6	Height 1	Height 2	Height 3	Height 4	Height 5	Height 6	ADO	UD1	
+evid1	AMEL	X	Y					2136	1015					false		
+evid1	D3S1358	14	15	16				178	2405	1982				false		
+evid1	TH01	6	7	9.3				419	282	1871				false		
+evid1	D21S11	27	29					1128	1750					false		
+evid1	D18S51	15	17					467	524					false		
+evid1	D2S1338	17	19	20	23			290	619	259	649			false		
+evid1	D16S539	9	10	11	12			217	312	743	619			false		
+evid1	vWA	14	15	17				1250	440	1232				false		
+evid1	D8S1179	10	13	14	15			206	352	978	827			false		
+evid1	FGA	21	22					664	714					false		
+evid1	D19S433	13	14	15.2				1157	781	922				false		
