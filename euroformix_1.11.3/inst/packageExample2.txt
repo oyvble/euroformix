@@ -1,0 +1,50 @@
+rm(list=ls())
+library(euroformix); #sessionInfo()
+
+#setup:
+nC <- 2 #number of contributors
+threshT = 150 #detection threshold (default is 50)
+kit = "SGMPlus" #getKit()
+
+#load allele-frequncy data:
+load(system.file("mcData.Rdata", package = "euroformix"))
+popFreq <- mcdata$popFreq #get object with allele-frequncies
+
+#Generate samples using popFreq-object and assumed model parameters
+set.seed(1) 
+gendata <- genDataset(nC,popFreq,mu=1000,sigma=0.2,mx=rev(nC:1)/sum(1:nC),threshT=threshT,nrep=1,stutt=0.1,kit=kit,beta=0.8)
+samples = gendata$samples #generated mixture-samples
+retlist <- Qassignate(samples,popFreq=popFreq,refData=gendata$refData) #Q-assignation (speeds up calculations)
+popFreq <- retlist$popFreq
+refData <- retlist$refData 
+nR <- length(refData[[1]]) #number of references in refData-object
+print(sum(unlist(refData)=="99")) #number of dropout from references
+
+refData2 <- list() #switch order of marker and ref - elements
+for(r in names(refData[[1]])) {
+ refData2[[r]] <- lapply(refData,function(x) x[[r]]) 
+}
+plotEPG(Data=samples,kitname=kit,threshT=threshT,refcond=refData2,showPH=TRUE)
+
+#Hypothesis: Hp: ref2+1unknown , Hd:2 unknowns
+hpH <- hdH <- rep(0,nR) #NB: this vector must be of size nR!
+hpH[1] <- 1 #condition ref2 to be placed as contributor 1 in model: Hp: ref2 is a contributor
+
+###################################################
+#Maximum likelihood estimation of parameter models#
+###################################################
+#model-setup:
+stutter=T##F #consider stutter model?
+xi = NULL #stutter parameter: Default is that it is estimated (NULL)
+if(!stutter) xi = 0  #otherwise set as 0 => no stutter
+fst = 0.01
+pC=0.05 #dropin 
+lambda=0.01 #dropin peak heigth 
+nDone=4 #Number of required converged estimates 
+hpmle <- contLikMLE(nC,samples,popFreq,refData=refData,condOrder=hpH,threshT=threshT,nDone=nDone,kit=kit,prC=pC,lambda=lambda,fst=fst,xi=xi) #under hp
+hdmle <- contLikMLE(nC,samples,popFreq,refData=refData,condOrder=hdH,threshT=threshT,nDone=nDone,kit=kit,prC=pC,lambda=lambda,fst=fst,xi=xi) #under hp
+
+#Weight-of-Evidence:
+LR <- exp(hpmle$fit$loglik - hdmle$fit$loglik) 
+
+
