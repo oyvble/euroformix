@@ -1,0 +1,14 @@
+Package: euroformix
+Type: Package
+Title: Package for interpretation of quantitative DNA mixtures
+Version: 2.2.0
+Date: 2019-06-13
+Author: Oyvind Bleka <oyvble@hotmail.com>
+Maintainer: Oyvind Bleka <oyvble@hotmail.com>
+Description: euroformix contains procedures for maximization, integration and MCMC of likelihoods of a continuous model for replicated STR DNA mixtures for a general specifications of hypotheses. It also does deconvolution condition on the continuous model. The continuous model takes care of drop-out, drop-in, stutters and degradation. It also contains the graphicallayer efm.
+License: GPL(>=2)
+Depends: R (>= 3.0.1)
+LinkingTo: BH,Rcpp,RcppArmadillo
+Imports: gWidgets,gWidgetstcltk,parallel
+Suggests: cubature,forensim,RCurl,XML,plotly
+RoxygenNote: 6.1.1
