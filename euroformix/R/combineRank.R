@@ -1,5 +1,5 @@
 #' @title combineRank
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description A search algorithm which creates a ranked table of the greatest combined sum from each vector-elements in a list.
 #' @details The procedure takes a list with vector elements of decreased sorted values and creates a ranked table of the most probable summed values (sum) from each vector-elements in the list.
 #'

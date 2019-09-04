@@ -1,22 +1,13 @@
 #' @title efm
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description efm (EuroForMix) is a GUI wrapper for euroformix
 #' @details The function is a graphical layer for the functions in the package euroformix. See ?euroformix for more information.
 #' @param envirfile A file to a saved environment of a project
 #' @export
 
-#library(roxygen2)
-#setwd("C:/Users/oebl/Dropbox/Forensic/MixtureProj/myDev/")
-#roxygenize("euroformix")
-
-#library(euroformix); sessionInfo()#;efm()
-#setwd("D:/Dropbox/Forensic/MixtureProj/myDev/quantLR/gammadnamix2")
-#setwd("C:/Users/oebl/Dropbox/Forensic/MixtureProj/myDev/quantLR/gammadnamix2")
-#rm(list=ls())
-#envirfile=NULL
-#source("efm.R");efm()
-
 efm = function(envirfile=NULL) {
+ LUSsymbol = "_" #Added in version 1.11.0 defined as constant. Used for showing MPS based STRs in RU_LUS format (LUS must be numeric)
+ MPSsymbol = ":" #Added in version 2.2.0 defined as constant. Used for showing MPS based SNPs/STRs in RU_something format (both can be strings)
 
  #size of main window
  mwH <- 800
@@ -27,31 +18,26 @@ efm = function(envirfile=NULL) {
  options(guiToolkit="tcltk")
 
  #version:
- version = 1.8
-
- #v1.0 -> v1.1: More userfriendly names for parameters.
- #v1.1 -> v1.2: Integrals handles very small likelihood values
- #v1.2 -> v1.3: Show quantiles of fitted gamma model on the sum peak heights. Evalidation plots upgraded.
- #v1.3 -> v1.4: 1) Markers (due to sum of the peak heights) which are flagged as extremes are rescaled upon question. 2) Startvalues of MLE based on prefitted model.
- #v1.4 -> v1.5: 1) Replicates possible in Bayesian framework. 2) Max evaluations in Bayesian framework possible to adjust. 3) Degradation model added to genData.
- #v1.5 -> v1.6: Prints out all probabilities per locus in deconvolution.
- #v1.6 -> v1.7: Module in deconvolution added: Marginal probability of top genotypes.
- #v1.7 -> v1.8: Includes a "EASY MODE" vs "ADVANCED MODE". Default values can be given for variables under Model options. 
+ version = packageVersion("euroformix") #follows same version as package number
 
  #software name:
  softname <- paste0("EuroForMix v",version)
 
+ #GUI-Restriction on maximum number of unknowns
+ maxUsetup <- 4 
 
  #Spacing between widgets
  spc <- 10
- scaleINT <- 700 #scaling of likelihood function used with integration
-#NOTE: scaleINT necessary to tweak to avoid zero-likelihood values
+
+ #Strider link
+ striderlink = "https://strider.online/frequencies/download"
 
  #####################
  #create environment #
  #####################
   pgkPath <- path.package("euroformix", quiet = FALSE) # Get package path.
  .sep <- .Platform$file.sep # Platform dependent path separator. 
+  deffreq <- paste(pgkPath ,"tutorialdata","FreqDatabases",sep=.sep) #default path to freq-files
 
   #the file used to store system settings (opt-settings)
   optSetupFile <- paste(pgkPath,"config",sep=.sep)  
@@ -66,24 +52,22 @@ efm = function(envirfile=NULL) {
   }
 
  if(is.null(envirfile)) {
-  mmTK = new.env() #create new envornment object
-  deffreq <- paste(pgkPath ,"tutorialdata","FreqDatabases",sep=.sep) #default path to freq-files
+  mmTK = new.env( parent = emptyenv() ) #create new envornment object (must be empty)
 
   #Toolbar options: can be changed any time by using toolbar
   assign("optSetup",optSetup,envir=mmTK) 
-  assign("optFreq",list(freqsize=0,wildsize=5),envir=mmTK) #option when new frequencies are found (size of imported database,minFreq), and missmatch options
-  assign("optMLE",list(nDone=4,delta=10,dec=4,obsLR=NULL),envir=mmTK) #options when optimizing (nDone,delta)
-  assign("optMCMC",list(delta=10,niter=2000),envir=mmTK) #options when running MCMC-simulations (delta, niter)
-  assign("optINT",list(reltol=0.1,maxeval=0,maxmu=20000,maxsigma=0.9,maxxi=0.5),envir=mmTK) #options when integrating (reltol and boundaries)
+  assign("optFreq",list(freqsize=0,wildsize=5,minF=NULL),envir=mmTK) #option when new frequencies are found (size of imported database,minFreq), and missmatch options
+  assign("optMLE",list(nDone=4,delta=10,dec=4,obsLR=NULL,maxIter=100),envir=mmTK) #options when optimizing,validation (nDone,delta)
+  assign("optMCMC",list(delta=10,niter=1000),envir=mmTK) #options when running MCMC-simulations (delta, niter)
+  assign("optINT",list(reltol=0.1,maxeval=0,maxmu=20000,maxsigma=0.9,maxxi=0.5,scaleINT=700),envir=mmTK) #options when integrating (reltol and boundaries)
   assign("optDC",list(alphaprob=0.99,maxlist=20),envir=mmTK) #options when doing deconvolution (alphaprob, maxlist)
-  assign("optDB",list(maxDB=10000,QUALpC=0.05,ntippets=1e3),envir=mmTK)  #options when doing database search (maxDB)
+  assign("optDB",list(maxDB=10000,QUALpC=0.05,ntippets=1e2),envir=mmTK)  #options when doing database search (maxDB)
   assign("optLRMIX",list(range=0.6,nticks=31,nsample=2000,alpha=0.05),envir=mmTK) #options when doing LRmix
-
 
   #initializing environment variables
   assign("workdir",NULL,envir=mmTK) #assign working directory to mmTK-environment
-  assign("freqfolder",deffreq,envir=mmTK) #assign freqfolder to mmTK-environment
-  assign("kits",NULL,envir=mmTK) #assign kitList to mmTK-environment
+  assign("freqfile",NULL,envir=mmTK) #Added in v1.10,0 (instead of freqfolder), assign freqfile to mmTK-environment
+  assign("popList",NULL,envir=mmTK) #Added in v1.10.0, assign imported popfreq list to mmTK-environment
   assign("selPopKitName",NULL,envir=mmTK) #selected kit and population for popFreq
 
   #imported data:
@@ -104,31 +88,53 @@ efm = function(envirfile=NULL) {
   assign("resDC",NULL,envir=mmTK) #assign deconvolved results (i.e. ranked tables of results)
   assign("resEVIDINT",NULL,envir=mmTK) #assign evidence weighting results - Based on Integration 
   assign("resEVIDLRMIX",NULL,envir=mmTK) #assign evidence weighting results - Based on LRmix
- } else {
+ } else { #restore from file
   load(envirfile) #loading environment
-#MAKING VERSION BACKWARD COMPATIBLE FROM v6.0
+  #MAKING VERSION BACKWARD COMPATIBLE FROM v0.6.0
   if( is.null( mmTK$optSetup )) assign("optSetup",optSetup,envir=mmTK)  
+
+  #MAKING VERSION BACKWARD COMPATIBLE FROM v1.9.4
+  if( is.null( mmTK$optINT$scaleINT )) {
+   mmTK$optINT$scaleINT <- 700 #set default value
+   assign("optINT",mmTK$optINT,envir=mmTK)   #store again
+  }
+  if( is.null( mmTK$optMLE$maxIter )) {
+   mmTK$optMLE$maxIter  <- 100 #set default value
+   assign("optMLE",mmTK$optMLE,envir=mmTK)   #store again
+  }
+
+  #MAKING VERSION BACKWARD COMPATIBLE FROM v1.10.0
+  if( is.null( mmTK$popList)) {
+   assign("popList",NULL,envir=mmTK) #Added in v1.10.0, 
+  }
+  if( is.null( mmTK$freqfile)) {
+   assign("freqfile",NULL,envir=mmTK) #Added in v1.10.0,
+  }
  }
 
  ####################################
  #auxiliary functions and variables:#
  ####################################
  prim = c(2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113, 127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263, 269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,389,397,401,409,419,421, 431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,541,547,557,563,569,571,577,587,593, 599,601,607,613,617,619,631,641,643,647,653,659,661,673,677,683,691,701,709,719,727,733,739,743,751,757, 761,769,773,787,797,809,811,821,823,827,829,839,853,857,859,863,877,881,883,887,907,911,919,929,937,941, 947,953,967,971,977,983,991,997,1009,1013,1019,1021,1031,1033,1039,1049,1051,1061,1063,1069,1087,1091,1093, 1097,1103,1109,1117,1123,1129,1151,1153,1163,1171,1181,1187,1193,1201,1213,1217,1223,1229,1231,1237,1249, 1259,1277,1279,1283,1289,1291,1297,1301,1303,1307,1319,1321,1327,1361,1367,1373,1381,1399,1409,1423,1427, 1429,1433,1439,1447,1451,1453,1459,1471,1481,1483,1487,1489,1493,1499,1511,1523,1531,1543,1549) 
+ #max length of alleles for reference-database storage is 244
 
  NAtoSign <- function(x) {
   x[is.na(x)] <- "-" #NB: New version of gtable does not accept NA values
   return(x)
  }
- helptext = function(obj,txt) { addHandlerRightclick(obj,handler=function(h,...) { gmessage(txt,title="Detailed information") }) }
+ helptext = function(obj,txt) { gWidgets::addHandlerRightclick(obj,handler=function(h,...) { gWidgets::gmessage(txt,title="Detailed information") }) }
 
  #helpfunction to return minimum frequency (used for new alleles)
  getminFreq = function() {
   popFreq <- get("popFreq",envir=mmTK) #get selected popFreq
   freqsize <- get("optFreq",envir=mmTK)$freqsize #get selected size of frequence-database
+  minfreq <- get("optFreq",envir=mmTK)$minF #get selected size of frequence-database
   if(freqsize>0) {
    return(5/(2*freqsize))
-  } else {
+  } else if(is.null(minfreq)) {
    return(min(unlist(popFreq))) #minumum observed frequency was used 
+  } else {
+   return(minfreq) #specified observed frequency was used 
   }
  }
 
@@ -143,37 +149,11 @@ efm = function(envirfile=NULL) {
    return(Data)
  }
 
- #function for inserting sample/ref/db-names into existing gcheckboxgroup
+ #function for inserting sample/ref/db-names into existing gWidgets::gcheckboxgroup
  restoreCheckbox = function(type) {
   subD <- getData(type)
   if(!is.null(subD)) { return( names(subD))
   } else { return(numeric()) }
- }
-
- #Load kit with allelefreq-info from filefolder:
- loadKitList = function(freqpath) {
-  freqfiles = list.files(freqpath)
-  kitList <- list()
-  for(i in 1:length(freqfiles)) {
-   filename = paste(freqpath,"/",freqfiles[i],sep="")
-   tab=tableReader(filename)
-   Anames = tab[,1] #first column is allele frequeneies
-   tab = tab[,-1] 
-   freqlist = list()
-   for(j in 1:ncol(tab)) { #for each locus
-     tmp = tab[,j]
-     tmp2 = tmp[!is.na(tmp)]
-     names(tmp2) = Anames[!is.na(tmp)]
-     freqlist[[j]] = tmp2
-   }
-   names(freqlist) = toupper(colnames(tab)) #LOCUS-names are assigned as Upper-case! This is important to do!
-   kit = unlist(strsplit(freqfiles[i],"_"))[1]
-   pop = unlist(strsplit(freqfiles[i],"_"))[2]
-   pop = unlist(strsplit(pop,"\\."))[1]
-   kitind = kit==names(kitList) 
-   kitList[[kit]][[pop]] = freqlist
-  }
-  assign("kits",kitList,envir=mmTK) #assign kit to mmTK-environment
  }
 
  #Function which takes rownames and adds to first column
@@ -184,18 +164,9 @@ efm = function(envirfile=NULL) {
   return(tab)
  }
 
- #Robust function for reading tables:
- tableReader=function(filename) {
-  tab <- read.table(filename,header=TRUE,sep="\t",stringsAsFactors=FALSE)
-  tryCatch( {  if(ncol(tab)==1) tab <- read.table(filename,header=TRUE,sep=",",stringsAsFactors=FALSE) } ,error=function(e) e) 
-  tryCatch( {  if(ncol(tab)==1) tab <- read.table(filename,header=TRUE,sep=";",stringsAsFactors=FALSE) } ,error=function(e) e) 
-  if(ncol(tab)==1) tab <- read.table(filename,header=TRUE,sep=";",stringsAsFactors=FALSE)
-  return(tab) #need dataframe to keep allele-names correct!!
- }
-
  #save result table to file:
  saveTable = function(tab,sep="txt") {
-  tabfile  = gfile(text="Save table",type="save") #csv is correct format!
+  tabfile  = gWidgets::gfile(text="Save table",type="save") #csv is correct format!
   if(!is.na(tabfile)) {
    if(length(unlist(strsplit(tabfile,"\\.")))==1) tabfile = paste0(tabfile,".",sep)
    if(sep=="txt" | sep=="tab") write.table(tab,file=tabfile,quote=FALSE,sep="\t",row.names=FALSE) 
@@ -274,6 +245,11 @@ efm = function(envirfile=NULL) {
   }
   return(Y)
  }
+ 
+ #Helpfunction to print tables (R v3.5.0) has problem showing tables in the GUI.
+ printTable = function(x) {
+  print(cbind(rownames(x),x),row.names=FALSE)
+ }
 
 ###################################################################
 ###########################GUI#####################################
@@ -281,78 +257,81 @@ efm = function(envirfile=NULL) {
 
  #Menu bar file-lists:
  f_setwd = function(h,...) {
-  dirfile = gfile(text="Select folder",type="selectdir")
+  dirfile = gWidgets::gfile(text="Select folder",type="selectdir")
   if(!is.na(dirfile)) {
    setwd(dirfile)
    assign("workdir",dirfile,envir=mmTK) #assign working directory
   }
  }
  f_openproj = function(h,...) {
-  projfile = gfile(text="Open project",type="open", filter=list("Project"=list(patterns=list("*.Rdata"))))
+  projfile = gWidgets::gfile(text="Open project",type="open", filter=list("Project"=list(patterns=list("*.Rdata"))))
   if(!is.na(projfile)) {
-   dispose(mainwin)
+   gWidgets::dispose(mainwin)
    efm(projfile) #send environment into program
   }
  }
  f_saveproj = function(h,...) {
-  projfile = gfile(text="Save project",type="save")
+  projfile = gWidgets::gfile(text="Save project",type="save")
   if(!is.na(projfile)) {
    if(length(unlist(strsplit(projfile,"\\.")))==1) projfile = paste0(projfile,".Rdata")
-   print("Size of stored objects (in MB):") #prints size of each stored object
-   print(sapply(mmTK,object.size)/1e6) #prints size of each stored object
-   save(mmTK,file=projfile) #save environment
+   tmp = sort(sapply(mmTK,object.size)/1e6,decreasing=TRUE)
+   print(paste0("Size of stored objects (in MB): ",round(sum(tmp),2))) #prints size of each stored object
+   print(tmp) #prints size of each stored object
+   #save(mmTK,file=projfile,compress="xz") #save environment, #Dont compress!
+   save(mmTK,file=projfile,compress="xz",eval.promises=FALSE,precheck=FALSE,compression_level=2)
    print(paste("Project saved in ",projfile,sep=""))
   }
  }
 
  f_settings = function(h,...) { #creates a table, with different settings
    opt <- get("optSetup",envir=mmTK) 
-   setwin <- gWidgets::gwindow(paste0("Settings"), visible=FALSE,height=mwH)
-   tabval = glayout(spacing=0,container=(setwin)) 
+   setwin <- gWidgets::gwindow(paste0("Settings"),visible=FALSE,height=mwH)
+   tabval = gWidgets::glayout(spacing=0,container=(setwin)) 
    w0 <- 15 #width
    #Model parameters: 
-   tabval[1,1] <- glabel(text="Easy mode:",container=tabval)
-   tabval[1,2] <- gradio(items=c("NO","YES"), selected = as.numeric(opt$easyMode==TRUE)+1, horizontal = TRUE,container=tabval)
-   tabval[2,1] <- glabel(text="Default detection threshold",container=tabval)
-   tabval[2,2] <- gedit(text=opt$thresh0,width=w0,container=tabval)
-   tabval[3,1] <- glabel(text="Default fst-correction",container=tabval)
-   tabval[3,2] <- gedit(text=opt$fst0,width=w0,container=tabval)
-   tabval[4,1] <- glabel(text="Default probability of drop-in",container=tabval)
-   tabval[4,2] <- gedit(text=opt$pC0,width=w0,container=tabval)
-   tabval[5,1] <- glabel(text="Default drop-in\nhyperparam (lambda)",container=tabval)
-   tabval[5,2] <- gedit(text=opt$lam0,width=w0,container=tabval)
-   tabval[6,1] <- glabel(text="Prior: Stutter-prop. \n function(x)=",container=tabval)
-   tabval[6,2] <- gedit(text=opt$pXi,width=w0,container=tabval)
-   tabval[7,1] <- glabel(text="Max locus: ",container=tabval)
-   tabval[7,2] <- gedit(text=opt$maxloc,width=w0,container=tabval)
-   tabval[8,1] <- gbutton("Save", container=tabval,handler = function(h, ...) { 
+   tabval[1,1] <- gWidgets::glabel(text="Easy mode:",container=tabval)
+   tabval[1,2] <- gWidgets::gradio(items=c("NO","YES"), selected = as.numeric(opt$easyMode==TRUE)+1, horizontal = TRUE,container=tabval)
+   tabval[2,1] <- gWidgets::glabel(text="Default detection threshold",container=tabval)
+   tabval[2,2] <- gWidgets::gedit(text=opt$thresh0,width=w0,container=tabval)
+   tabval[3,1] <- gWidgets::glabel(text="Default fst-correction",container=tabval)
+   tabval[3,2] <- gWidgets::gedit(text=opt$fst0,width=w0,container=tabval)
+   tabval[4,1] <- gWidgets::glabel(text="Default probability of drop-in",container=tabval)
+   tabval[4,2] <- gWidgets::gedit(text=opt$pC0,width=w0,container=tabval)
+   tabval[5,1] <- gWidgets::glabel(text="Default drop-in\nhyperparam (lambda)",container=tabval)
+   tabval[5,2] <- gWidgets::gedit(text=opt$lam0,width=w0,container=tabval)
+   tabval[6,1] <- gWidgets::glabel(text="Prior: Stutter-prop. \n function(x)=",container=tabval)
+   tabval[6,2] <- gWidgets::gedit(text=opt$pXi,width=w0,container=tabval)
+   tabval[7,1] <- gWidgets::glabel(text="Max locus: ",container=tabval)
+   tabval[7,2] <- gWidgets::gedit(text=opt$maxloc,width=w0,container=tabval)
+   tabval[8,1] <- gWidgets::gbutton("Save", container=tabval,handler = function(h, ...) { 
 
-   opt$easyMode <- svalue(tabval[1,2])=="YES" #easy Mode?
-   opt$thresh0 <- as.numeric(svalue(tabval[2,2]))
-   opt$fst0 <- as.numeric(svalue(tabval[3,2])) 
-   opt$pC0 <- as.numeric(svalue(tabval[4,2])) 
-   opt$lam0 <- as.numeric(svalue(tabval[5,2]))
-   opt$pXi <- svalue(tabval[6,2]) #get pXi function
-   opt$maxloc <- as.integer(svalue(tabval[7,2])) #must be whole an integer
+    opt$easyMode <- gWidgets::svalue(tabval[1,2])=="YES" #easy Mode?
+    opt$thresh0 <- as.numeric(gWidgets::svalue(tabval[2,2]))
+    opt$fst0 <- as.numeric(gWidgets::svalue(tabval[3,2])) 
+    opt$pC0 <- as.numeric(gWidgets::svalue(tabval[4,2])) 
+    opt$lam0 <- as.numeric(gWidgets::svalue(tabval[5,2]))
+    opt$pXi <- gWidgets::svalue(tabval[6,2]) #get pXi function
+    opt$maxloc <- as.integer(gWidgets::svalue(tabval[7,2])) #must be whole an integer
+    if( any( sapply(opt,is.na) ) ) { 
+       gWidgets::gmessage(message="Invalid input in settings, please set another value!",title="Wrong input",icon="error")
+       return()
+    }
 
    assign("optSetup",opt,envir=mmTK)  #assign user-value to opt-list
    write(unlist(opt),file=optSetupFile)    #save to file in installation folder
-   dispose(setwin)
+   gWidgets::dispose(setwin)
   } )
-  visible(setwin) <- TRUE
+  gWidgets::visible(setwin) <- TRUE
  }
 
  f_quitproj = function(h,...) {
-  ubool <- gconfirm("Do you want to save project?",title="Quit Program",icon="info")
-  if(svalue(ubool)) {
-   savefile <- gfile(text="Save file",type="save")
-   if(length(unlist(strsplit(savefile ,"\\.")))==1) savefile = paste0(savefile ,".Rdata")
-   save(mmTK,file=savefile) 
-   print(paste("Project saved in ",savefile,sep=""))
+  ubool <- gWidgets::gconfirm("Do you want to save project?",title="Quit Program",icon="info")
+  if(gWidgets::svalue(ubool)) {
+    f_saveproj(h)
   } else { 
    print("Program terminated without saving")
   }
-  dispose(mainwin) #remove window!
+  gWidgets::dispose(mainwin) #remove window!
  }
 
  #helpfunction to get value in from user and store
@@ -360,46 +339,57 @@ efm = function(envirfile=NULL) {
    listopt <- get(what1,envir=mmTK) #get object what 1.
    val <- listopt[[what2]]
    sw <- gWidgets::gwindow(title="User input",visible=FALSE, width=300,height=50)
-   grid <- glayout(spacing=0,container=sw )
-   grid[1,1] <- glabel(txt, container=grid)
-   grid[1,2] <- gedit(text=val,container=grid,width=15)
-   grid[2,1] <- gbutton("OK", container=grid,handler = function(h, ...) { 
-    listopt[[what2]] <- as.numeric(svalue(grid[1,2])) #insert new value
+   grid <- gWidgets::glayout(spacing=0,container=sw )
+   grid[1,1] <- gWidgets::glabel(txt, container=grid)
+   grid[1,2] <- gWidgets::gedit(text=val,container=grid,width=15)
+   grid[2,1] <- gWidgets::gbutton("OK", container=grid,handler = function(h, ...) { 
+    tmp <- as.numeric(gWidgets::svalue(grid[1,2])) #insert new value
+    if(is.na(tmp)) {
+     NAerror(what2)
+     return()
+    }
+    listopt[[what2]] <- tmp
     assign(what1,listopt,envir=mmTK) #assign user-value to opt-list
-    dispose(sw)
+    gWidgets::dispose(sw)
    } )
-   grid[2,2] <- gbutton("Cancel", container=grid,handler = function(h, ...) { dispose(sw) } )
-   visible(sw) <- TRUE
+   grid[2,2] <- gWidgets::gbutton("Cancel", container=grid,handler = function(h, ...) { gWidgets::dispose(sw) } )
+   gWidgets::visible(sw) <- TRUE
+ }
+
+ #helpfunction to get value from user
+ getValueUser <- function(txt="",val=0) {
+  val2 <- gWidgets::ginput(txt, text=val, title="User input",icon="question")
+  return(val2)   
  }
 
  NAerror <- function(what) {
-  gmessage(message=paste0(what," must be specified as a valid number"),title="Wrong input",icon="error")
-  stop("Wrong user-input")
+  gWidgets::gmessage(message=paste0(what," must be specified as a valid value"),title="Wrong input",icon="error")
+  #stop("Wrong user-input")
  }
 
  #helpfunction which checks that at value is in interval of [0,1]
  checkProb = function(x,what) {
   if(is.na(x)) NAerror(what)
   if(x < 0 || x>1) {
-   gmessage(message=paste0(what," must be specified in interval [0,1] "),title="Wrong input",icon="error")
+   gWidgets::gmessage(message=paste0(what," must be specified in interval [0,1] "),title="Wrong input",icon="error")
    stop("Wrong user-input")
   }
  }
  checkPositive = function(x,what,strict=FALSE) {
   if(is.na(x)) NAerror(what)
   if(x < 0 ) {
-   gmessage(message=paste0(what," cannot be a negative number"),title="Wrong input",icon="error")
+   gWidgets::gmessage(message=paste0(what," cannot be a negative number"),title="Wrong input",icon="error")
    stop("Wrong user-input")
   }
   if(strict && x==0) {
-   gmessage(message=paste0(what," cannot be zero"),title="Wrong input",icon="error")
+   gWidgets::gmessage(message=paste0(what," cannot be zero"),title="Wrong input",icon="error")
    stop("Wrong user-input")
   }
  }
  checkPosInteger = function(x,what) {
   if(is.na(x)) NAerror(what)
   if(x < 1 || round(x)!=x) {
-   gmessage(message=paste0(what," must be a positive integer"),title="Wrong input",icon="error")
+   gWidgets::gmessage(message=paste0(what," must be a positive integer"),title="Wrong input",icon="error")
    stop("Wrong user-input")
   }
  }
@@ -416,23 +406,48 @@ efm = function(envirfile=NULL) {
   }
   rownames(mixtab) <- locs
   colnames(mixtab) <- c("Allele","Height")
-  print(mixtab)
+  printTable(mixtab)
  }  
 
  #helpfunction for printing reference sample to terminal
  printRefs = function(refD,refSel=NULL) {
+   popFreq <- get("popFreq",envir=mmTK) #get frequencies
+   fst <- get("optSetup",envir=mmTK)$fst0 #get Fst-correction
    nR <- length(refSel) #number of selected references
    locs <- unique(unlist(lapply(refD,names))) #get unique loci
-   reftab <- matrix(ncol=nR,nrow=length(locs))
+   reftab <- matrix(ncol=nR,nrow=length(locs)) #last row is RMP
+   RMPs <- matrix(1,ncol=nR,nrow=2) #RMP and 1/RMP
+   colnames(RMPs) <- refSel
+   rownames(RMPs) <- c("RMP","1/RMP")
    for(rsel in refSel) {
     for(loc in  locs) { #for each locus
       refA <-refD[[rsel]][[loc]]$adata
-      if(!is.null(refA)) reftab[which(loc==locs),which(rsel==refSel)] <- paste0(refA ,collapse="/")
+      if(!is.null(refA)) {
+       reftab[which(loc==locs),which(rsel==refSel)] <- paste0(refA ,collapse="/")
+       if(!is.null(popFreq) && loc%in%names(popFreq) ) {
+        tmp <- popFreq[[loc]][ names(popFreq[[loc]])%in%refA ]
+        prob <- 0 #default: Some of alleles not found in freqtable
+        if(refA[1]==refA[2]) { #if homozygous
+         if(length(tmp)==1) prob <- (2*fst+(1-fst)*tmp)/(1+fst)*(3*fst+(1-fst)*tmp)/(1+2*fst) #tmp^2 
+        } else {#if heterozygous
+         if(length(tmp)==2) prob <- 2*(fst+(1-fst)*tmp[1])/(1+fst)*(fst+(1-fst)*tmp[2])/(1+2*fst) #2*prod(tmp) 
+        }
+        RMPs[1,which(refSel==rsel)] <- RMPs[1,which(refSel==rsel)]*prob 
+       }
+      }
     }
    }
+   RMPs[2,] <- 1/RMPs[1,] #invert RMP
+
    rownames(reftab) <- locs
    colnames(reftab) <- refSel 
-   print(reftab)
+   printTable(reftab)
+   if(!is.null(popFreq)) {
+     print(paste0("Calculation of random match probability and its inverse for fst=",fst))
+     printTable(RMPs)
+     misslocs <- setdiff(locs,names(popFreq)) #missing loci compared to refs loci
+     if(length(misslocs)>0) print( paste0("RMP not using loci ", paste0(misslocs,collapse="/") ))
+   }
  }
 
  #helpfunction to plot tippet
@@ -494,6 +509,36 @@ efm = function(envirfile=NULL) {
       } 
  }
 
+ #Helpfunction to load data in a file with values and fit drop-in model
+ f_fitdropin = function(h,...) { 
+   impfile = gWidgets::gfile(text="Find drop-in data",type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
+   if(is.na(impfile)) return()
+   data = tableReader(impfile,header=FALSE) #load profile
+   x = as.numeric(unlist(data)) #convert to a numerical vector
+   x = x[!is.na(x)] #dont consider NAs
+
+   threshT <- get("optSetup",envir=mmTK)$thresh0 #get specified threshold from settings
+   x = x[x>=threshT] #UPDATED v2.1.1: consider dropinPH above threhsold
+   if(length(x)==0) { #if no drop-in observed
+    gWidgets::gmessage("No PHs above detection threshold found. \nNo estimation could be done!",title="Drop-in model estimation", icon="info")
+    return()
+   }
+   
+   print(paste0(x,collapse=","))
+   lambda = signif(length(x)/sum(x-threshT),2) #estimated hyperparam with 2 significant numbers
+   print(paste0("Estimated hyperparameter lambda=",lambda))
+
+   optSetup <- get("optSetup",envir=mmTK) #get settings
+   optSetup$lam0=lambda #update parameter in settings
+   assign("optSetup",optSetup,envir=mmTK)  #store settings again
+    
+   #PLOT DROPIN MODEL:
+   par(mfrow=c(1,1))
+   h = hist(x,breaks=25,probability=TRUE,xlab="RFU",main=paste0("Estimated lambda=",lambda))
+   lines(h$mid,dexp(h$mid-threshT ,rate=lambda ),lty=1,lwd=2)
+   legend("topright",legend=paste0("Drop-in P.H. distribution\nw/lambda=",lambda),lty=1)
+ }
+
 ###########GUI WINDOW STARTS#########
  
  ##########
@@ -509,18 +554,30 @@ efm = function(envirfile=NULL) {
   ),
   Frequencies=list(
    'Set size of frequency database'=list(handler=function(h,...) {  
-      setValueUser(what1="optFreq",what2="freqsize",txt="Set size of imported database:") 
+      setValueUser(what1="optFreq",what2="freqsize",txt="Set size of imported freq database \n(minFreq used if not spesified):") 
     }),
+   'Set minimum frequency'=list(handler=function(h,...) {  
+      setValueUser(what1="optFreq",what2="minF",txt="Set minimum freq for new alleles\n(min observed used if not spesified):") 
+    }),
+#   'Normalize frequencies'=list(handler=function(h,...) {  
+#      setValueUser(what1="optFreq",what2="normalize",txt="Should frequencies always add up to one?\n(1=YES,0=NO)") 
+#    }),
+#   'Select stutter model'=list(handler=function(h,...) {  
+#      setValueUser(what1="optFreq",what2="stutterMod",txt="Select prefered stutter model \n(1=Before v2,2=From v2, <v1.12 used 1)") 
+#    }),
    'Set number of wildcards in false positives match'=list(handler=function(h,...) {  
       setValueUser(what1="optFreq",what2="wildsize",txt="Set number of missmatches (wildcards) in false positive match:") 
     })
   ),
   Optimization=list(
-   'Set number of random startpoints'=list(handler=function(h,...) {  
-      setValueUser(what1="optMLE",what2="nDone",txt="Set number of random startvalues:") 
+   'Set number of required optimizations'=list(handler=function(h,...) {  
+      setValueUser(what1="optMLE",what2="nDone",txt="Set number of required optimizations:") 
     }),
    'Set variance of randomizer'=list(handler=function(h,...) {  
-      setValueUser(what1="optMLE",what2="delta",txt="Set variance of randomizer:") 
+      setValueUser(what1="optMLE",what2="delta",txt="Set variance of start point randomizer:") 
+    }),
+   'Set max number of iterations'=list(handler=function(h,...) {  
+      setValueUser(what1="optMLE",what2="maxIter",txt="Set max number of iterations:") 
     })
   ),
   MCMC=list(
@@ -530,6 +587,9 @@ efm = function(envirfile=NULL) {
    'Set variance of randomizer'=list(handler=function(h,...) {  
       setValueUser(what1="optMCMC",what2="delta",txt="Set variation of randomizer:") 
     })
+#,   'Set seed of randomizer'=list(handler=function(h,...) { #Not implemented yet
+#      setValueUser(what1="optMCMC",what2="seed",txt="Set seed of randomizer:") 
+#    })
   ),
   Integration=list(
    'Set relative error requirement'=list(handler=function(h,...) {  
@@ -546,6 +606,9 @@ efm = function(envirfile=NULL) {
     }),
    'Set maximum of stutter proportion'=list(handler=function(h,...) {  
       setValueUser(what1="optINT",what2="maxxi",txt="Set upper boundary of stutter proportion (xi) parameter:") 
+    }),
+   'Set likelihood-scaling to avoid zero'=list(handler=function(h,...) {  
+      setValueUser(what1="optINT",what2="scaleINT",txt="Set a scaling value to avoid zero log-likelihood:") 
     })
   ),
   Deconvolution=list(
@@ -593,33 +656,33 @@ efm = function(envirfile=NULL) {
  
  #Main window:
  mainwin <- gWidgets::gwindow(softname, visible=FALSE, width=mwW,height=mwH)
- gmenu(mblst,container=mainwin)
- nb = gnotebook(container=mainwin)
- tabGEN = glayout(expand=TRUE,spacing=spc,container=nb,label="Generate data") #tab1: Generates data(with peak heights) for a given model (plot EPG in addition)
- tabimport = ggroup(horizontal=FALSE,expand=TRUE,spacing=40,container=nb,label="Import data") #tab2: (imports all files)
- tabmodel = glayout(expand=TRUE,spacing=spc,container=nb,label="Model specification") #tab3: specify model used in weight-of-evidence (INT/MLE) or in a Database search 
- tabMLE = glayout(expand=TRUE,spacing=spc,container=nb,label="MLE fit") #results from MLE
- tabDC = ggroup(expand=TRUE,spacing=spc,container=nb,label="Deconvolution") #results from a deconvolution
- tabDB= ggroup(expand=TRUE,spacing=spc,container=nb,label="Database search") #results from a database search
- tabLRMIX <- glayout(expand=TRUE,spacing=spc,container=nb,label="Qual. LR") #LRmix
- svalue(nb) <- 2 #initial start at second tab
+ gWidgets::gmenu(mblst,container=mainwin)
+ nb = gWidgets::gnotebook(container=mainwin)
+ tabGEN = gWidgets::glayout(expand=TRUE,spacing=spc,container=nb,label="Generate data") #tab1: Generates data(with peak heights) for a given model (plot EPG in addition)
+ tabimport = gWidgets::ggroup(horizontal=FALSE,expand=TRUE,spacing=40,container=nb,label="Import data") #tab2: (imports all files)
+ tabmodel = gWidgets::glayout(expand=TRUE,spacing=spc,container=nb,label="Model specification") #tab3: specify model used in weight-of-evidence (INT/MLE) or in a Database search 
+ tabMLE = gWidgets::glayout(expand=TRUE,spacing=spc,container=nb,label="MLE fit") #results from MLE
+ tabDC = gWidgets::ggroup(expand=TRUE,spacing=spc,container=nb,label="Deconvolution") #results from a deconvolution
+ tabDB= gWidgets::ggroup(expand=TRUE,spacing=spc,container=nb,label="Database search") #results from a database search
+ tabLRMIX <- gWidgets::glayout(expand=TRUE,spacing=spc,container=nb,label="Qual. LR") #LRmix
+ gWidgets::svalue(nb) <- 2 #initial start at second tab
 
 
 ####################################################
 ###############Tab 1: Create Data:##################
 ####################################################
 
- refreshTabGEN = function(thlist=list(mu=1000,sigma=0.15,xi=0.1,mx=NULL) ) { #can be repeated
-  visible(mainwin) <- FALSE 
-  tabGENtmp <- glayout(spacing=0,container=(tabGEN[1,1,expand=TRUE] <- ggroup(container=tabGEN))) 
+ refreshTabGEN = function(thlist=list(mu=1000,sigma=0.15,xi=0.1,beta=1,mx=NULL) ) { #can be repeated
+  gWidgets::visible(mainwin) <- FALSE 
+  tabGENtmp <- gWidgets::glayout(spacing=0,container=(tabGEN[1,1,expand=TRUE] <- gWidgets::ggroup(container=tabGEN))) 
 
 
   #load/save helpfunctions for generated data
   f_openprof = function(h,...) {
-    proffile = gfile(text="Open profile",type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
+    proffile = gWidgets::gfile(text="Open profile",type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
     if(!is.na(proffile)) {
      Data = tableReader(proffile) #load profile
-     print(Data)
+     printTable(Data)
      setDataToGUI(sample_tableToList(Data)[[1]] ,h$action) #convert from table to list and load into GUI
     }
   }
@@ -637,14 +700,14 @@ efm = function(envirfile=NULL) {
     for(i in 1:length(locs)) {
      dind <- grep(toupper(locs[i]),toupper(dloc)) #get dataindex
      if(type==0) { #if evidence
-       svalue(tabGENb2[i,1]) <- svalue(tabGENb2[i,2]) <- ""
+       gWidgets::svalue(tabGENb2[i,1]) <- gWidgets::svalue(tabGENb2[i,2]) <- ""
        if(length(dind)>0) { #if locus found
-         if(!is.null(Data[[dind]]$adata)) svalue(tabGENb2[i,1]) <- paste0(Data[[dind]]$adata,collapse=",") #insert alleles
-         if(!is.null(Data[[dind]]$hdata)) svalue(tabGENb2[i,2]) <- paste0(Data[[dind]]$hdata,collapse=",") #insert alleles
+         if(!is.null(Data[[dind]]$adata)) gWidgets::svalue(tabGENb2[i,1]) <- paste0(Data[[dind]]$adata,collapse=",") #insert alleles
+         if(!is.null(Data[[dind]]$hdata)) gWidgets::svalue(tabGENb2[i,2]) <- paste0(Data[[dind]]$hdata,collapse=",") #insert alleles
        }
      } else { #if reference
-       svalue(tabGENb3[i,type]) <- ""
-       if( length(dind)>0 && !is.null(Data[[dind]]$adata) ) svalue(tabGENb3[i,type]) <- paste0(Data[[dind]]$adata,collapse=",") #insert
+       gWidgets::svalue(tabGENb3[i,type]) <- ""
+       if( length(dind)>0 && !is.null(Data[[dind]]$adata) ) gWidgets::svalue(tabGENb3[i,type]) <- paste0(Data[[dind]]$adata,collapse=",") #insert
      }
    } #end for each locus
   } #end function
@@ -654,22 +717,22 @@ efm = function(envirfile=NULL) {
     outloc <- locs #store locs
     Data <- list()
     for(i in 1:length(locs)) {
-     outloc[i] <- svalue(tabGENb1[i,1]) #get new loc-names
+     outloc[i] <- gWidgets::svalue(tabGENb1[i,1]) #get new loc-names
      if(type==0) { #store evidence
-      Data[[outloc[i]]] <- list( adata=unlist(strsplit(svalue(tabGENb2[i,1]),",")) , hdata=as.numeric(unlist(strsplit(svalue(tabGENb2[i,2]),","))) )
+      Data[[outloc[i]]] <- list( adata=unlist(strsplit(gWidgets::svalue(tabGENb2[i,1]),",")) , hdata=as.numeric(unlist(strsplit(gWidgets::svalue(tabGENb2[i,2]),","))) )
      } else { #store reference
-      Data[[outloc[i]]] <- list( adata=unlist(strsplit(svalue(tabGENb3[i,type]),",")) )
+      Data[[outloc[i]]] <- list( adata=unlist(strsplit(gWidgets::svalue(tabGENb3[i,type]),",")) )
      }    
     } #end for each locus
     return(Data)
   }
 
   #layout: 
-  tabGENb = glayout(spacing=0,container=(tabGENtmp[2,1] <-gframe("Edit",container=tabGENtmp))) 
-  tabGENc = glayout(spacing=3,container=(tabGENtmp[3,1] <-gframe("Import/Export profile",container=tabGENtmp)))  
-  tabGENtop = glayout(spacing=3,container=(tabGENtmp[1,1] <-glayout(spacing=3,container=tabGENtmp))) 
-  tabGENa = glayout(spacing=0,container=(tabGENtop[1,1] <-gframe("Parameters",container=tabGENtop))) 
-  tabGENd = glayout(spacing=3,container=(tabGENtop[1,2] <-gframe("Further action",container=tabGENtop))) 
+  tabGENb = gWidgets::glayout(spacing=0,container=(tabGENtmp[2,1] <-gWidgets::gframe("Edit",container=tabGENtmp))) 
+  tabGENc = gWidgets::glayout(spacing=3,container=(tabGENtmp[3,1] <-gWidgets::gframe("Import/Export profile",container=tabGENtmp)))  
+  tabGENtop = gWidgets::glayout(spacing=3,container=(tabGENtmp[1,1] <-gWidgets::gframe(spacing=3,container=tabGENtmp))) 
+  tabGENa = gWidgets::glayout(spacing=0,container=(tabGENtop[1,1] <-gWidgets::gframe("Parameters",container=tabGENtop))) 
+  tabGENd = gWidgets::glayout(spacing=3,container=(tabGENtop[1,2] <-gWidgets::gframe("Further action",container=tabGENtop))) 
 
   #number of contributors
   set <- get("setGEN",envir=mmTK) #get stored setup
@@ -681,19 +744,23 @@ efm = function(envirfile=NULL) {
 
 
   #user input:
-  tabGENa[1,1] <- glabel("mu (amount of dna)",container=tabGENa)
-  tabGENa[1,2] <- gedit(thlist$mu,container=tabGENa,width=10)
-  tabGENa[2,1] <- glabel("sigma (coeffecient of variation)",container=tabGENa)
-  tabGENa[2,2] <- gedit(thlist$sigma,container=tabGENa,width=10)
-  tabGENa[3,1] <- glabel("xi (stutter proportion)",container=tabGENa)
-  tabGENa[3,2] <- gedit(thlist$xi,container=tabGENa,width=10)
+  tabGENa[1,1] <- gWidgets::glabel("P.H.expectation(mu)",container=tabGENa)
+  tabGENa[1,2] <- gWidgets::gedit(thlist$mu,container=tabGENa,width=10)
+  tabGENa[2,1] <- gWidgets::glabel("P.H.variability(sigma)",container=tabGENa)
+  tabGENa[2,2] <- gWidgets::gedit(thlist$sigma,container=tabGENa,width=10)
+  tabGENa[3,1] <- gWidgets::glabel("Stutter-prop.(xi)",container=tabGENa)
+  tabGENa[3,2] <- gWidgets::gedit(thlist$xi,container=tabGENa,width=10)
+  tabGENa[4,1] <- gWidgets::glabel("Degrad.slope(beta)",container=tabGENa)
+  tabGENa[4,2] <- gWidgets::gedit(thlist$beta,container=tabGENa,width=10)
   for(k in 1:nC) { #for each contributors
-   tabGENa[k+3,1] <- glabel( paste0("mx",k," (mix-proportion contr. ",k,")") ,container=tabGENa)
-   tabGENa[k+3,2] <- gedit(thlist$mx[k],container=tabGENa,width=10)
+   tabGENa[k+4,1] <- gWidgets::glabel( paste0("Mix-prop.",k," (mx",k,")") ,container=tabGENa)
+   tabGENa[k+4,2] <- gWidgets::gedit(thlist$mx[k],container=tabGENa,width=10)
   }
 
   #Generate:
-  simdata <- genDataset(nC, popFreq=set$popFreq, mu=thlist$mu, sigma=thlist$sigma, sorted=FALSE,threshT=par$threshT, refData=set$refData, mx=thlist$mx/sum(thlist$mx),nrep=1, stutt = thlist$xi, prC=par$prC, lambda=par$lambda)
+  kit <- get("selPopKitName",envir=mmTK)[1]  #get selected kit
+  if(is.na(kit)) kit = NULL
+  simdata <- genDataset(nC, popFreq=set$popFreq, mu=thlist$mu, sigma=thlist$sigma,beta=thlist$beta,sorted=FALSE,threshT=par$threshT, refData=set$refData, mx=thlist$mx/sum(thlist$mx),nrep=1, stutt = thlist$xi, prC=par$prC,lambda=par$lambda,kit=kit)
 
   #insert data in GUI
   mixData <- simdata$samples[[1]]
@@ -701,50 +768,50 @@ efm = function(envirfile=NULL) {
   locs <- names(mixData) #get locus names
 
   #show Loci
-  tabGENb1 <-  glayout(spacing=0,container=(tabGENb[1,1] <-gframe("Loci",container=tabGENb))) 
-  for(i in 1:length(locs))  tabGENb1[i,1] = gedit(locs[i],container=tabGENb1,width=nchar(locs[i])+3)
+  tabGENb1 <-  gWidgets::glayout(spacing=0,container=(tabGENb[1,1] <-gWidgets::gframe("Loci",container=tabGENb))) 
+  for(i in 1:length(locs))  tabGENb1[i,1] = gWidgets::gedit(locs[i],container=tabGENb1,width=nchar(locs[i])+3)
 
   #show allele,heights
-  tabGENb2 <-  glayout(spacing=0,container=(tabGENb[1,2] <-gframe("Evidence (allele,heights)",container=tabGENb))) 
+  tabGENb2 <-  gWidgets::glayout(spacing=0,container=(tabGENb[1,2] <-gWidgets::gframe("Evidence (allele,heights)",container=tabGENb))) 
   for(i in 1:length(locs)) {
    adata <- mixData[[locs[i]]]$adata
    hdata <- round(mixData[[locs[i]]]$hdata)
-   tabGENb2[i,1] = gedit(paste0(adata,collapse=","),container=tabGENb2,width=sum(nchar(adata)) + length(adata))
-   tabGENb2[i,2] = gedit(paste0(hdata,collapse=","),container=tabGENb2,width=sum(nchar(hdata)) + length(hdata))
+   tabGENb2[i,1] = gWidgets::gedit(paste0(adata,collapse=","),container=tabGENb2,width=sum(nchar(adata)) + length(adata))
+   tabGENb2[i,2] = gWidgets::gedit(paste0(hdata,collapse=","),container=tabGENb2,width=sum(nchar(hdata)) + length(hdata))
   }
 
   #show references:
-  tabGENb3 <-  glayout(spacing=0,container=(tabGENb[1,3] <-gframe("Reference(s)",container=tabGENb))) 
+  tabGENb3 <-  gWidgets::glayout(spacing=0,container=(tabGENb[1,3] <-gWidgets::gframe("Reference(s)",container=tabGENb))) 
   for(k in 1:nC) {
    for(i in 1:length(locs)) {
     adata <- refData[[locs[i]]][[k]]
-    tabGENb3[i,k] = gedit(paste0(adata,collapse=","),container=tabGENb3,width=sum(nchar(adata)) + length(adata))
+    tabGENb3[i,k] = gWidgets::gedit(paste0(adata,collapse=","),container=tabGENb3,width=sum(nchar(adata)) + length(adata))
    }
   }
 
   #storage buttons:
-  tabGENc[1,1] <- gbutton(text="Store evidence",container=tabGENc,handler=f_saveprof,action=0)
-  for(k in 1:nC) tabGENc[1,1+k] <- gbutton(text=paste0("Store ref",k),container=tabGENc,handler=f_saveprof,action=k)
-  tabGENc[2,1] <- gbutton(text="Load evidence",container=tabGENc,handler=f_openprof,action=0)
-  for(k in 1:nC) tabGENc[2,1+k] <- gbutton(text=paste0("Load ref",k),container=tabGENc,handler=f_openprof,action=k)
+  tabGENc[1,1] <- gWidgets::gbutton(text="Store evidence",container=tabGENc,handler=f_saveprof,action=0)
+  for(k in 1:nC) tabGENc[1,1+k] <- gWidgets::gbutton(text=paste0("Store ref",k),container=tabGENc,handler=f_saveprof,action=k)
+  tabGENc[2,1] <- gWidgets::gbutton(text="Load evidence",container=tabGENc,handler=f_openprof,action=0)
+  for(k in 1:nC) tabGENc[2,1+k] <- gWidgets::gbutton(text=paste0("Load ref",k),container=tabGENc,handler=f_openprof,action=k)
 
   #further action
-  tabGENd[1,1] <- gbutton(text="Generate again",container=tabGENd,handler=function(h,...) { 
+  tabGENd[1,1] <- gWidgets::gbutton(text="Generate again",container=tabGENd,handler=function(h,...) { 
    mx <- rep(0,nC)
-   for(k in 1:nC)  mx[k] <- as.numeric(svalue(tabGENa[3+k,2])) 
-   refreshTabGEN(list(mu=as.numeric(svalue(tabGENa[1,2])),sigma=as.numeric(svalue(tabGENa[2,2])),xi=as.numeric(svalue(tabGENa[3,2])),mx=mx/sum(mx)) )
+   for(k in 1:nC)  mx[k] <- as.numeric(gWidgets::svalue(tabGENa[4+k,2])) 
+   refreshTabGEN(list(mu=as.numeric(gWidgets::svalue(tabGENa[1,2])),sigma=as.numeric(gWidgets::svalue(tabGENa[2,2])),xi=as.numeric(gWidgets::svalue(tabGENa[3,2])),beta=as.numeric(gWidgets::svalue(tabGENa[4,2])),mx=mx/sum(mx)) )
    })
 
-  tabGENd[2,1] <- gbutton(text="Plot EPG",container=tabGENd,handler=function(h,...) {
+  tabGENd[2,1] <- gWidgets::gbutton(text="Plot EPG",container=tabGENd,handler=function(h,...) {
    kit <- get("selPopKitName",envir=mmTK)[1] #get
-   if(is.na(kit)) return()
+   if(is.null(kit) || is.na(kit)) return()
    Data <- getDataFromGUI(0) #get data from GUI
    plotEPG(list(stain=Data),kitname=kit,threshT=0) #plot epg's
-   focus(mainwin)
+   gWidgets::focus(mainwin) <- TRUE
   })
 
-  visible(mainwin) <- TRUE #INCREASE SPEED
-  focus(mainwin)
+  gWidgets::visible(mainwin) <- TRUE #INCREASE SPEED
+  gWidgets::focus(mainwin) <- TRUE
  } #end refreshTabGE
 
 ####################################################
@@ -753,26 +820,22 @@ efm = function(envirfile=NULL) {
 
  #When program starts, import assumed model for EVID.
 
-
- #a) button for loading kits from directory:
- f_loadkd = function(h,...) { loadKitList(freqpath=get("freqfolder",envir=mmTK)); }
-
  #b) load/save profiles/database: Supports any filetype
  f_importprof = function(h,...) {
   type=h$action #get type of profile
-#  proffile = gfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab"))))
-  proffile = gfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
+#  proffile = gWidgets::gfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab"))))
+  proffile = gWidgets::gfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
   if(!is.na(proffile)) {
    Data = tableReader(proffile) #load profile
    print("Raw fil import:")
-   print(Data[1:min(nrow(Data),100),]) #print raw-input data
+   printTable(Data[1:min(nrow(Data),100),]) #print raw-input data
   ###################
   ##DATABASE IMPORT##
   ###################
    if(type=="db") { #importing database file
     popFreq <- get("popFreq",envir=mmTK) 
     if(is.null(popFreq)) {
-     gmessage("Population frequencies needs to be imported for database search",title="Error")
+     gWidgets::gmessage("Population frequencies needs to be imported for database search",title="Error")
     } else {
      minFreq <- getminFreq()
      #saving MEMORY by convert database here!
@@ -855,6 +918,26 @@ efm = function(envirfile=NULL) {
     } #end if popFreq exist
    } else { #if not DB
     Data = sample_tableToList(Data) #convert from table to list 
+
+    #New block for 0.6.2
+    txt2 <- "The number of alleles in a genotype must be 2."
+    txt1 <- paste0("Only one allele was given for a genotype in a reference profile. ",txt2, " Hence the second allele was automatically set as the first allele.") 
+    txt3 <- paste0("Too many alleles where given for a genotype in a reference profile. ",txt2) 
+    if(type=="ref") { #check that homozygote alleles are given twice
+     miss <- FALSE #indicator whether hom. are missing
+     for(kn in names(Data)) { #for each profile
+      for(loc in names(Data[[kn]])) { #for each profile
+         if( length(Data[[kn]][[loc]]$adata)>2 ) gWidgets::gmessage(txt3,"Wrong file-input",icon="error")
+         if( length(Data[[kn]][[loc]]$adata)==1) {
+          Data[[kn]][[loc]]$adata <- rep(Data[[kn]][[loc]]$adata,2) #duplicated
+          miss <- TRUE
+         }
+		 Data[[kn]][[loc]]$hdata = NULL #Updated v2.1.0: Remove peak heights if these have been added for references.
+      }
+     }
+     if(miss) gWidgets::gmessage(txt1,"Warning",icon="info")
+    }
+
     #get already stored data:
     if(type=="mix") Data2 <- getData("mix") #get data from mmTK-environment
     if(type=="ref") Data2 <- getData("ref") #get data from mmTK-environment
@@ -862,8 +945,8 @@ efm = function(envirfile=NULL) {
     if(is.null(Data2)) { #if no previous already there
      Data2 <- Data
     } else {
-     for(k in 1:length(Data)) { #for each profile
-      Data2[[names(Data)[k]]] <- Data[[k]] #insert dataframe
+     for(kn in names(Data)) { #for each profile
+      Data2[[kn]] <- Data[[kn]] #insert dataframe
      }
     }
     if(type=="mix")  assign("mixData",Data2,envir=mmTK) #assign data to mmTK-environment
@@ -879,13 +962,14 @@ efm = function(envirfile=NULL) {
   #types: freq,mix,ref,db
   evidD <- getData("mix") #get selected data
   mixSel  <- numeric()
-  if(!is.null(evidD)) mixSel <- svalue(tabimportB[2,1])  #get selected mixtures
+  if(!is.null(evidD)) mixSel <- gWidgets::svalue(tabimportB[2,1])  #get selected mixtures
+  threshT <- get("optSetup",envir=mmTK)$thresh0 #get specified threshold from settings
 
   if(h$action=="freq") { #prints frequencies
    wildsize <- get("optFreq",envir=mmTK)$wildsize
    popFreq <- get("popFreq",envir=mmTK) #get frequencies
    if(is.null(popFreq)) {
-    tkmessageBox(message="Please import and select population frequencies!")
+    gWidgets::gmessage(message="Please import and select population frequencies!",icon="info")
     return
    } else {
     locs <- names(popFreq)
@@ -916,7 +1000,7 @@ efm = function(envirfile=NULL) {
     colnames(outD) = c("Allele",locs) 
     dbwin <- gWidgets::gwindow("Population frequencies", visible=FALSE,height=mwH)
     gWidgets::gtable(NAtoSign(outD) ,container=dbwin) #create table
-    visible(dbwin) <- TRUE
+    gWidgets::visible(dbwin) <- TRUE
 
     #Calculate random match probability of matching for each samples
     for(msel in mixSel) { 
@@ -937,10 +1021,12 @@ efm = function(envirfile=NULL) {
   } #end freq
 
   if(h$action=="mix") { #prints EPG
+     nS <- length(mixSel) #number of selected samples
+     if(nS==0) return() #return if no samples selected
      refD <- getData("ref") #get selected references
      refSel <- numeric()
-     if(!is.null(refD))  refSel <- svalue(tabimportB[2,2])  #get selected references
-     kitname <- svalue(tabimportA[3,1]) #get kit name. Must be same name as in generateEPG
+     if(!is.null(refD))  refSel <- gWidgets::svalue(tabimportB[2,2])  #get selected references
+     kitname <- get("selPopKitName",envir=mmTK)[1]  #gWidgets::svalue(tabimportA[3,1]) #get kit name. Must be same name as in generateEPG
      #first: Print evidences:
 
      evidDsel <- list()
@@ -951,9 +1037,52 @@ efm = function(envirfile=NULL) {
       printEvid(subD)
      }
 
+	 noKit = is.null(kitname) || is.na(kitname)
+     if(noKit) { #UPDATED: if kit is not recognized: Make simple Sum of peak heights plot
+      locs <- unique(unlist(sapply(evidDsel,function(x) names(x))))
+      regdata <- matrix(NA,ncol=nS,nrow=length(locs))
+      rownames(regdata) <- locs
+      colnames(regdata) <- mixSel
+      for(msel in mixSel) {
+       for(loc in locs) {
+          if( !loc%in%names(evidDsel[[msel]]) ) next;
+          regdata[which(loc==locs),which(msel==mixSel)] <- sum(evidDsel[[msel]][[loc]]$hdata)  #take sum
+       }
+      }
+      plot(0,0, ylim=c(0,max(regdata,na.rm=T)),xlim=c(0,length(locs)),ty="n",main="Summed intensity per loci",axes=F,xlab="",ylab="Intensity")
+      axis(2)
+      axis(1,at=1:length(locs)-1,labels=locs,las=2,cex.axis=0.7)
+
+      mtext(paste0(mixSel,collapse="/"))
+      dw <- 0.15 #width between bars       
+      rw <- (1 - dw)/nS #rectange widths
+      for(loc in locs) {
+       i <- which(loc==locs)
+       for(msel in mixSel) {
+          j <- which(msel==mixSel)
+          yval <- regdata[i,j]  #take sum
+          if(is.na(yval)) next;
+          low <- i + (j-1)*rw - rw/2
+          up <- i + (j-1)*rw + rw/2
+          rect(low-1,0,up-1,yval,col=j)
+       }
+      }
+      yd <- c(regdata)
+      yd <- yd[!is.na(yd)]
+
+      checkgamma = function(y,th) {
+        xz <- ppoints(length(y))
+        qq1 <- qgamma(xz ,shape=2/th[2]^2,scale=th[1]*th[2]^2)
+        dev.new() #create new plot
+        plot(qq1,sort(y),main="Q-Q plot of observed intensities (summed)",xlab="Theoretical intensities (gamma distributed)",ylab="Observed intensities")
+        abline(a=0,b=1)
+        mtext(paste0(mixSel,collapse="/"))
+      }
+      tryCatch({ checkgamma(yd,fitgammamodel(yd)) }, error = function(e) e)
+ 
+   } else { #end not kit found
+     kitinfo = getKit(kitname) #get kitinfo
      #Plot degradation:
-     kitinfo <- getKit(kitname)
-     if(any(is.na(kitinfo))) next
      dyes <- unique(kitinfo$Color)
      srange <- range(kitinfo$Size)
      xz <- seq(srange[1],srange[2],l=1000)     
@@ -961,16 +1090,22 @@ efm = function(envirfile=NULL) {
      for(dye in dyes) {
        locs <- toupper(unique(subset(kitinfo$Marker,kitinfo$Color==dye)))
        for(loc in locs) {
-         if(length(grep("AM",loc))>0) next
+         if(length(grep("AM",toupper(loc)))>0) next
          subK <- subset(kitinfo,kitinfo$Color==dye & toupper(kitinfo$Marker)==loc) 
          for(msel in mixSel) { #for each replicate
-          dat <- subK$Size[subK$Allele%in%evidDsel[[msel]][[loc]]$adata] #sizedata for alleles
+          av  <- evidDsel[[msel]][[loc]]$adata #get alleles
+          if(is.null(av)) next
+          av  <- sapply(strsplit(av,LUSsymbol),function(x) x[1]) #in case of LUS. Extract only first allele. OK for general
+          dat <- subK$Size[subK$Allele%in%av] #sizedata for alleles
           if(length(dat)==0) next
           regdata <- rbind(regdata, c(sum(evidDsel[[msel]][[loc]]$hdata),mean(dat),dye,loc,msel)) #use average for each locus
          } #end for each replicate 
        }  #end for each mixsel
      }
-
+      if(length(regdata)==0) {
+        gWidgets::gmessage(title="Incompatible data found",message="The data and kit selected did not match!",icon="warning")
+        return() #INCOMPATIBLE DATA WITH KI FOUND
+      }
       regdata[regdata[,3]=="yellow",3] <- "orange"
       dyes[dyes=="yellow"] <- "orange"
       yd <- as.numeric(regdata[,1]) #M data
@@ -996,7 +1131,7 @@ efm = function(envirfile=NULL) {
       #print(regdata)
 
       plotquant <- function(th,alpha=0.01) {
-       print(th)
+ #      print(th)
        lines(xz,qgamma(1-alpha/2,shape=2/th[2]^2*th[3]^((xz-125)/100),scale=th[1]*th[2]^2),col="gray")
        lines(xz,qgamma(alpha/2,shape=2/th[2]^2*th[3]^((xz-125)/100),scale=th[1]*th[2]^2),col="gray")
        lines(xz,2*th[1]*th[3]^((xz-125)/100),col="black")
@@ -1004,59 +1139,63 @@ efm = function(envirfile=NULL) {
       }
 
       #fit data based on the gamma-model:
-      fitgammamodel <- function(x,y) {
-       negloglik <- function(th) {
-        th <- exp(th)
-        val <- -sum(dgamma(y,shape=2/th[2]^2*th[3]^((x-125)/100),scale=th[1]*th[2]^2,log=TRUE))
-        if(is.infinite(val)) val <- .Machine$integer.max 
-        return(val)
-       }
-       foo <- nlm(negloglik,log( c(mean(yd),0.4,0.8) ))
-       return(exp(foo$est))
-      } 
-      tryCatch({ plotquant(fitgammamodel(xd,yd)) }, error = function(e) e)
-      suppressWarnings({
+      tryCatch({ plotquant(th=fitgammamodel(yd,xd,delta=0.5)) }, error = function(e) e)
+      tryCatch({
        pvec <- rep(NA,length(yd))
        for(i in 1:length(yd) ) {
-         tryCatch({
-           th <- fitgammamodel(xd[-i],yd[-i])
+           th <- fitgammamodel(yd[-i],xd[-i],niter=1,delta=0)
            pvec[i] <- pgamma(yd[i],shape=2/th[2]^2*th[3]^((xd[i]-125)/100),scale=th[1]*th[2]^2) #get probabilities
-         }, error = function(e) e)
        }
        pvec[pvec>0.5] <- 1-pvec[pvec>0.5] #make all values smaller than 0.5
        alpha <- 0.05 #signif level
        ind <- which(pvec<(alpha/length(pvec))) #find flagged markers which are below bonferroni-corrected signif
        if(length(ind)>0) {
         text(xd[ind],yd[ind], labels=format(pvec[ind],digits=2),adj=c(0,1.2),cex=0.7)
-if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
-        what <- paste0("The sum of the peak heights in the markers\n",paste0(regdata[ind,4],collapse=","),"\nare more extreme than others. \n\nDo you want to rescale them?")
-        bool <- gconfirm(message=what,title="Rescaling sum of the peak heights",icon="question")
-
-        if(bool) {
-         #Rescale marker sum peak heights which are flaged
-         tryCatch({
-          th <- fitgammamodel(xd[-ind],yd[-ind]) #estimates from model without the extreme markers
-          newyd <- rgamma(length(ind),shape=2/th[2]^2*th[3]^((xd[ind]-125)/100),scale=th[1]*th[2]^2) #draw new sum of peak heights 
-          #NB: CHANGING PEAK HEIGHTS IN DATA:
-          for(i in ind) evidD[[msel]][[regdata[i,4]]]$hdata <- evidD[[msel]][[regdata[i,4]]]$hdata/yd[i]*newyd[ind==i] #rescaling peak heights
-         }, error = function(e) e)
-        } #end bool
-}
        } #end if flaggings
-      }) #end suppress warning
-     assign("mixData",evidD,envir=mmTK)  #store updated data again
+     }, error = function(e) e) #end error catch
+    } #end if kit was found
+    #assign("mixData",evidD,envir=mmTK)  #store updated data again
     print("------------------------------------")
 
-    dev.new() #plot epg's with possible replicates:
-    plotEPG(Data=evidDsel,kitname,refcond=refD[refSel],threshT=0) 
+    #determine whether it is EPG/MPS(LUS)/(strings): Check if "_" is used. Otherwise check with all alleles are strings
+    isMPS = FALSE
+    isLUS = all(unlist(sapply(evidDsel,function(x)  sapply(x,function(y) all(grepl(LUSsymbol,y$adata),na.rm=TRUE)) )))  #ADDED: check if alleles are given on LUS format 
+    if(!isLUS) suppressWarnings( { isMPS = all(unlist(sapply(evidDsel,function(x)  sapply(x,function(y) all(is.na( as.numeric(y$adata) )))))) }) #ADDED: check if alleles are given on string-format (i.e MPS)grepl(y$adata),na.rm=TRUE)) )))  
+    if(noKit) isMPS = TRUE    #print("Please specify kit in order to show EPG. Otherwise default MPS format is shown!")
+    isEPG = !isMPS && !isLUS 
 
-    focus(mainwin)
-  }
+    #PLOTS IN R:
+    if(isLUS || isEPG)  {
+     dev.new(width=25, height=10)
+     if(isLUS) { #plot one for each sample
+      for(sn in names(evidDsel)) { #for each evidence)
+        plotLUS(mixData=evidDsel[[sn]],sn=sn,refData=refD[refSel],threshT=threshT,LUSsymbol=LUSsymbol) 
+      }
+     } 
+     if(isEPG) plotEPG(Data=evidDsel,kitname,refcond=refD[refSel],threshT=threshT)  #if kit was found
+     dev.new()
+     op <- par(no.readonly = TRUE)
+     dev.off()
+     par(op)
+     gWidgets::focus(mainwin) <- TRUE
+    }
+
+    #Updated v2.2.0: PLOTS IN Browser with plotly (requires plotly installed)
+    if( require(plotly) ) {
+     if(isEPG) {
+    	   plotEPG2(evidDsel,kitname,refD[refSel],AT=threshT)  #Plot epg if kit was recognized
+	 } else if (isLUS) {
+        plotMPS2(evidDsel,refD[refSel],AT=threshT,grpsymbol=LUSsymbol)  #Plot MPS plot if LUS variant
+	 } else if(isMPS) {
+    	   plotMPS2(evidDsel,refD[refSel],AT=threshT,grpsymbol=MPSsymbol)  #Otherwise plot generic MPS plot
+	 }
+    }
+  } #end show mix
 
   if(h$action=="ref") { #print tables only
      refD <- getData("ref")
      refSel <- numeric()
-     if(!is.null(refD))  refSel <- svalue(tabimportB[2,2])  #get selected references
+     if(!is.null(refD))  refSel <- gWidgets::svalue(tabimportB[2,2])  #get selected references
      nR <- length(refSel)
      if(nR==0) return()
      printRefs(refD,refSel)
@@ -1080,9 +1219,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
       nLocs <- colSums(!is.na(tab))
       matchrate <- MAC/(2*nLocs)
       tab2 <- rbind(tab,MAC,nLocs)
-
-      #Not implemented: If freqs are imported: Calculate false postive match probability of observed MAC
-      print(tab2)
+      printTable(tab2)
 
      } #end for each mix    
      print("------------------------------------")
@@ -1091,7 +1228,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
    if(h$action=="db") {  #view imported databases
     popFreq <- get("popFreq",envir=mmTK)
     if(length(tabimportB[2,3][])==0) return();
-    dbSel <- svalue(tabimportB[2,3])  #get selected database
+    dbSel <- gWidgets::svalue(tabimportB[2,3])  #get selected database
     for(dsel in dbSel) { #for each selected databases
      subD <- getData("db",dsel)[[dsel]] #get selected data
      dblocs <- toupper(colnames(subD)) #get database locs
@@ -1139,17 +1276,17 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      #if selected Mixtures: show ranked matches in database-reference:
      if(ncol(macD)>0) { #
       ord <- order(rowSums(macD),decreasing=TRUE)
-      outD2 <- cbind(outD[ord,1],macD[ord,],nlocs)
+      outD2 <- cbind(outD[ord,1],macD[ord,],nlocs[ord])
       colnames(outD2) <- c("Reference",mixSel,"nLocs") 
       dbwin2 <- gWidgets::gwindow(paste0("Number of sample matching alleles in references in database ",dsel), visible=FALSE,height=mwH)
       if(nmax<=1) gWidgets::gtable(NAtoSign(outD2),container=dbwin2) #create table
       if(nmax>1) gWidgets::gtable(NAtoSign(outD2[1:nmax,]),container=dbwin2) #create table
-      visible(dbwin2) <- TRUE
+      gWidgets::visible(dbwin2) <- TRUE
      }
      dbwin <- gWidgets::gwindow(paste0("References in imported database ",dsel), visible=FALSE,height=mwH)
      if(nmax<=1) gWidgets::gtable(NAtoSign(outD),container=dbwin) #create table
      if(nmax>1) gWidgets::gtable(NAtoSign(outD[1:nmax,]),container=dbwin) #create table
-     visible(dbwin) <- TRUE        
+     gWidgets::visible(dbwin) <- TRUE        
 
     } #end for each databases
    } #end if db -case
@@ -1158,92 +1295,157 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
  ###############
  #start layout:#
  ###############
- tabimportA = glayout(spacing=5,container=gframe("Step 1) Import and select Population frequencies",container=tabimport)) #kit and population selecter
- tabimportA2 = glabel("",container=tabimport) #evidence,ref dataframe
- tabimportB = glayout(spacing=5,container=gframe("Step 2) Import and select Evidence, Reference, Database",container=tabimport)) #evidence,ref dataframe
- tabimportB2 = glabel("",container=tabimport) #evidence,ref dataframe
- tabimportC = glayout(spacing=20,container=gframe("Step 3) Select Interpretation",container=tabimport)) #Tasks button
+ tabimportA = gWidgets::glayout(spacing=5,container=gWidgets::gframe("Step 1) Import and select Population frequencies",container=tabimport)) #kit and population selecter
+ tabimportA2 = gWidgets::glabel("",container=tabimport) #evidence,ref dataframe
+ tabimportB = gWidgets::glayout(spacing=5,container=gWidgets::gframe("Step 2) Import and select Evidence, Reference, Database",container=tabimport)) #evidence,ref dataframe
+ tabimportB2 = gWidgets::glabel("",container=tabimport) #evidence,ref dataframe
+ tabimportC = gWidgets::glayout(spacing=20,container=gWidgets::gframe("Step 3) Select Interpretation",container=tabimport)) #Tasks button
+
+ setPopsToList = function(dbList) {
+   assign("popList",dbList,envir=mmTK) #assign population frequency info to mmTK-environment
+   tabimportA[3,2][] <- names(dbList)
+ }
 
  #Choose box and import button
- tabimportA[1,1] = gbutton(text="1) Select directory\n(with frequency files)",container=tabimportA,handler=
+ tabimportA[1,1] = gWidgets::gbutton(text="Import from file",container=tabimportA,handler=
   function(h,...) {
-   dirfile = gfile(text="Select folder",type="selectdir")
-   if(!is.na(dirfile)) assign("freqfolder",dirfile,envir=mmTK) #assign freqfolder
+   initfile <- get("freqfile",envir=mmTK) #get last used freqfile
+   f = gWidgets::gfile(text="Select file",type="open",filter = list(`All files` = list(patterns = c("*"))),initialfilename=initfile)
+   if(!is.na(f)) {
+    setPopsToList(freqImport(f,url=FALSE,xml=FALSE))
+    assign("freqfile",f,envir=mmTK) #assign freqfolder
+   }
   }
  )
- helptext(tabimportA[1,1],"Chooses the directory which must contain frequency files only. \n\nThe format of the files must be 'kitname_population'. Use getKit() to see available kitnames.")
+ helptext(tabimportA[1,1],paste0("Choose a frequency file.\nExample files are found in directory\n",deffreq))
 
- tabimportA[1,2] = gbutton(text="2) Import from directory\n(with frequency files)",container=tabimportA,handler=
+ tabimportA[1,2] = gWidgets::gbutton(text="Import from folder",container=tabimportA,handler=
   function(h,...) {
-   loadKitList(freqpath=get("freqfolder",envir=mmTK))
-   kitList <- get("kits",envir=mmTK)
-   tabimportA[3,1][] <- names(kitList)
+   dirfile = gWidgets::gfile(text="Select folder",type="selectdir") #get folder from user
+   if(!is.na(dirfile)) {
+    setPopsToList(freqImport(list.files(dirfile,full.names=TRUE),url=FALSE,xml=FALSE))
+   } 
   }
- ) 
- helptext(tabimportA[1,2],paste0("Imports the data from the frequency files (from selected directory) into the software. \n\nThe selected directory is now:'",get("freqfolder","dirfile",envir=mmTK),"'"))
+ )
+ #helptext(tabimportA[1,2],paste0("Choose a directory with frequency files only.\nAn example is directory\n",deffreq))
+ gWidgets::addHandlerRightclick(tabimportA[1,2],handler=function(h,...) { setPopsToList(freqImport(list.files(deffreq,full.names=TRUE),url=FALSE,xml=FALSE)) })
 
- tabimportA[2,1] <- glabel(text="Select kit:",container=tabimportA)
- tabimportA[2,2] <- glabel(text="Select population:",container=tabimportA)
+ tabimportA[1,3] = gWidgets::gbutton(text="Import from STRidER",container=tabimportA,handler=
+  function(h,...) {
+   setPopsToList(freqImport(striderlink,url=TRUE,xml=TRUE))
+  }
+ )
+ helptext(tabimportA[1,3],paste0("Click to import directly from the STRidER database.\nLink: ",striderlink))
 
- tabimportA[3,1] <- gcombobox(items="", width=100, selected =0 , editable = FALSE, container = tabimportA, handler=
+ tabimportA[2,1] <- gWidgets::glabel(text="Select STR kit:",container=tabimportA)
+ tabimportA[2,2] <- gWidgets::glabel(text="Select population:",container=tabimportA)
+
+
+ #previous stored kit/pop-names:
+ initPops <- names(get("popList",envir=mmTK)) #get population list already saved from mmTK-environment
+ initKits <- c("NONE",getKit()) #get kit names (shortname)
+ selKit <- 0 #default selection
+ selPop <- 0 #default selection
+ if(is.null(initPops)) initPops <- ""
+ popkitname <- get("selPopKitName",envir=mmTK) 
+ if(!is.null(popkitname)) { 
+  if(!is.na(popkitname[1])) {
+   selKit <- which(popkitname[1]==initKits)
+   if(length(selKit)==0) selKit <- 0
+  }
+  if(!is.na(popkitname[2])) {
+   selPop <- which(popkitname[2]==initPops)
+   if(length(selPop)==0) { #if not found, just show poptext (the popFreq object is already stored)
+    selPop <- 1
+    initPops <- popkitname[2]
+   }
+  }
+ }
+
+ tabimportA[3,1] <- gWidgets::gcombobox(items=initKits, width=100, selected =selKit, editable = FALSE, container = tabimportA, handler=
     function(h,...) {
      if(!is.null(get("dbData",envir=mmTK))) {
       print("You can not change selected kit after loading a database!") 
      } else {
-      kitList <- get("kits",envir=mmTK)
-      if(!is.null(kitList)) tabimportA[3,2][] <- names(kitList[[svalue(tabimportA[3,1])]])
-     }
+      kitsel <- gWidgets::svalue(tabimportA[3,1]) #get selected kit
+      popkitname <- get("selPopKitName",envir=mmTK) 
+      if(is.null(popkitname)) {
+        popkitname <- rep(NA,2) #initiate kit-pop selection
+      }
+      if(kitsel!="NONE") {
+        popkitname[1] <- kitsel #insert selected kit (if not none)
+      } else {
+        popkitname[1] = NA #set to none
+      }
+      assign("selPopKitName",popkitname,envir=mmTK) #store to environment
+     } #end else
     })
  #population-selection
- tabimportA[3,2] <- gcombobox(items="", width=100, selected = 0 , editable = FALSE , container = tabimportA, handler=
+ tabimportA[3,2] <- gWidgets::gcombobox(items=initPops, width=100, selected = selPop, editable = FALSE , container = tabimportA, handler=
     function(h,...) {
      if(!is.null(get("dbData",envir=mmTK))) {
       print("You can not change selected population after loading a database!") 
      } else {
-      kitList <- get("kits",envir=mmTK)
-      if(!is.null(kitList)) {
-       popList <- kitList[[svalue(tabimportA[3,1])]][[svalue(tabimportA[3,2])]] #get selected frequencies
+      dbList <- get("popList",envir=mmTK) #get population frequency info from mmTK-environment
+      if(!is.null(dbList)) {
+       popsel <- gWidgets::svalue(tabimportA[3,2]) #get selected population
+       popList <- dbList[[popsel]] #get selected frequencies
        assign("popFreq",popList,envir=mmTK) #assign popFreq get("popFreq",envir=mmTK)
-       popkitname <- c(svalue(tabimportA[3,1]),svalue(tabimportA[3,2])) #store selected kit and popnames
-       assign("selPopKitName",popkitname,envir=mmTK) 
+
+       popkitname <- get("selPopKitName",envir=mmTK) 
+       if(is.null(popkitname)) popkitname <- rep(NA,2) #initiate kit-pop selection
+       popkitname[2] <- popsel #insert selected population
+       assign("selPopKitName",popkitname,envir=mmTK)  #store selected popname
+ 
+       if(!is.null(popList)) { #NEW in v1.9: Gives a warning when allele frequencies are 'odd'
+        locs <- names(popList)
+        check1 <- locs[sapply(popList,length)==0] #loci which was empty
+        check2 <- locs[sapply(popList,function(x) any(x<0))] #any loci containing negative frequencies
+        check3 <- locs[sapply(popList,function(x) round(sum(x),2)!=1) ] #any loci containing negative frequencies
+        txt <- paste0("Selected population frequency file: ",paste0(popkitname,collapse="-"))
+
+        giveWarning = function(loci,what) {
+         loctext <- ifelse(length(loci)>1,"Loci: ","Locus: ")
+         txt2 <- paste0(txt,"\n\n",loctext, paste0(loci,collapse="/"),"\n",what,".\n\nPlease check the allele frequency file!")
+         gWidgets::gmessage(title="Incorrect allele frequencies observed!",message=txt2,icon="warning")
+        }
+        if(length(check1)>0)  giveWarning(check1,what="did not have any allele frequencies")
+	   if(length(check2)>0)  giveWarning(check2,what="had atleast one negative allele frequency")
+	   if(length(check3)>0)  giveWarning(check3,what="had summed allele frequencies different from one (with 2 decimal roundoff)")
+	  }
       }
      }
     })
-#previous stored kit/pop-names:
- popkitname <- get("selPopKitName",envir=mmTK) 
- if(!is.null(popkitname)) {
-  tabimportA[3,1][] <- popkitname[1]
-  tabimportA[3,2][] <- popkitname[2]
- }
- tabimportA[2,3] <-  gbutton(text="View frequencies",container=tabimportA,handler=f_viewdata,action="freq")  #view popFreq-data
- helptext(tabimportA[2,3],"Shows the selected population frequencies from the drop-down menu. \n\nIf evidence(s) is selected, the probability for a random profile to have more than k number of allele matches to the sample is given in a plot.")
+
+ tabimportA[3,3] <-  gWidgets::gbutton(text="View frequencies",container=tabimportA,handler=f_viewdata,action="freq")  #view popFreq-data
+ helptext(tabimportA[3,3],"Shows the selected population frequencies from the drop-down menu. \n\nIf evidence(s) is selected, the probability for a random profile to have more than k number of allele matches to the sample is given in a plot.")
 
  #Choose box and import button
- tabimportB[1,1] = gbutton(text="Import evidence",container=tabimportB,handler=f_importprof,action="mix")
- tabimportB[2,1] = gcheckboxgroup(items="", container = tabimportB)
+ tabimportB[1,1] = gWidgets::gbutton(text="Import evidence",container=tabimportB,handler=f_importprof,action="mix")
+ tabimportB[2,1] = gWidgets::gcheckboxgroup(items="", container = tabimportB)#,use.table=TRUE)
  tabimportB[2,1][] = restoreCheckbox("mix")
  helptext(tabimportB[1,1],"Imports sample profile(s) from a selected file into the software. \n\nThe column names must contain 'sample..', 'marker', 'allele..'. Optional: 'height..'")
 
  #Choose box and import button
- tabimportB[1,2] = gbutton(text="Import reference",container=tabimportB,handler=f_importprof,action="ref")
- tabimportB[2,2] = gcheckboxgroup(items="", container = tabimportB)
+ tabimportB[1,2] = gWidgets::gbutton(text="Import reference",container=tabimportB,handler=f_importprof,action="ref")
+ tabimportB[2,2] = gWidgets::gcheckboxgroup(items="", container = tabimportB)#,use.table=T)
  tabimportB[2,2][] = restoreCheckbox("ref")
  helptext(tabimportB[1,2],"Imports reference profile(s) from a selected file into the software. \n\nThe column names must contain 'sample..', 'marker', 'allele..'.")
 
  #Choose box and import button
- tabimportB[1,3] = gbutton(text="Import database",container=tabimportB,handler=f_importprof,action="db")
- tabimportB[2,3] = gcheckboxgroup(items="", container = tabimportB)
+ tabimportB[1,3] = gWidgets::gbutton(text="Import database",container=tabimportB,handler=f_importprof,action="db")
+ tabimportB[2,3] = gWidgets::gcheckboxgroup(items="", container = tabimportB)
  tabimportB[2,3][] = restoreCheckbox("db")
  helptext(tabimportB[1,3],"Imports reference profile(s) from a selected file into the software. \n\nThe column names must contain 'sample..', 'marker', 'allele..'.")
 
  #view data:
- tabimportB[3,1] = gbutton(text="View evidence",container=tabimportB,handler=f_viewdata,action="mix")
+ tabimportB[3,1] = gWidgets::gbutton(text="View evidence",container=tabimportB,handler=f_viewdata,action="mix")
  helptext(tabimportB[3,1],"Shows the data in the selected evidence(s) both in terminal and in an epg-like plot. \n\nIf selected kit is recognized by the software and peak heights are imported, the sum of the peak heights per marker are fitted against fragment length assuming a gamma-model. \n\nThe p-value for an extreme marker is based on the fitted model when leaving out the marker.")
 
- tabimportB[3,2] = gbutton(text="View references",container=tabimportB,handler=f_viewdata,action="ref")
+ tabimportB[3,2] = gWidgets::gbutton(text="View references",container=tabimportB,handler=f_viewdata,action="ref")
  helptext(tabimportB[3,2],"Shows the allele data for each selected reference(s). \n\nShows number of alleles for selected references matching against selected evidence(s).")
 
- tabimportB[3,3] = gbutton(text="View database",container=tabimportB,handler=f_viewdata,action="db")
+ tabimportB[3,3] = gWidgets::gbutton(text="View database",container=tabimportB,handler=f_viewdata,action="db")
  helptext(tabimportB[3,3],"Shows the allele data for each reference(s) in selected database(s). \n\nShows number of alleles for each references in selected database(s) matching against selected evidence(s).")
 
  #helpfunction used to extract selected importdata-elements to further model-setup
@@ -1255,47 +1457,58 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
    #DC: Deconvolution requires only mixtures. Reference profiles is optional
    popFreq <- get("popFreq",envir=mmTK)
    mixSel <- refSel <- dbSel <- numeric()
-   if(length(tabimportB[2,1][])>0) mixSel <- svalue(tabimportB[2,1])  #get selected mixtures
-   if(length(tabimportB[2,2][])>0) refSel <- svalue(tabimportB[2,2])  #get selected references
-   if(length(tabimportB[2,3][])>0) dbSel <- svalue(tabimportB[2,3])  #get selected databases
+   if(length(tabimportB[2,1][])>0) mixSel <- gWidgets::svalue(tabimportB[2,1])  #get selected mixtures
+   if(length(tabimportB[2,2][])>0) refSel <- gWidgets::svalue(tabimportB[2,2])  #get selected references
+   if(length(tabimportB[2,3][])>0) dbSel <- gWidgets::svalue(tabimportB[2,3])  #get selected databases
 
    if(is.null(popFreq)) {
-    gmessage("No frequencies was specified!\n Please import table with population frequencies.")
+    gWidgets::gmessage("No frequencies was specified!\n Please import table with population frequencies.")
    } else if(h$action!="GEN" && length(mixSel)==0) {
-    gmessage(message="Please import and select mixture-profile!")
+    gWidgets::gmessage(message="Please import and select mixture-profile!")
    } else if(h$action=="EVID" && length(refSel)==0) {
-    gmessage(message="Please import and select reference-profiles for weight of evidence!")
+    gWidgets::gmessage(message="Please import and select reference-profiles for weight of evidence!")
    } else if(h$action=="DB" && length(dbSel)==0) {
-    gmessage(message="Please import and select reference-database for database search!")
+    gWidgets::gmessage(message="Please import and select reference-database for database search!")
    } else {
     refreshTabmodel(mixSel,refSel,dbSel,h$action) #refresh table with selected data
-    svalue(nb) <- 3 #change tab of notebook
+    gWidgets::svalue(nb) <- 3 #change tab of notebook
    }
  }
 
  #Button-choices further:
- tabimportC[1,1] = gbutton(text="Weight-of-Evidence",container=tabimportC,handler=selectDataToModel,action="EVID")
+ tabimportC[1,1] = gWidgets::gbutton(text="Weight-of-Evidence",container=tabimportC,handler=selectDataToModel,action="EVID")
  helptext(tabimportC[1,1],"A module for calculating the Likelihood Ratio for selected sample(s) (treated as replicates). \n\nSelected reference(s) can later be conditioned on in the hypotheses.")
 
- tabimportC[1,2] = gbutton(text="Deconvolution",container=tabimportC,handler=selectDataToModel,action="DC")
+ tabimportC[1,2] = gWidgets::gbutton(text="Deconvolution",container=tabimportC,handler=selectDataToModel,action="DC")
  helptext(tabimportC[1,2],"A module for ranking the most likely profiles of the unknown contributors for selected sample(s) (treated as replicates).\n\nThe user will first need to fit a gamma-model based on maximum likelihood estimation.")
 
- tabimportC[1,3] = gbutton(text="Database search",container=tabimportC,handler=selectDataToModel,action="DB")
+ tabimportC[1,3] = gWidgets::gbutton(text="Database search",container=tabimportC,handler=selectDataToModel,action="DB")
  helptext(tabimportC[1,3],"A module for calculating the Likelihood Ratio for selected sample(s) (treated as replicates) for each profile(s) in the selected database(s). \n\nSelected reference(s) can later be conditioned on in the hypotheses.")
 
- tabimportC[1,4] = gbutton(text="Generate sample",container=tabimportC,handler=selectDataToModel,action="GEN")
- helptext(tabimportC[1,4],"A module for generating alleles based on selected population frequencies and corresponding peak heights based on the gamma-model.")
+ tabimportC[2,1] = gWidgets::gbutton(text="Fit dropin data",container=tabimportC,handler=f_fitdropin)
+ helptext(tabimportC[2,1],"A module for fitting the drop-in P.H. model based on data from an imported text file.")
+ 
+ tabimportC[2,2] = gWidgets::gbutton(text="Generate sample",container=tabimportC,handler=selectDataToModel,action="GEN")
+ helptext(tabimportC[2,2],"A module for generating alleles based on selected population frequencies and corresponding peak heights based on the gamma-model.")
 
+ tabimportC[2,3] = gWidgets::gbutton(text="RESTART",container=tabimportC,handler=function(h,...) {
+   gWidgets::dispose(mainwin) #remove window!
+   efm() #and open EFM again
+ })
+ helptext(tabimportC[2,3],"A button to restart EuroForMix")
+
+
+ 
 
 
 #ADD EASY MODE
  if(get("optSetup",envir=mmTK)$easyMode) {
-    enabled(tabimportC[1,2]) <- FALSE  #deactivate deconvolution
-    enabled(tabimportC[1,3]) <- FALSE  #deactivate database search
-    enabled(tabimportC[1,4]) <- FALSE  #deactivate generate sample
+    gWidgets::enabled(tabimportC[1,2]) <- FALSE  #deactivate deconvolution
+    gWidgets::enabled(tabimportC[1,3]) <- FALSE  #deactivate database search
+    gWidgets::enabled(tabimportC[2,2]) <- FALSE  #deactivate generate sample
 
-    enabled(tabimportB[1,3]) <- FALSE
-    enabled(tabimportB[3,3]) <- FALSE
+    gWidgets::enabled(tabimportB[1,3]) <- FALSE
+    gWidgets::enabled(tabimportB[3,3]) <- FALSE
  }
 
 
@@ -1326,7 +1539,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
     #sig = number of decimals
     set <- get(paste0("set",type),envir=mmTK)
 #    if(length(set$samples)>1) {
-#       gmessage(message="The LR (Bayesian based) does not handle multiple replicates",icon="error")
+#       gWidgets::gmessage(message="The LR (Bayesian based) does not handle multiple replicates",icon="error")
 #    } else {
      if(type=="EVID") {
        optint <- get("optINT",envir=mmTK) #options when integrating (reltol and boundaries)
@@ -1339,15 +1552,15 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 
        #integrate:
        print("Calculates under Hp...")
-       time <- system.time({     int_hp <- contLikINT(mod$nC_hp, set$samples, set$popFreqQ, bhp$lower, bhp$upper, set$refDataQ, mod$condOrder_hp, mod$knownref_hp, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scale=scaleINT,maxEval=optint$maxeval)  })[3]
+       time <- system.time({     int_hp <- contLikINT(mod$nC_hp, set$samples, set$popFreqQ, bhp$lower, bhp$upper, set$refDataQ, mod$condOrder_hp, mod$knownref_hp, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scale=optint$scaleINT,maxEval=optint$maxeval)  })[3]
        print(paste0("Integration under Hp took ",format(time,digits=5),"s"))
-       print(paste0("log(Lik)=",log(int_hp$margL)-scaleINT))
-       print(paste0("Lik=",int_hp$margL*exp(-scaleINT)))
+       print(paste0("log(Lik)=",log(int_hp$margL)-optint$scaleINT))
+       print(paste0("Lik=",int_hp$margL*exp(-optint$scaleINT)))
        print("Calculates under Hd...")
-       time <- system.time({     int_hd <- contLikINT(mod$nC_hd, set$samples, set$popFreqQ, bhd$lower, bhd$upper, set$refDataQ, mod$condOrder_hd, mod$knownref_hd, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scale=scaleINT,maxEval=optint$maxeval)  })[3]
+       time <- system.time({     int_hd <- contLikINT(mod$nC_hd, set$samples, set$popFreqQ, bhd$lower, bhd$upper, set$refDataQ, mod$condOrder_hd, mod$knownref_hd, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scale=optint$scaleINT,maxEval=optint$maxeval,knownRel=mod$knownRel,ibd=mod$ibd)  })[3]
        print(paste0("Integration under Hd took ",format(time,digits=5),"s"))
-       print(paste0("log(Lik)=",log(int_hd$margL)-scaleINT))
-       print(paste0("Lik=",int_hd$margL*exp(-scaleINT)))
+       print(paste0("log(Lik)=",log(int_hd$margL)-optint$scaleINT))
+       print(paste0("Lik=",int_hd$margL*exp(-optint$scaleINT)))
        LR <- int_hp$margL/int_hd$margL
        dev <- range(c(int_hp$deviation/int_hd$deviation,int_hp$deviation/rev(int_hd$deviation))) #get deviation interval of LR
        res <- list(LR=LR,dev=dev)
@@ -1355,7 +1568,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
        #Print a GUI message:
        txt <- paste0("The LR (Bayesian based)\nwas calculated as \nLR=",format(LR,digits=4)," [",format(dev[1],digits=4)," , ",format(dev[2],digits=4),"]\nlog10LR=",format(log10(LR),digits=4)," [",format(log10(dev[1]),digits=4)," , ",format(log10(dev[2]),digits=4),"]")
        cat(txt)
-       gmessage(message=txt,title="Continuous LR (Bayesian based)",icon="info")
+       gWidgets::gmessage(message=txt,title="Quantitative LR (Bayesian based)",icon="info")
      } 
      if(type=="DB") { #Case of DB-search
        doDB("INT") #do database search with integration
@@ -1365,81 +1578,107 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 
   refreshTabmodel = function(mixSel,refSel,dbSel,type) { 
    #type={"GEN","EVID","DB","DC"}
-   visible(mainwin) <- FALSE
-   tabmodeltmp <- glayout(spacing=spc,container=(tabmodel[1,1,expand=TRUE] <- ggroup(container=tabmodel))) 
+   gWidgets::visible(mainwin) <- FALSE
+   tabmodeltmp <- gWidgets::glayout(spacing=spc,container=(tabmodel[1,1,expand=TRUE] <- gWidgets::ggroup(container=tabmodel))) 
    edwith = 6 #edit width
 
    popFreq <- get("popFreq",envir=mmTK)
    locs <- names(popFreq)  #get names of loci for imported population frequencies. used as default in list
+   kitname <- get("selPopKitName",envir=mmTK)[1]  #get selected kit to use
+   if(!is.null(kitname) && !is.na(kitname)) locs <- intersect(locs,toupper(getKit(kitname,"Marker"))) #use only overlapping allele
    mixD = getData("mix")
    refD = getData("ref") 
    nM = length(mixSel) #number of mix-profiles
    nR = length(refSel) #number of ref-profiles
 
-   tabmodelA = glayout(spacing=5,container=(tabmodeltmp[1,1] <-gframe("Model specification",container=tabmodeltmp))) 
-   tabmodelB = glayout(spacing=0,container=(tabmodeltmp[1,2] <-gframe("Data selection",container=tabmodeltmp))) 
-   tabmodelCC = glayout(spacing=10,container=(tabmodeltmp[1,3] <-glayout(spacing=10,container=tabmodeltmp)))  
+   tabmodelA = gWidgets::glayout(spacing=5,container=(tabmodeltmp[1,1] <-gWidgets::gframe("Model specification",container=tabmodeltmp))) 
+   tabmodelB = gWidgets::glayout(spacing=0,container=(tabmodeltmp[1,2] <-gWidgets::gframe("Data selection",container=tabmodeltmp))) 
+   tabmodelCC = gWidgets::glayout(spacing=10,container=(tabmodeltmp[1,3] <-gWidgets::gframe(spacing=10,container=tabmodeltmp)))  
 
-   tabmodelC = glayout(spacing=0,container=(tabmodelCC[1,1] <-gframe("Show selected data",container=tabmodelCC)))  
-   tabmodelD = glayout(spacing=5,container=(tabmodelCC[2,1] <-gframe("Calculations",container=tabmodelCC)))  
+   tabmodelC = gWidgets::glayout(spacing=0,container=(tabmodelCC[1,1] <-gWidgets::gframe("Show selected data",container=tabmodelCC)))  
+   tabmodelD = gWidgets::glayout(spacing=5,container=(tabmodelCC[2,1] <-gWidgets::gframe("Calculations",container=tabmodelCC)))  
 
    #Hypothesis selection: subframe of A
    txt <- "Contributor(s) under Hp:"
    if(type=="DB") txt <- paste0(txt, "\n(DB-reference already included)")
-   if(type%in%c("DB","EVID")) tabmodelA2 = glayout(spacing=0,container=(tabmodelA[2,1] <-gframe(txt,container=tabmodelA))) 
-   tabmodelA3 = glayout(spacing=0,container=(tabmodelA[3,1] <-gframe("Contributor(s) under Hd:",container=tabmodelA)))
-   tabmodelA4 = glayout(spacing=0,container=(tabmodelA[4,1] <-gframe("Model options",container=tabmodelA))) 
-   #tabmodelA5 = glayout(spacing=0,container=(tabmodelA[5,1] <-gframe("Advanced Parameters",container=tabmodelA))) 
+   if(type%in%c("DB","EVID")) tabmodelA2 = gWidgets::glayout(spacing=0,container=(tabmodelA[2,1] <-gWidgets::gframe(txt,container=tabmodelA))) 
+   tabmodelA3 = gWidgets::glayout(spacing=0,container=(tabmodelA[3,1] <-gWidgets::gframe("Contributor(s) under Hd:",container=tabmodelA)))
+   if(type!="GEN")  tabmodelA4 = gWidgets::glayout(spacing=0,container=(tabmodelA[4,1] <-gWidgets::gframe("Model options",container=tabmodelA))) 
 
    #specify references under hypotheses
    for(rsel in refSel) {
-    if(type%in%c("DB","EVID")) tabmodelA2[which(rsel==refSel),1]  <- gcheckbox(text=rsel,container=tabmodelA2,checked=TRUE) #Check as default under Hp
-    tabmodelA3[which(rsel==refSel),1]  <- gcheckbox(text=rsel,container=tabmodelA3,checked=!(type=="EVID")) #references under Hd (not checked if evidnece)
+    if(type%in%c("DB","EVID")) tabmodelA2[which(rsel==refSel),1]  <- gWidgets::gcheckbox(text=rsel,container=tabmodelA2,checked=TRUE) #Check as default under Hp
+    tabmodelA3[which(rsel==refSel),1]  <- gWidgets::gcheckbox(text=rsel,container=tabmodelA3,checked=!(type=="EVID")) #references under Hd (not checked if evidnece)
    }
 
+   Krange <- 0:4 #default Contr range
    #specify number of unknowns
    if(!type%in%c("DC","GEN")) {
-    tabmodelA2[nR+1,1] <- glabel(text="#unknowns (Hp): ",container=tabmodelA2)
-    tabmodelA2[nR+1,2] <- gedit(text="1",container=tabmodelA2,width=4)
+    tabmodelA2[nR+1,1] <- gWidgets::glabel(text="#unknowns (Hp): ",container=tabmodelA2)
+    tabmodelA2[nR+1,2] <- gWidgets::gcombobox(items=Krange,selected=2,editable=TRUE,container=tabmodelA2)
+#    tabmodelA2[nR+1,2] <- gWidgets::gedit(text="1",container=tabmodelA2,width=4)
    }
-   tabmodelA3[nR+1,1] <- glabel(text="#unknowns (Hd): ",container=tabmodelA3)
-   tabmodelA3[nR+1,2] <- gedit(text="2",container=tabmodelA3,width=4)
+   tabmodelA3[nR+1,1] <- gWidgets::glabel(text="#unknowns (Hd): ",container=tabmodelA3)
+   #tabmodelA3[nR+1,2] <- gWidgets::gedit(text="2",container=tabmodelA3,width=4)
+   tabmodelA3[nR+1,2] <- gWidgets::gcombobox(items=Krange,selected=3,editable=TRUE,container=tabmodelA3)
+
+   #BLOCK added in version 2.0.0: Relatedness
+   tabmodelA3[nR+2,1] <-  gWidgets::glabel(text="\n1st unknown is",container=tabmodelA3)
+   relatednessIBD = rbind( c(1,0,0), t(replicate(2,c(0,1,0))) , c(1/4,1/2,1/4),  t(replicate(5,c(1/2,1/2,0))) ,c(3/4,1/4,0), c(0,0,1) )  #Defined at https://strbase.nist.gov/pub_pres/Lewis-Towson-kinship-Apr2010.pdf
+   relname <- rownames(relatednessIBD) <- c("Unrelated" , "Parent","Child", "Sibling" , "Uncle","Nephew","Grandparent","Grandchild","Half-sibling" , "Cousin" , "Twin (ident.)")
+ 
+   tabmodelA3[nR+3,1] <-  gWidgets::gcombobox(items=rownames(relatednessIBD),container=tabmodelA3,editable=FALSE) 
+   tabmodelA3[nR+4,1] <-  gWidgets::glabel(text="to",container=tabmodelA3)
+   refSel2 <- c("All knowns",refSel) #selection list of references
+   tabmodelA3[nR+5,1] <-  gWidgets::gcombobox(items=refSel2,container=tabmodelA3,editable=FALSE)
 
    #Case if SNP data:
-   isSNP <- all(sapply(popFreq,length)==2) #check if SNP data
-   stuttTxt <- ""
-   t0 <- get("optSetup",envir=mmTK)$thresh0    
-   if(isSNP) {
-    stuttTxt <- 0 #set as no stutter
-   }
-#  t0 <- 10 #REMOVED SINCE THRESHOLD CAN BE GIVEN IN SETTINGS
+   isSNP <- all(sapply(popFreq,length)==2) #check if SNP data: I.e. 2 allele outcome for all markers - stutter/deg models not possible
 
    #Model parameters: 
-   tabmodelA4[1,1] <- glabel(text="Degradation:",container=tabmodelA4)
-   tabmodelA4[1,2] <- gradio(items=c("YES","NO"), selected = 2, horizontal = TRUE,container=tabmodelA4)
-   tabmodelA4[2,1] <- glabel(text="Stutter:",container=tabmodelA4)
-   tabmodelA4[2,2] <- gradio(items=c("YES","NO"), selected = 2, horizontal = TRUE,container=tabmodelA4)
- 
+   if(type!="GEN") {
+    tabmodelA4[1,1] <- gWidgets::glabel(text="Degradation:",container=tabmodelA4)
+    tabmodelA4[1,2] <- gWidgets::gradio(items=c("YES","NO"), selected = 2, horizontal = TRUE,container=tabmodelA4)
+    tabmodelA4[2,1] <- gWidgets::glabel(text="Stutter:",container=tabmodelA4)
+    tabmodelA4[2,2] <- gWidgets::gradio(items=c("YES","NO"), selected = 2, horizontal = TRUE,container=tabmodelA4)
+
+    #added v1.9.3:
+    if(isSNP) {
+     gWidgets::enabled( tabmodelA4[1,2] ) <- FALSE
+     gWidgets::enabled( tabmodelA4[2,2] ) <- FALSE
+    } else {
+     #added v1.10.0:   Changed in v2.2.0
+     kit <- get("selPopKitName",envir=mmTK)[1] #get kit
+     if(is.null(kit) || is.na(kit)) gWidgets::enabled( tabmodelA4[1,2] ) <- FALSE  #is kit defined? If not then don't consider degradation model
+
+     #Stutters accepted for numerical vairants (STR-RU/LUS)   
+     isMPS = FALSE
+     isLUS = all(unlist(sapply(mixD,function(x)  sapply(x,function(y) all(grepl(LUSsymbol,y$adata),na.rm=TRUE)) )))  #ADDED: check if alleles are given on LUS format 
+     if(!isLUS) suppressWarnings( { isMPS = all(unlist(sapply(mixD,function(x)  sapply(x,function(y) all(is.na( as.numeric(y$adata) )))))) }) #ADDED: check if alleles are given on string-format (i.e MPS)grepl(y$adata),na.rm=TRUE)) )))    
+     if(isMPS) gWidgets::enabled( tabmodelA4[2,2] ) <- FALSE  #Deactivate stutter if alleles are strings
+    } #end if not SNP 
+   } #end if not GEN
+	
    #Data selection
    if(length(locs)<=get("optSetup",envir=mmTK)$maxloc) { 
-    tabmodelB[1,1] <- glabel(text="Loci:",container=tabmodelB)
+    tabmodelB[1,1] <- gWidgets::glabel(text="Loci:",container=tabmodelB)
     for(loc in locs) { #insert locus names from popFreq
      tabmodelB[1+which(loc==locs),1] <- loc  #insert loc-name
     }
     for(msel in mixSel) { #for each selected mixture
-     tabmodelB[1,1 + which(msel==mixSel)] <- glabel(text=msel,container=tabmodelB) #get selected mixturenames
+     tabmodelB[1,1 + which(msel==mixSel)] <- gWidgets::glabel(text=msel,container=tabmodelB) #get selected mixturenames
      for(loc in locs) { #for each locus
       exist <- !is.null(mixD[[msel]][[loc]]$adata) ##&& !is.null(mixD[[msel]][[loc]]$hdata) #check if exist alleles!
-      tabmodelB[1+which(loc==locs),1 + which(msel==mixSel)]  <- gcheckbox(text="",container=tabmodelB,checked=exist)
-      if(!exist) enabled(tabmodelB[1+which(loc==locs),1 + which(msel==mixSel)]) <- FALSE #deactivate non-existing locus
+      tabmodelB[1+which(loc==locs),1 + which(msel==mixSel)]  <- gWidgets::gcheckbox(text="",container=tabmodelB,checked=exist)
+      if(!exist) gWidgets::enabled(tabmodelB[1+which(loc==locs),1 + which(msel==mixSel)]) <- FALSE #deactivate non-existing locus
      }
     }  
     for(rsel in refSel) { #for each selected reference
-     tabmodelB[1,1 + nM + which(rsel==refSel)] <- glabel(text=rsel,container=tabmodelB) #name of reference
+     tabmodelB[1,1 + nM + which(rsel==refSel)] <- gWidgets::glabel(text=rsel,container=tabmodelB) #name of reference
      for(loc in locs) { #for each locus
       exist <- !is.null(refD[[rsel]][[loc]]$adata) #check if allele exists
-      tabmodelB[1+which(loc==locs),1 + nM + which(rsel==refSel)]  <- gcheckbox(text="",container=tabmodelB,checked=exist)
-      if(!exist) enabled(tabmodelB[1+which(loc==locs),1 + nM + which(rsel==refSel)]) <- FALSE #deactivate non-existing locus
+      tabmodelB[1+which(loc==locs),1 + nM + which(rsel==refSel)]  <- gWidgets::gcheckbox(text="",container=tabmodelB,checked=exist)
+      if(!exist) gWidgets::enabled(tabmodelB[1+which(loc==locs),1 + nM + which(rsel==refSel)]) <- FALSE #deactivate non-existing locus
      }
     }
    }
@@ -1447,25 +1686,30 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
    #helpfunction which takes GUI settings and stores them in "set'type'"
    storeSettings = function(lrtype="PLOT") {
      #lrtype="CONT","QUAL","PLOT"
-      sellocs <- numeric() #Selected loci (which all mixtures, references has)
+      sellocs <- numeric() #Selected loci for stains
       if(length(locs)<=get("optSetup",envir=mmTK)$maxloc) { 
 #NOTE: Should it check whether "tabmodelB" elements exists instead of the possibly editable maxloc-number?
        for(loc in locs) { #for each locus in popFreq
         isOK <- TRUE
-        for(msel in mixSel) isOK <- isOK && svalue(tabmodelB[1+which(loc==locs),1 + which(msel==mixSel)])  #check if locus checked for samples
-        for(rsel in refSel) isOK <- isOK && svalue(tabmodelB[1+which(loc==locs),1 + nM + which(rsel==refSel)]) #check if locus checked for references
+        for(msel in mixSel) isOK <- isOK && gWidgets::svalue(tabmodelB[1+which(loc==locs),1 + which(msel==mixSel)])  #check if locus checked for stains
+        for(rsel in refSel) {
+          bool <- gWidgets::svalue(tabmodelB[1+which(loc==locs),1 + nM + which(rsel==refSel)]) #check if locus checked for references
+          if(!bool || is.null(refD[[rsel]][[loc]])) refD[[rsel]][[loc]]$adata = numeric() #INSERT numeric() if missing or not checked
+        }
         if(isOK) sellocs <- c(sellocs,loc) #locus can be evaluated
        }
       } else { #if more than 30 loci: select only valid existing loci in both mix and possible refs
        for(loc in locs) { #for each locus in popFreq
         isOK <- TRUE
-        for(msel in mixSel) isOK <- isOK && !is.null(mixD[[msel]][[loc]])
-        for(rsel in refSel) isOK <- isOK && !is.null(refD[[rsel]][[loc]])
+        for(msel in mixSel) isOK <- isOK && !is.null(mixD[[msel]][[loc]]) #don't consider marker if missing in stain
+        for(rsel in refSel) {
+          if(is.null(refD[[rsel]][[loc]])) refD[[rsel]][[loc]]$adata = numeric() #INSERT numeric() if missing 
+        }
         if(isOK) sellocs <- c(sellocs,loc) #locus can be evaluated
        }
       }
       if(length(sellocs)==0) { #don't do anything if no loci will be evaluated
-       gmessage(message="No loci are evaluated! Be sure that all selected data have valid data in their loci.",title="No loci found!",icon="error")
+       gWidgets::gmessage(message="No loci are evaluated! Be sure that all selected data have valid data in their loci.",title="No loci found!",icon="error")
        stop("No evaluation done.")
       }
       popFreq <- popFreq[sellocs] #consider only relevant loci in popFreq
@@ -1475,50 +1719,40 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
       if(lrtype=="CONT") {
         hdatas <- sapply( mixD[mixSel], function(x) sum(sapply(x,function(y) length(y$hdata)) ) ) #number of alleles for each samples
         if(any(hdatas==0)) {
-          gmessage(paste0("The sample(s) ", paste0(mixSel[hdatas==0],collapse=",")," did not have peak heights! \nEvaluate with qualitative LR model"),title="Wrong data input!",icon="error")
+          gWidgets::gmessage(paste0("The sample(s) ", paste0(mixSel[hdatas==0],collapse=",")," did not have peak heights! \nEvaluate with qualitative LR model"),title="Wrong data input!",icon="error")
           stop("No evaluation done.")
         }
       }
 
-      #Insert missing alleles to the popFreq-object:
-      minFreq <- getminFreq() #get frequency used 
+      #Check for duplicated alleles in loci
       for(loc in sellocs) {
        tmp <- popFreq[[loc]] #get allele-names in popFreq
        newA <- numeric()
-       for(ss in mixSel) {
+       for(ss in mixSel) { #for each stain sample
         adata <- mixD[[ss]][[loc]]$adata
         if(length(adata)!=length(unique(adata))) {
-         gmessage(paste0("The sample ", ss," has duplicated alleles in locus ",loc,"\nPlease remove the duplicate from the text-file!"),title="Wrong data input!",icon="error")
+         gWidgets::gmessage(paste0("The sample ", ss," has duplicated alleles in locus ",loc,"\nPlease remove the duplicate from the text-file!"),title="Wrong data input!",icon="error")
          stop("No evaluation done.")
         }
-        newA <- c(newA, adata[!adata%in%names(tmp)])
-       }
-       for(rr in refSel) {
-        adata <- refD[[rr]][[loc]]$adata
-        newA <- c(newA, adata[!adata%in%names(tmp)])
-       }
-       newA <- unique(newA)
-       if(length(newA)>0) { #if new allele found
-        popFreq[[loc]] <- c(tmp, rep(minFreq,length(newA)))
-        popFreq[[loc]] <- popFreq[[loc]]/sum(popFreq[[loc]]) #normalize
-        names(popFreq[[loc]]) <- c(names(tmp),newA) #add unique
-        print(paste0("In locus ",loc,": Allele(s) ",paste0(newA,collapse=",")," was inserted with min. frequency ",prettyNum(minFreq)))
        }
       } #end for each loci
 
       #READ FROM GUI:
-      betabool <-  svalue(tabmodelA4[1,2]) #get boolean of degradation
-      xibool <- svalue(tabmodelA4[2,2]) #get boolean of degradation
+      betabool <- xibool <- "NO"
+      if(type!="GEN") {
+       betabool <-  gWidgets::svalue(tabmodelA4[1,2]) #get boolean of degradation
+       xibool <- gWidgets::svalue(tabmodelA4[2,2]) #get boolean of degradation
+      }
 
       #READ FROM SETTINGS:
-      threshT <- t0 #detection threshold
+      threshT <- get("optSetup",envir=mmTK)$thresh0 #get specified threshold
       fst <- get("optSetup",envir=mmTK)$fst0 #theta-correction
       prC <-   get("optSetup",envir=mmTK)$pC0 #prC is probability of dropin
       lambda <-   get("optSetup",envir=mmTK)$lam0 #lambda is hyperparameter to dropin-peak height model
-      pXi = eval(parse(text= paste("function(x)",get("optSetup",envir=mmTK)$pXi))) #get prior from settings
-
+      pXi = eval( parse(text= paste("function(x)",get("optSetup",envir=mmTK)$pXi)) , envir=mmTK ) #get prior from settings. UPDATED v2.1.1 causing saved project to include other environments
+   
       checkPrior <- function() {
-       gmessage("The prior function was wrongly specified.",title="Wrong data input!",icon="error")
+       gWidgets::gmessage("The prior function was wrongly specified.",title="Wrong data input!",icon="error")
        stop("The prior function was wrongly specified.")
       }
       tryCatch({pXi(0.1)}, error = function(e) checkPrior() ) 
@@ -1542,10 +1776,6 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
       for(loc in sellocs) { #for each selected locus in popFreq
        for(msel in mixSel) { #for each mixture samples
          subD <- mixD[[msel]][[loc]] #get selected data
-#         if(lrtype=="CONT" && is.null(subD$hdata)) { #peak height not found!
-#            gmessage(message=paste0("The evidence ",msel," didn't contain peak heights for locus ",loc,". Please unselect locus"),title="Wrong input",icon="error")
-#            stop("Unselect loci which does not have peak heights.")
-#         }
          if(!is.null(subD$hdata)) {
           keep <- subD$hdata>=threshT #allele to keep (above threshold)
           subD$hdata <- subD$hdata[keep]
@@ -1562,10 +1792,10 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
       if(type=="DC") condOrder_hp <- NULL
       for(rsel in refSel) { #for each reference under hp and hd
         if(!type%in%c("DC","GEN")) {
-         valhp <- as.integer(svalue(tabmodelA2[which(rsel==refSel),1])) 
+         valhp <- as.integer(gWidgets::svalue(tabmodelA2[which(rsel==refSel),1])) 
          condOrder_hp[which(rsel==refSel)] <- valhp +  valhp*max(condOrder_hp)
         }
-        valhd <- as.integer(svalue(tabmodelA3[which(rsel==refSel),1])) 
+        valhd <- as.integer(gWidgets::svalue(tabmodelA3[which(rsel==refSel),1])) 
         condOrder_hd[which(rsel==refSel)] <- valhd + valhd*max(condOrder_hd)
       }
       #get specified preposition 
@@ -1578,10 +1808,10 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
       #number of contributors in model:
       nC_hp <- NULL
       if(!type%in%c("DC","GEN")) {
-       nC_hp <-  as.integer(svalue(tabmodelA2[nR+1,2])) + sum(condOrder_hp>0)
+       nC_hp <-  as.integer(gWidgets::svalue(tabmodelA2[nR+1,2])) + sum(condOrder_hp>0)
        checkPosInteger(nC_hp + sum(type=="DB"),"Number of contributors under Hp")
       }
-      nC_hd <-  as.integer(svalue(tabmodelA3[nR+1,2])) + sum(condOrder_hd>0)
+      nC_hd <-  as.integer(gWidgets::svalue(tabmodelA3[nR+1,2])) + sum(condOrder_hd>0)
       checkPosInteger(nC_hd,"Number of contributors under Hd")
 
       #get model parameters:
@@ -1592,14 +1822,26 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
        Qdes <- TRUE #always true in EFM
        if(lrtype=="QUAL") stutt <- FALSE #no stutter for qualitative model
        if(lrtype=="GEN") Qdes <- FALSE #Q-designation turned off when generating data
-#       ret <- Qassignate(samples, popFreq, refData,doQ=Qdes,incS=stutt,incR=stutt) #call function in euroformix
-       ret <- Qassignate(samples, popFreq, refData,doQ=Qdes,incS=stutt,incR=FALSE) #call function in euroformix
+       optfreq <- get("optFreq",envir=mmTK) #get frequency option
+       ret <- Qassignate(samples, popFreq, refData,doQ=Qdes,incS=FALSE,minF=getminFreq(),normalize=FALSE,incR=FALSE) #call function in euroformix
        popFreqQ <- ret$popFreq
        refDataQ <- ret$refData
       }
-
+  
+      #get relationship type of 1st unknown under Hd
+      rel_type <- gWidgets::svalue( tabmodelA3[nR+3,1]) #get selected relationship (name)
+      rel_ibd <- relatednessIBD[relname==rel_type,] #get selected ibd
+      names(rel_ibd) <- rel_type
+      rel_refName <- gWidgets::svalue( tabmodelA3[nR+5,1]) #get name of related individual
+      if(rel_type==relname[1] || rel_refName==refSel2[1] || length(refSel)==0) { #refSel has lenght zero if not selected
+         rel_ref = NULL
+      } else {
+         rel_ref <-  which(refSel==rel_refName) #get index
+         names(rel_ref) <- rel_refName
+      }
+      knownref_hd
       #get input to list: note: "fit_hp" and "fit_hd" are list-object from fitted model
-      model <- list(nC_hp=nC_hp,nC_hd=nC_hd,condOrder_hp=condOrder_hp,condOrder_hd=condOrder_hd,knownref_hp=knownref_hp,knownref_hd=knownref_hd) #proposition
+      model <- list(nC_hp=nC_hp,nC_hd=nC_hd,condOrder_hp=condOrder_hp,condOrder_hd=condOrder_hd,knownref_hp=knownref_hp,knownref_hd=knownref_hd,ibd=rel_ibd,knownRel=rel_ref) #proposition
       param <- list(xi=xi,prC=prC,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,kit=kit) 
       set <- list(samples=samples,refData=refData,popFreq=popFreq,model=model,param=param,refDataQ=refDataQ,popFreqQ=popFreqQ)     
       if(type=="DB") set$dbSel <- dbSel #store name of selected databases
@@ -1607,22 +1849,22 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
    } #end store settings from GUI to environment
 
 
-   #View evaluating evidence/databases  
+   #View evaluating evidence/databases 
    #Plot EPG of selected data (calls storeSettings first and then plotEPG by importing selected data)
    if(type!="GEN") {
-     tabmodelC1 = glayout(spacing=0,container=(tabmodelC[1,1] <-gframe("Evidence(s)",container=tabmodelC))) 
+     tabmodelC1 = gWidgets::glayout(spacing=0,container=(tabmodelC[1,1] <-gWidgets::gframe("Evidence(s)",container=tabmodelC))) 
      for(msel in mixSel) {
-       tabmodelC1[which(msel==mixSel),1] <- gcheckbox(text=msel,container=tabmodelC1,checked=TRUE)
-       enabled(tabmodelC1[which(msel==mixSel),1]) <- FALSE
+       tabmodelC1[which(msel==mixSel),1] <- gWidgets::gcheckbox(text=msel,container=tabmodelC1,checked=TRUE)
+       gWidgets::enabled(tabmodelC1[which(msel==mixSel),1]) <- FALSE
      }
-     tabmodelC[2,1] = gbutton(text="Plot EPG",container=tabmodelC,handler= function(h,...) { 
+     tabmodelC[2,1] = gWidgets::gbutton(text="Show",container=tabmodelC,handler= function(h,...) { 
       storeSettings("PLOT") #store settings
       #loads each selections and plot epg:
       set = get(paste0("set",type),set,envir=mmTK) #store setup for relevant type
       print("Assumed population frequencies:")
       print(unlist(set$popFreqQ))
       print("Considered references:")
-      print(t(sapply(set$refDataQ,function(x) {  sapply(x,function(y) { paste0(y,collapse="/") } ) })))
+      printTable(t(sapply(set$refDataQ,function(x) {  sapply(x,function(y) { paste0(y,collapse="/") } ) })))
       print("Considered Evidence samples:")
       for(sn  in names(set$samples)) {
        print("------------------------------------")
@@ -1631,56 +1873,56 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
       }
       #plot EPG:
       kit <- get("selPopKitName",envir=mmTK)[1] #get selected kit
-      if(is.na(kit)) return()
+      if(is.na(getKit(kit))) return()
       plotEPG(set$samples,kitname=kit,threshT=set$param$threshT) #plot epg's
      })
      if(type=="DB") { #add database-names if included:
-      tabmodelC3 = glayout(spacing=0,container=(tabmodelC[3,1] <-gframe("Database(s) to search",container=tabmodelC))) 
-      for(dsel in dbSel) tabmodelC3[which(dsel==dbSel),1] =  glabel(text=dsel,container=tabmodelC3)
+      tabmodelC3 = gWidgets::glayout(spacing=0,container=(tabmodelC[3,1] <-gWidgets::gframe("Database(s) to search",container=tabmodelC))) 
+      for(dsel in dbSel) tabmodelC3[which(dsel==dbSel),1] =  gWidgets::glabel(text=dsel,container=tabmodelC3)
      }
    }
 
    #Calculation button:  
    if(type=="GEN") {
-    tabmodelD[1,1] = gbutton(text="Generate sample",container=tabmodelD,handler= function(h,...) { 
+    tabmodelD[1,1] = gWidgets::gbutton(text="Generate sample",container=tabmodelD,handler= function(h,...) { 
      storeSettings("CONT") #store settings
      refreshTabGEN() #generate a dataset based on stored settings
-     svalue(nb) <- 1 #go to data generation-window
+     gWidgets::svalue(nb) <- 1 #go to data generation-window
     })
    } else {
-    tabmodelD[1,1] = gbutton(text="Continuous LR\n(Maximum Likelihood based)",container=tabmodelD,handler=
+    tabmodelD[1,1] = gWidgets::gbutton(text="Quantitative LR\n(Maximum Likelihood based)",container=tabmodelD,handler=
 	function(h,...) {
       storeSettings("CONT") #store settings
       refreshTabMLE(type) #refresh MLE fit tab (i.e. it fits the specified model)
-      svalue(nb) <- 4 #go to mle-fit window (for all cases) when finished
+      gWidgets::svalue(nb) <- 4 #go to mle-fit window (for all cases) when finished
     }) #end cont. calculation button
     if(type%in%c("EVID","DB")) {
-     tabmodelD[2,1] = gbutton(text="Continuous LR \n(Bayesian based)",container=tabmodelD,handler=
+     tabmodelD[2,1] = gWidgets::gbutton(text="Quantitative LR \n(Bayesian based)",container=tabmodelD,handler=
 	function(h,...) {
       storeSettings("CONT") #store model-settings
       doINT(type) #Integrate either for EVID or DB search
      }) #end cont. calculation button
-     tabmodelD[3,1] = gbutton(text="Qualitative LR\n(semi-continuous)",container=tabmodelD,handler=
+     tabmodelD[3,1] = gWidgets::gbutton(text="Qualitative LR\n(semi-continuous)",container=tabmodelD,handler=
 	function(h,...) {
       storeSettings("QUAL") #store model-settings (use other input)
       if(type=="DB") {
         doDB("QUAL")
       } else {
         refreshTabLRMIX() #refresh LRmix calculation tab (i.e. it fits the specified model)
-        svalue(nb) <- 7 #go to LRmix tab
+        gWidgets::svalue(nb) <- 7 #go to LRmix tab
       }
      }) #end cont. calculation button
 
 #ADD EASY MODE
      if(get("optSetup",envir=mmTK)$easyMode) {
-      enabled(tabmodelD[2,1]) <- FALSE  #deactivate generate sample
-      enabled(tabmodelD[3,1]) <- FALSE  #deactivate deconvolution
+      gWidgets::enabled(tabmodelD[2,1]) <- FALSE  #deactivate generate sample
+      gWidgets::enabled(tabmodelD[3,1]) <- FALSE  #deactivate deconvolution
      }
 
     } #end if evid or db
    } #end if not gen
-   visible(mainwin) <- TRUE
-   focus(mainwin)
+   gWidgets::visible(mainwin) <- TRUE
+   gWidgets::focus(mainwin) <- TRUE
   } #end refresh setup tab-frame
 
 
@@ -1688,7 +1930,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 ##########CONT DB-SEARCHING (MLE or INT)#########
 #################################################
    doDB <- function(ITYPE="MLE") {  #take a given inference-type {"MLE","INT","QUAL"} #qual means that only qualitative LR is done
-     require(forensim)  
+     require(forensim); #options(guiToolkit="tcltk")
      set <- get("setDB",envir=mmTK) #get setup for DB
      opt <- get("optDB",envir=mmTK) #options when doing LRmix
      popFreq <- set$popFreq #get original saved popfreq 
@@ -1766,10 +2008,13 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
           evidlist <- lapply( set$samples, function(x) x[[loc]]$adata ) #take out sample data:
           condR <- unlist(refData[[loc]][mod$condOrder_hp] ) #take out known refs under Hp 
           dbR <- subD[,which(loc==colnames(subD))] #take out DB-refs
-          isNA <- is.na(dbR) #take out missing references
-          if(all(isNA)) next #skipt locus if none to calculate
-          dbR2 <- dbR[!isNA] #keep non-NA
-          undbR <- unique(dbR2) #get unique genotypes
+
+          #Following part is Updated in v1.9 to allow missing markers for references
+          #isNA <- is.na(dbR) #take out missing references: 
+          #if(all(isNA)) next #skipt locus if none to calculate 
+          #dbR2 <- dbR[!isNA] #keep non-NA
+          dbR[is.na(dbR)] <- 0 #Put zero for missing
+          undbR <- unique(dbR) #get unique genotypes
           Evid <- NULL
           for(ss in length(evidlist)) { #for each evidence
             Ei <- evidlist[[ss]]	
@@ -1777,21 +2022,27 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
             Evid <- c(Evid,Ei)
           } #end for each evidence
           for(unG in undbR) {
-             dbind <-  which(dbR2==unG) #get index of matching genotypes
-             ref0 <- Ainfo[unG%%Pinfo==0]
-             if(length(ref0)==1) ref0 <- rep(ref0,2)
-             ref1 <- c(ref0,condR ) #conditional references
-             hp0 <- likEvid( Evid,T=ref1,V=NULL,x=nU_hp,theta=th0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
-             if(th0>0 | which(undbR==unG)==1) hd0 <- likEvid( Evid,T=condR,V=ref0,x=nU_hd,theta=th0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
+             dbind <-  which(dbR==unG) #get index of matching genotypes
+             nU_hp2 <- nU_hp #number of unknown under Hp: Is increased if missing marker
+             if(unG==0) {
+               nU_hp2 <- nU_hp2 + 1 #add unknown
+               ref0 <- NULL
+             } else {
+               ref0 <- Ainfo[unG%%Pinfo==0]
+               if(length(ref0)==1) ref0 <- rep(ref0,2)
+               nlocs[dbind] <- nlocs[dbind] + 1 #counted only once! Missing markers are not counted
+             }
+             ref1 <- c(ref0,condR) #conditional references
+             hp0 <- forensim::likEvid( Evid,T=ref1,V=NULL,x=nU_hp2,theta=th0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
+             if(th0>0 | which(undbR==unG)==1) hd0 <- forensim::likEvid( Evid,T=condR,V=ref0,x=nU_hd,theta=th0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
              LR1[dbind] <- LR1[dbind]*hp0/hd0   #if more alleles than unknown
-             nlocs[dbind] <- nlocs[dbind] + 1 #counted only once!
              macD[dbind] = macD[dbind] + sum(ref0%in%unlist(evidlist))
           }#end for each genotypes
          } #end for each locus
        } #end for qual LR only
  
        if(ITYPE!="QUAL") {   #CONT LR calculation for each reference in table: FOR each database: calculate LR for each samples 
-        LRD <- rep(0,length(indD)) #Continuous LR for each reference
+        LRD <- rep(0,length(indD)) #Quantitative LR for each reference
 
         #step 1) convert allele-names of elements in database to one in popFreq
         for(loc in dblocs) { #for each locus in db     
@@ -1828,7 +2079,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 
         #step 2) determine individuals which will with LR=0 when pC=0 for cases xi>0 and xi=0 (i.e. no peak explained by unknowns or stutter)
         #can combine it to calculate qualitative LR
-        LR0bool <- rep(FALSE,nrow(subD)) #boolean for reference which is not necessary to calculate for contLR (TRUE means likelihood equal 0)
+        LR0bool <- rep(FALSE,nrow(subD)) #boolean for reference which is not necessary to calculate for quanLR (TRUE means likelihood equal 0)
         LR1 <- rep(1,nrow(subD)) #LRmix vec
         pC <- opt$QUALpC #get drop-in parameter from option
         for(loc in dblocs ) { #for each locus in db 
@@ -1836,37 +2087,46 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
               evidlist <- lapply( set$samples, function(x) x[[loc]]$adata ) #take out sample data:
               condR <- unlist(refData[[loc]][mod$condOrder_hp] ) #take out known refs under Hp 
               dbR <- subD[,which(loc==colnames(subD))] #take out DB-refs
-              isNA <- is.na(dbR) #take out missing references
-              if(all(isNA)) next #skipt locus if none to calculate
+              isNA <- is.na(dbR) #indicate references with missing loci
+              #dbR[is.na(dbR)] <- 0 #insert zero
+              #if(all(isNA)) next #skipt locus if none to calculate
               dbR2 <- matrix(NA,nrow=nrow(subD),ncol=2) #create a matrix with NA
               dbR2[!isNA,] <- t(matrix(unlist(strsplit(dbR[!isNA] , "/")) ,nrow=2)) #store into new matrix
               move = as.numeric(dbR2[,2])<as.numeric(dbR2[,1])
               dbR2[move[!isNA],] <- dbR2[move[!isNA],c(2,1)]   #sort they are same genotype           
-              dbR2 <- dbR2[!isNA,]
-              if(sum(!isNA)==1) dbR2 <- rbind(dbR2) #require conversion if one possible combination
+              #dbR2 <- dbR2[!isNA,] #not removed
+              #if(sum(!isNA)==1) dbR2 <- rbind(dbR2) #require conversion if one possible combination
               undbR <- unique(dbR2) #get unique genotypes
-              for(j in 1:nrow(undbR)) {
-                dbind <-  which(dbR2[,1]==undbR[j,1] & dbR2[,2]==undbR[j,2]) #get index of matching genotypes
-                ref0 <- c(undbR[j,],condR ) #conditional references
+              for(j in 1:nrow(undbR)) { #for each unique reference profile
+                refAs <- undbR[j,] #take out alleles
+                nU_hp2 <- nU_hp + sum(is.na(refAs[1])) #add an extra unknown if locus missing
+                dbind <-  which(dbR2[,1]==refAs[1] & dbR2[,2]==refAs[2]) #get index of matching genotypes
+                if(length(dbind)==0) {
+                 dbind <- which(is.na(dbR2[,1])) #index of miss markers
+                 ref0 <- c(NULL,condR ) #conditional references
+                } else {
+                 ref0 <- c(refAs,condR ) #conditional references
+                }
                 Evid <- NULL
-                for(ss in length(evidlist)) { #for each evidence
+                for(ss in 1:length(evidlist)) { #for each evidence
                   Ei <- evidlist[[ss]]	
-                  if(par$prC==0 && any(LR0bool[dbind]==FALSE))  LR0bool[dbind] <- LR0bool[dbind] | iszerolik(Ei,ref0,nU_hp,par$xi) #determine if likelihood under hp is 0
+                  if(par$prC==0 && any(LR0bool[dbind]==FALSE))  LR0bool[dbind] <- LR0bool[dbind] | iszerolik(Ei,ref0,nU_hp2,par$xi) #determine if likelihood under hp is 0
                   if(ss>1) Ei <- c(Ei,"0") #insert zero
                   Evid <- c(Evid,Ei)
                 } #end for each evidence
-                hp0 <- likEvid( Evid,T=ref0,V=NULL,x=nU_hp,theta=0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
-                if(j==1) hd0 <- likEvid( Evid,T=condR,V=undbR[j,],x=nU_hd,theta=0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
+                hp0 <- forensim::likEvid( Evid,T=ref0,V=NULL,x=nU_hp2,theta=0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
+                if(j==1) hd0 <- forensim::likEvid( Evid,T=condR,V=undbR[j,],x=nU_hd,theta=0, prDHet=pDvec, prDHom=pDvec^2, prC=pC, freq=popFreqQ[[loc]])
                 LR1[dbind] <- LR1[dbind]*hp0/hd0   #if more alleles than unknown
               }#end for each genotypes
          } #end for each locus
 
-         print(paste0("Calculating continuous LR for ",sum(!LR0bool)," individual(s) in database ",dsel,"..."))
+         print(paste0("Calculating quantitative LR for ",sum(!LR0bool)," individual(s) in database ",dsel,"..."))
          #unsubD <- unique( subD ) #get unique values. Not in use
          for(rind in 1:length(indD)) { #for each individual in database
           if(LR0bool[rind]) next #skip individual in database (which will have LR=0)
           Dind <- subD[rind,] #take out individual
-          dblocs2 <- dblocs[!is.na(Dind)] #take out loci which the reference in database have
+
+          dblocs2 <- dblocs #take out loci which the reference in database have: #Update from v1.9: !NA is removed
           locevalind <- locs_hd%in%dblocs2
           loceval <- locs_hd[locevalind] #locus to evaluate 
 
@@ -1882,21 +2142,24 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
            condOrder_hd <- c(mod$condOrder_hd,0) #put conditional-index to model 
           }
           nR <- length(condOrder_hp) #number of references in refData2
-          for(loc in loceval) refData2[[loc]]$ijoisdjskwa <- unlist(strsplit(Dind[ which(loc==names(Dind)) ], "/"))  #insert data into a new ref: name it with a random text to avoid similar with others
+          for(loc in loceval) {
+             refData2[[loc]]$ijoisdjskwa <- unlist(strsplit(Dind[ which(loc==names(Dind)) ], "/"))  #insert data into a new ref: name it with a random text to avoid similar with others
+             if(is.na(refData2[[loc]]$ijoisdjskwa[1])) refData2[[loc]]$ijoisdjskwa <- numeric() #Update from v1.9: added line
+          }
           samples <- lapply( set$samples, function(x) x[loceval] ) #take only relevant mixture data:
           
           if(ITYPE=="MLE") { #calculate with MLE
             logLi_hdeval <- logLi_hd[locevalind] #take out relevant values
-            mlefit_hp <- contLikMLE(mod$nC_hp+1,samples,popFreqQ[loceval],refData2,condOrder_hp,mod$knownref_hp,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE)
+            mlefit_hp <- contLikMLE(mod$nC_hp+1,samples,popFreqQ[loceval],refData2,condOrder_hp,mod$knownref_hp,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter)
             if(par$fst>0) { #must calculate Hd once again (assume Rj is known)
-             mlefit_hdj <- contLikMLE(mod$nC_hd,samples,popFreqQ[loceval],refData2,condOrder_hd,nR,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE)
+             mlefit_hdj <- contLikMLE(mod$nC_hd,samples,popFreqQ[loceval],refData2,condOrder_hd,nR,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter,knownRel=mod$knownRel,ibd=mod$ibd)
              LRD[rind] <- exp(mlefit_hp$fit$loglik - mlefit_hdj$fit$loglik) #insert calculated LR adjusted by fst-correction
             } else {
              LRD[rind] <- exp(mlefit_hp$fit$loglik - sum(logLi_hdeval)) #insert calculated LR:
             }  
           } #END DB WITH TYPE MLE
           if(ITYPE=="INT") { #Calculate with INT
-            int_hp <- contLikINT(mod$nC_hp+1, samples, popFreqQ[loceval], bhp$lower, bhp$upper, refData2, condOrder_hp, mod$knownref_hp, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scaleINT,maxEval=optint$maxeval)     
+            int_hp <- contLikINT(mod$nC_hp+1, samples, popFreqQ[loceval], bhp$lower, bhp$upper, refData2, condOrder_hp, mod$knownref_hp, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,optint$scaleINT,maxEval=optint$maxeval)     
             hd0INT <- numeric()
             if(par$fst==0 && length(hd0stored)>0) { #If any previous calculated values
               if(par$fst==0) { #can use stored value if fst=0
@@ -1907,7 +2170,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
               }
             }
             if(length(hd0INT)==0) { #calculate and store
-              int_hd <- contLikINT(mod$nC_hd, samples, popFreqQ[loceval], bhp$lower, bhp$upper, refData2, condOrder_hd,nR, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scaleINT,maxEval=optint$maxeval) 
+              int_hd <- contLikINT(mod$nC_hd, samples, popFreqQ[loceval], bhp$lower, bhp$upper, refData2, condOrder_hd,nR, par$xi, par$prC, optint$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,optint$scaleINT,maxEval=optint$maxeval,knownRel=mod$knownRel,ibd=mod$ibd) 
               hd0INT <- int_hd$margL
               hd0stored[[length(hd0stored) + 1]] <- c(hd0INT,loceval)
             }
@@ -1918,14 +2181,15 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
        } #end type !QUAL
        
         print(paste0(100,"% finished for database ",dsel))
-        if(ITYPE=="QUAL") LRD <- rep(NA,length(LR1))
+        if(ITYPE=="QUAL") LRD <- rep("-",length(LR1)) #updated in v1.9: NA causes error, replaced with "-"
         DBtab <- rbind(DBtab , cbind(indD,LRD,LR1,macD,nlocs) ) #add to DBtab
     } #end for each databases
-    colnames(DBtab) <- c("Referencename","contLR","qualLR","MAC","nLocs")
+    colnames(DBtab) <- c("Referencename","quanLR","qualLR","MAC","nLocs")
     assign("resDB",DBtab ,envir=mmTK) #assign deconvolved result to environment
     if(ITYPE!="QUAL") refreshTabDB(1) #cont LR is order to sort with
     if(ITYPE=="QUAL") refreshTabDB(2) #qual LR is order to sort with
-    svalue(nb) <- 6 #go to database search results window when finished     
+    gWidgets::svalue(nb) <- 6 #go to database search results window when finished     
+    gWidgets::focus(mainwin) <- TRUE
    } #end doDB
 
 ##########################################################################################
@@ -1948,10 +2212,12 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
   }
 
   f_savetableALL = function(h,...) { #function for storing MLE estimates of fitted models
+   colps="\t" #h = list(action="EVID")
    if(h$action=="START") h$action="EVID"
    set <- get(paste0("set",h$action),envir=mmTK) #get all setup-object 
+   popKitInfo <- get("selPopKitName",envir=mmTK) #selected kit and population for popFreq
    sig=4
-   printMLE <- function(mlefit,hyp,colps="\t") {
+   printMLE <- function(mlefit,hyp) {
     mle <- cbind(mlefit$thetahat2,sqrt(diag(mlefit$thetaSigma2))) #standard deviation
     txt0 <- paste0("\n\n-------Estimates under ",hyp,"---------\n")
     txt1 <- paste0(c("Param.","MLE","Std.Err."),collapse=colps)
@@ -1963,28 +2229,48 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
     return(txt)
    }
    printSET <- function(model) { #print settings used
-    txt <- paste0("\n-------Data-------")
-    txt <- paste0(txt,"\nEvidence(s)=",paste0(names(model$samples),collapse="/"))
+    txt <- paste0("\nEvidence(s)=",paste0(names(model$samples),collapse="/"))
     txt <- paste0(txt,"\nMarkers=",paste0(names(model$popFreq),collapse="/"))
-    if(length(model$kit)) txt <- paste0(txt,"\nKit=",model$kit)
+    #if(length(model$kit)) txt <- paste0(txt,"\nKit=",model$kit)
     txt <- paste0(txt,"\n\n-------Model options-------")
     txt <- paste0(txt,"\nDetection threshold=",model$threshT)
     txt <- paste0(txt,"\nFst-correction=",model$fst)
     txt <- paste0(txt,"\nProbability of drop-in=",model$prC)
     txt <- paste0(txt,"\nHyperparam lambda=",model$lambda)
+    txt <- paste0(txt,"\nDegradation:", ifelse(is.null(model$kit),"NO","YES")) #added in v2.0.1
+    txt <- paste0(txt,"\nStutter:",ifelse(is.null(model$xi),"YES","NO")) #added in v2.0.1
     txt <- paste0(txt,"\nStutter prop. prior=",paste0(deparse(eval(model$pXi)),collapse="") )
     return(txt)
    }
 
    printMOD <- function(model,hyp) { #print refs
     txt <- paste0("\n\n-------Hypothesis ",hyp,"---------")
-    txt <- paste0(txt,"\nNumber of contributors=",model$nC) #Number of contributors
-    txt <- paste0(txt,"\nKnown contributors=",paste0(names(model$refData[[1]])[model$condOrder],collapse="/")) #conditional references
-    if(length(model$knownRef)) txt <- paste0(txt,"\nKnown non-contribotors=",paste0(names(model$refData[[1]])[model$knownRef],collapse="/")) #conditional references
+    txt <- paste0(txt,"\nNumber of contributors: ",model$nC) #Number of contributors
+    txt <- paste0(txt,"\nKnown contributors: ",paste0(names(model$refData[[1]])[which(model$condOrder>0)],collapse="/")) #conditional references
+    if(length(model$knownRef)) txt <- paste0(txt,"\nKnown non-contributors: ",paste0(names(model$refData[[1]])[model$knownRef],collapse="/")) #conditional references
+    if(length(model$knownRel)) txt <- paste0(txt,"\nAssumed relationship: 1st Unknown is a ",names(model$ibd)[1]," to reference ",names(model$knownRel)) #Relationship
     return(txt)
    }
 
-   txt <- paste0("Created: ",Sys.time(),"\n")
+   printFREQ <- function(model) { #print freqs
+    locs = names(model$popFreq)
+    txt <- paste0("\n\n-------Frequency data---------")
+    for(loc in locs) {
+      tmp <- paste0(names(model$popFreq[[loc]]),"=",model$popFreq[[loc]]) #get allele names with freqs
+      txt <- paste0(txt,"\n",loc,": ",paste0(tmp,collapse="/"))
+    }
+    return(txt)
+   }
+
+   txt <- paste0("EuroForMix version ",version," (euroformix_",packageVersion("euroformix"),").")
+   txt <- paste0(txt,"\nR-version: ",R.version.string) #Add R-version used
+   txt <- paste0(txt,"\nUser: ",Sys.getenv("USERNAME"))
+   txt <- paste0(txt,"\nCreated: ",Sys.time(),"\n")
+
+   txt <- paste0(txt,"\n-------Data-------")
+   txt <- paste0(txt,"\nSelected STR Kit: ",popKitInfo[1])
+   txt <- paste0(txt,"\nSelected Population: ",popKitInfo[2])
+
    txt <-  paste0(txt,printSET(set$mlefit_hd$model)) #Print Data and model options
    if(!is.null(set$mlefit_hp))  txt <- paste0(txt,printMOD(model=set$mlefit_hp$model,hyp="Hp")) #Print hypothesis Hp:
    if(!is.null(set$mlefit_hd))  txt <- paste0(txt,printMOD(model=set$mlefit_hd$model,hyp="Hd")) #Print hypothesis Hd:
@@ -1997,34 +2283,45 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
    }
 
    #store LR-estimates 
-   if(!is.null(set$mlefit_hd) && !is.null(set$mlefit_hp)) {
-    hp10 <- set$mlefit_hp$fit$loglik/log(10)
-    hd10 <- set$mlefit_hd$fit$loglik/log(10)
-    txt2 <- paste0("log10LR=",format(hp10-hd10,digits=sig))
-    txt3 <- paste0("LR=",format(10^(hp10-hd10),digits=sig))
-    txt <- paste0(txt,"\n\n-------LR------\n",txt2,"\n",txt3)
+   resEVID <- get("resEVID",envir=mmTK) 
+   if(!is.null(resEVID)) {
+#    hp10 <- set$mlefit_hp$fit$loglik/log(10)
+#    hd10 <- set$mlefit_hd$fit$loglik/log(10)
+    txt2 <- paste0("log10LR=",log10(resEVID$LRmle)) #format(hp10-hd10,digits=sig))
+    txt3 <- paste0("LR=",resEVID$LRmle) #format(10^(hp10-hd10),digits=sig))
+    txt4 <- paste0(paste0(names(resEVID$LRi),colps,resEVID$LRi),collapse="\n")
+    txt <- paste0(txt,"\n\n-------LR (all markers)------\n",txt2,"\n",txt3,"\n")
+    txt <- paste0(txt,"\n-------LR (per marker)------\n",txt4,"\n")
    }
+   #store consLR - estimate
+   if(!is.null(set$consLR)) {
+    txt1 <- paste0("(Based on ",set$consLR$nSamples," MCMC samples)")
+    txt2 <- paste0("log10LR=",format(set$consLR$consLR,digits=sig))
+    txt3 <- paste0("LR=",format(10^set$consLR$consLR,digits=sig))
+    txt <- paste0(txt,"\n---Conservative LR (5% lower log10LR quantile)---\n",txt2,"\n",txt3,"\n",txt1)
+   }
+   #Print allele freqs last: ADDED in v2.0.1
+   txt <-  paste0(txt,printFREQ(set$mlefit_hd$model)) 
    txt <- as.matrix(txt)
-   colnames(txt) <- paste0("This is a generated report of the maximum likelihood results from EuroForMix version ",version)
+
+   colnames(txt) <- paste0("This is a generated report from")
    saveTable(txt , "txt") 
   } #end savetableALL
 
   #helpfunction ran when call deconvolution
   doDC <- function(mleobj) {
-#mlefit<<- mleobj
      dcopt <- get("optDC",envir=mmTK) #options when Deconvolution
-     dcobj <- deconvolve(mleobj,dcopt$alphaprob,dcopt$maxlist) 
-     DCtable1 <- dcobj$table1  #be sure of having ri
-     rownames(DCtable1) <- 1:nrow(DCtable1)
-     DCtable1<-addRownameTable(DCtable1)
-     DCtable2<-addRownameTable(dcobj$table2)
-     colnames(DCtable1)[1] <- "Rank"
-     colnames(DCtable2)[1] <- "Marker"
-     assign("resDC",list(DCtable1,DCtable2),envir=mmTK) #assign deconvolved result to environment
+     dcobj <- deconvolve(mlefit=mleobj,alpha=dcopt$alphaprob,maxlist=dcopt$maxlist) 
+     DCtable1<-addRownameTable(dcobj$table2)
+     colnames(DCtable1)[1] <- "Locus"
+     DCtable2<-dcobj$table1
+     DCtable3<-dcobj$table3
+     DCtable4<-dcobj$table4
+     assign("resDC",list(DCtable1,DCtable2,DCtable3,DCtable4),envir=mmTK) #assign deconvolved result to environment
      refreshTabDC() #update table with deconvolved results
-     svalue(nb) <- 5 #go to deconvolution results window (for all cases) when finished     
-     print(lapply(dcobj$rankGi,function(x) x[1:min(nrow(x),dcopt$maxlist),])) #printing out last
-  }
+     gWidgets::svalue(nb) <- 5 #go to deconvolution results window (for all cases) when finished     
+     gWidgets::focus(mainwin) <- TRUE
+   }
 
   #helpfunction ran when call MCMC
   doMCMC <- function(mleobj,showValid=TRUE) { 
@@ -2034,7 +2331,8 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      print(paste0("Sampling ",optlist$niter," samples with variation ",optlist$delta,". This could take a while... "))
      print("Note: You can change default number of iterations in toolbar menu.")
 #     mcmcfit <- contLikMCMC(mleobj,uppermu=optint$maxmu,uppersigma=optint$maxsigma,upperxi=optint$maxxi,optlist$niter,optlist$delta)
-     mcmcfit <- contLikMCMC(mleobj,optlist$niter,optlist$delta)
+#     mcmcfit <- contLikMCMC(mleobj,optlist$niter,optlist$delta)
+     mcmcfit <- contLikMCMCpara(mleobj,optlist$niter,optlist$delta) #updated in v1.9.3: Parallel version of MCMC ran
      print(paste0("Sampling acceptance rate=",round(mcmcfit$accrat,2),". This should be around 0.2"))
      print(paste0("Estimation of the marginalized likelihood=",mcmcfit$margL))
      if(showValid) validMCMC(mcmcfit,acf=FALSE) #don't plot acf
@@ -2043,21 +2341,29 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 
   #Simulating LR over the parameter space
   simLR = function(mlehp,mlehd) {
-     optlist <- get("optMCMC",envir=mmTK)  #options for MCMC 
      if(any(is.na(mlehp$fit$phiSigma)) || any(is.na(mlehd$fit$phiSigma)) ) return();
+     optlist <- get("optMCMC",envir=mmTK)  #options for MCMC 
+#     if(!is.null(optlist$seed)) { #not implemented yet
+#       set.seed(optlist$seed) 
+#       print(paste0("The seed was set to ",optlist$seed))
+#     }
      print("Sampling under Hp...")
      hpmcmc <- doMCMC(mlehp,showValid=FALSE)
      hplogL <- hpmcmc$postlogL
+if(0) { #removed from v1.9.3 and up
      dp <- density(hplogL/log(10))
-     layout(matrix(c(1,3,2,3), 2, 2, byrow = FALSE))
+     layout(matrix(c(1,3,2,3), 2, 2, byrow = FALSE)) 
      plot(dp,xlab="log10 P(E|Hp)",ylab="distr",main="Sensitivity under Hp")
      abline(v=mlehp$fit$loglik/log(10),lty=2)
+}
      print("Sampling under Hd...")
      hdmcmc <- doMCMC(mlehd,showValid=FALSE)
      hdlogL <- hdmcmc$postlogL
+if(0) { #removed from v1.9.3 and up
      dd <- density(hdlogL/log(10))
      plot(dd,xlab="log10 P(E|Hd)",ylab="distr",main="Sensitivity under Hd")
      abline(v=mlehd$fit$loglik/log(10),lty=2)
+} 
      log10LR <- (hplogL - hdlogL)/log(10)
      d <- density(log10LR)
      plot(d,xlab="log10 LR",ylab="log10LR distr",main="Sensitivity of LR")
@@ -2071,15 +2377,21 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      print("Quantiles of the LR distributions.")
      print(LRqq)
      abline(v=LRqq[3],col=4,lty=2)
-     legend("topright",legend=paste0("5% quantile = ",format(LRqq[3],digits=3)),col=4,lty=2)
+     legend("topright",legend=c("MLE based",paste0("5% quantile = ",format(LRqq[3],digits=3))),col=c(1,4),lty=2)
      dev.new()
      op <- par(no.readonly = TRUE)
      dev.off()
      par(op)
+
+     #Store results in setEVID
+     set <- get("setEVID",envir=mmTK) #get all setup-object 
+     set$consLR <- list(nSamples=optlist$niter,consLR=LRqq[3]) #Storing niter as specified. storing LR on log10 scale
+     assign("setEVID",set,envir=mmTK) #store again
   }
 
-  #Tippet-analysis frame:
+  #Tippet-analysis frame: Draw random (possibly related) non-contributors (specified under Hd) 
   doTippet <- function(tipind,set,type,lr0=NULL) { #tipref is index in refData to exchange with random man from population
+#    set <<- set
      mod <- set$model
      par <- set$param
      if(type=="MLE")  opt<- get("optMLE",envir=mmTK) #options when optimizing (nDone,delta)
@@ -2087,13 +2399,17 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      ntippet <- get("optDB",envir=mmTK)$ntippets
      nU_hp <- mod$nC_hp - sum(mod$condOrder_hp>0) #number of unknowns under Hp                    
  
-     Glist <- getGlist(set$popFreqQ) #get random man-Glist 
+#     Glist <- getGlist(set$popFreqQ) #get random man-Glist 
      refData <- set$refDataQ 
      locs <- names(refData) #loci to evaluate
      refind <- which(mod$condOrder_hp>0) #conditional references under Hp
      refind <- refind[!refind%in%tipind] #remove tippet-ref  
 
-     print(paste0("Simulating ",ntippet," non-contributors..."))
+     Glist <- list() #	 getGlist(mod$popFreq) #get random man probabilities in Glist 
+     for(loc in locs) Glist[[loc]] = calcGjoint(freq=set$popFreqQ[[loc]],nU=1,fst=par$fst,refK=unlist(refData[[loc]][mod$knownRef_hd]),refR=unlist(refData[[loc]][mod$knownRel]),ibd=mod$ibd)
+#NOTICe THE KNOWN REFERNCE GIVEN AS UNDER HD
+	 
+     print(paste0("Simulating ",ntippet," non-contributors (with defined model under Hd)..."))
      RMLR <- rep(-Inf,ntippet) #vector of tippets
      hpZero  <- rep(FALSE,ntippet) #boolean whether likelihood is zero under hp
      Gsim <- list()
@@ -2116,17 +2432,17 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      Lhd <- numeric()
      for(m in 1:ntippet) { #for each random individual from the population
        if(!hpZero[m]) {
-        for(loc in locs)  refData[[loc]][[tipind]] <-  Gsim[[loc]][m,]
+        for(loc in locs)  refData[[loc]][[tipind]] <-  Gsim[[loc]][m,] #insert genotype of the non-contributor
         if(type=="MLE") { #calculate based on MLE
-          logLhp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,refData,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE)$fit$loglik 
+          logLhp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,refData,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter)$fit$loglik 
           logLhd <- set$mlefit_hd$fit$loglik 
-          if(par$fst>0) logLhd  <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,refData,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE)$fit$loglik  #re-calculate only necessary once if fst>0 
+          if(par$fst>0) logLhd  <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,refData,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd)$fit$loglik  #re-calculate only necessary once if fst>0 
           RMLR[m] <- (logLhp - logLhd)/log(10)
         } else { #calculate based on INT
          bhp <- getboundary(mod$nC_hp,par$xi) #get boundaries under hp
          bhd <- getboundary(mod$nC_hd,par$xi) #get boundaries under hd
-         Lhp <- contLikINT(mod$nC_hp, set$samples, set$popFreqQ, bhp$lower, bhp$upper, refData, mod$condOrder_hp, mod$knownref_hp, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scaleINT,maxEval=opt$maxeval)$margL 
-         if(par$fst>0 || length(Lhd)==0 ) Lhd <- contLikINT(mod$nC_hd, set$samples, set$popFreqQ, bhd$lower, bhd$upper, refData, mod$condOrder_hd, mod$knownref_hd, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,scaleINT,maxEval=opt$maxeval)$margL
+         Lhp <- contLikINT(mod$nC_hp, set$samples, set$popFreqQ, bhp$lower, bhp$upper, refData, mod$condOrder_hp, mod$knownref_hp, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,opt$scaleINT,maxEval=opt$maxeval)$margL 
+         if(par$fst>0 || length(Lhd)==0 ) Lhd <- contLikINT(mod$nC_hd, set$samples, set$popFreqQ, bhd$lower, bhd$upper, refData, mod$condOrder_hd, mod$knownref_hd, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,opt$scaleINT,maxEval=opt$maxeval,knownRel=mod$knownRel,ibd=mod$ibd)$margL
          RMLR[m] <- log10(Lhp) - log10(Lhd)
        }
       }
@@ -2139,8 +2455,8 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 
   refreshTabMLE = function(type) { 
     #type={"EVID","DB","DC","START"}
-    visible(mainwin) <- FALSE
-    tabMLEtmp <- glayout(spacing=spc,container=(tabMLE[1,1,expand=TRUE] <- ggroup(container=tabMLE)))
+    gWidgets::visible(mainwin) <- FALSE
+    tabMLEtmp <- gWidgets::glayout(spacing=spc,container=(tabMLE[1,1,expand=TRUE] <- gWidgets::ggroup(container=tabMLE)))
  
     #optimizing options
     opt <- get("optMLE",envir=mmTK) #options when optimizing (nDone,delta)
@@ -2156,33 +2472,22 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 
     #helpfunction used to show MLE fit 
     tableMLE <- function(mlefit,tabmleX) {
-     tabmleX1 = glayout(spacing=0,container=(tabmleX[1,1] <-gframe("Parameter estimates:",container=tabmleX))) 
-     tabmleX2 = glayout(spacing=0,container=(tabmleX[2,1] <-gframe("Maximum Likelihood value",container=tabmleX))) 
-     mle <- cbind(mlefit$thetahat2,sqrt(diag(mlefit$thetaSigma2)))
-     log10Lik <- mlefit$loglik/log(10) #=log10(exp(mlefit$loglik))
-     #pnames <- 
-     pnames2 <- rownames(mle) #parameter names
+      tabmleX1 = gWidgets::glayout(spacing=0,container=(tabmleX[1,1] <-gWidgets::gframe("Parameter estimates:",container=tabmleX))) 
+      tabmleX2 = gWidgets::glayout(spacing=0,container=(tabmleX[2,1] <-gWidgets::gframe("Maximum Likelihood value",container=tabmleX))) 
+      mle <- cbind(mlefit$thetahat2,sqrt(diag(mlefit$thetaSigma2)))
+      log10Lik <- mlefit$loglik/log(10) #=log10(exp(mlefit$loglik))
+      pnames2 <- rownames(mle) #parameter names
 
-#     mxind <- grep("mx",pnames)
-#     pnames2[mxind] <- paste0("Mix-prop. C",mxind) #bquote(mu)
-#     pnames2[pnames=="mu"] <- "P.H.expectation" #bquote(mu)
-#     pnames2[pnames=="sigma"] <- "P.H.variability"#expression(sigma)
-#     pnames2[pnames=="beta"] <- "Degrad. slope" #expression(beta)
-#     pnames2[pnames=="xi"] <- "Stutter-prop." #expression(xi)
+      tab <- cbind(pnames2,format(mle,digits=dec))
+      colnames(tab) <- c("param","MLE","Std.Err.")
+      tabmleX1[1,1] <- gWidgets::gtable(tab,container=tabmleX1,width=240,height=nrow(tab)*25)#,noRowsVisible=TRUE) #add to frame
+      tabmleX2[1,1] =  gWidgets::glabel(text="logLik=",container=tabmleX2)
+      tabmleX2[1,2] =  gWidgets::glabel(text=format(mlefit$loglik,digits=dec),container=tabmleX2)
+      tabmleX2[2,1] =  gWidgets::glabel(text="Lik=",container=tabmleX2)
+      tabmleX2[2,2] =  gWidgets::glabel(text=format(exp(mlefit$loglik),digits=dec),container=tabmleX2)
+   }
 
-     tab <- cbind(pnames2,format(mle,digits=dec))
-     colnames(tab) <- c("param","MLE","Std.Err.")
-     tabmleX1[1,1] <- gWidgets::gtable(tab,container=tabmleX1,width=240,height=nrow(tab)*25)#,noRowsVisible=TRUE) #add to frame
-#     tabmleX2[1,1] =  glabel(text="log10lik=",container=tabmleX2)
-#     tabmleX2[1,2] =  glabel(text=format(log10LR,digits=dec),container=tabmleX2)
-     tabmleX2[1,1] =  glabel(text="logLik=",container=tabmleX2)
-     tabmleX2[1,2] =  glabel(text=format(mlefit$loglik,digits=dec),container=tabmleX2)
-     tabmleX2[2,1] =  glabel(text="Lik=",container=tabmleX2)
-     tabmleX2[2,2] =  glabel(text=format(exp(mlefit$loglik),digits=dec),container=tabmleX2)
-#     tabmleX2[3,1] =  glabel(text="Laplace P(E)=",container=tabmleX2)
-#     tabmleX2[3,2] =  glabel(text=format(exp(fit$logmargL),digits=sig),container=tabmleX2)
-    }
-     if(type=="START") { #loads already calculated results if program starts
+    if(type=="START") { #loads already calculated results if program starts
       set <- get("setEVID",envir=mmTK) #get setup for EVID
       mlefit_hd <- set$mlefit_hd
       mlefit_hp <- set$mlefit_hp
@@ -2198,11 +2503,13 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 
      #fit under hp: (only for evidence)
      if(type=="EVID") {
-      if((mod$nC_hp-sum(mod$condOrder_hp>0))>2) {
+      nUhp <- mod$nC_hp-sum(mod$condOrder_hp>0) #number of unknowns
+      if(nUhp>2) {
            print("RUNNING PARALLELIZATION...No response given before it is done!")
- 	   time <- system.time({     mlefit_hp <- contLikMLEpara(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit)     })[3]
+ 	      time <- system.time({     mlefit_hp <- contLikMLEpara(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter)     })[3]
       } else {
-           time <- system.time({     mlefit_hp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit)     })[3]      
+#nC=mod$nC_hp;samples=set$samples;popFreq=set$popFreqQ;refData=set$refDataQ;condOrder=mod$condOrder_hp;knownRef=mod$knownref_hp;xi=par$xi;prC=par$prC;nDone=opt$nDone;threshT=par$threshT;fst=par$fst;lambda=par$lambda;pXi=par$pXi;delta=opt$delta;kit=par$kit;verbose=TRUE;maxIter=opt$maxIter
+           time <- system.time({     mlefit_hp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter)     })[3]      
       }
       print(paste0("Optimizing under Hp took ",format(time,digits=5),"s"))
       if(!is.null(set$mlefit_hp) && set$mlefit_hp$fit$loglik>mlefit_hp$fit$loglik )  mlefit_hp <- set$mlefit_hp #the old model was better
@@ -2211,11 +2518,13 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      }
    
      #fit under hd: (does it for all methods)
-     if((mod$nC_hd-sum(mod$condOrder_hd>0))>2) {
+     nUhd <- mod$nC_hd-sum(mod$condOrder_hd>0)
+     if(nUhd>2) {
       print("RUNNING PARALLELIZATION...No response given before it is done!")
-      time <- system.time({     mlefit_hd <- contLikMLEpara(mod$nC_hd,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit)    })[3]
+      time <- system.time({     mlefit_hd <- contLikMLEpara(mod$nC_hd,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd)    })[3]
      } else {
-      time <- system.time({     mlefit_hd <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit)    })[3]
+#nC=mod$nC_hd;samples=set$samples;popFreq=set$popFreqQ;refData=set$refDataQ;condOrder=mod$condOrder_hd;knownRef=mod$knownref_hd;xi=par$xi;prC=par$prC;nDone=opt$nDone;threshT=par$threshT;fst=par$fst;lambda=par$lambda;pXi=par$pXi;delta=opt$delta;kit=par$kit;verbose=TRUE;maxIter=opt$maxIter;knownRel=set$model$knownRel;ibd=set$model$ibd
+      time <- system.time({     mlefit_hd <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd)    })[3]
 	 }
      print(paste0("Optimizing under Hd took ",format(time,digits=5),"s"))
      if(!is.null(set$mlefit_hd) && set$mlefit_hd$fit$loglik>mlefit_hd$fit$loglik )  mlefit_hd <- set$mlefit_hd #the old model was better
@@ -2230,55 +2539,89 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
     }
 
     #helpfunction to print msg to screen
-    #modelfitmsg =function() gmessage(message="The one-sample Kolmogorov-Smirnov test\nrejected the peak height model assumption\n(with significance level 0.05)",title="Rejection of model assumption",icon="info")
+    #modelfitmsg =function() gWidgets::gmessage(message="The one-sample Kolmogorov-Smirnov test\nrejected the peak height model assumption\n(with significance level 0.05)",title="Rejection of model assumption",icon="info")
+    doValidMLEModel = function(mlefit,kit,txt="") { #function to get significance level in Validation plot
+     alpha <- as.numeric(getValueUser("Set significance level \nin model validation:",0.01))
+     checkPositive(alpha,"The significance level",strict=TRUE)
+     validMLEmodel(mlefit,kit,txt,alpha=alpha)
+    }   
 
     kit <- get("selPopKitName",envir=mmTK)[1] #get selected kit: Used in modelvalidation
- 
+    isEPG = FALSE
+    isLUS = all(unlist(sapply(mlefit_hd$model$samples,function(x)  sapply(x,function(y) all(grepl(LUSsymbol,y$adata),na.rm=TRUE)) )))  #ADDED: check if alleles are given on LUS format 
+    if(!isLUS && !is.na(kit) && !is.null(kit)) isEPG = TRUE
+
+    plotTop = function(mlefit){
+      if(isLUS) { 
+         plotTopLUS(mlefit,threshT=set$param$threshT,LUSsymbol=LUSsymbol) 
+         if(require(plotly)) plotTopMPS2(mlefit,AT=set$param$threshT,grpsymbol=LUSsymbol) 
+      } else if(isEPG) {
+         plotTopEPG(mlefit,kitname=kit,threshT=set$param$threshT ) 
+         if(require(plotly)) plotTopEPG2(mlefit,kit=kit,AT=set$param$threshT) 
+      } else {
+       if(require(plotly)) {
+          plotTopMPS2(mlefit,AT=set$param$threshT,grpsymbol=MPSsymbol ) 
+       } else {
+          gWidgets::gmessage(message="Install the package plotly to show MPS plot!",title="Package not found",icon="info")
+       }
+      }
+    } #end if plotting top
+	
     #GUI:
-    tabmleA = glayout(spacing=0,container=(tabMLEtmp[1,1] <- gframe("Estimates under Hd",container=tabMLEtmp))) 
+    tabmleA = gWidgets::glayout(spacing=0,container=(tabMLEtmp[1,1] <- gWidgets::gframe("Estimates under Hd",container=tabMLEtmp))) 
     tableMLE(mlefit_hd$fit,tabmleA)
-    tabmleA3 = glayout(spacing=0,container=(tabmleA[3,1] <-gframe("Further Action",container=tabmleA))) 
-    tabmleA3[1,1] <- gbutton(text="MCMC simulation",container=tabmleA3,handler=function(h,...) { doMCMC(mlefit_hd) } )
-    tabmleA3[2,1] <- gbutton(text="Deconvolution",container=tabmleA3,handler=function(h,...) { doDC(mlefit_hd) }  )
-    tabmleA3[3,1] <- gbutton(text="Model validation",container=tabmleA3,handler=function(h,...) { validMLEmodel(mlefit_hd,kit) } )
-
+    tabmleA3 = gWidgets::glayout(spacing=0,container=(tabmleA[3,1] <-gWidgets::gframe("Further Action",container=tabmleA))) 
+    tabmleA3[1,1] <- gWidgets::gbutton(text="MCMC simulation",container=tabmleA3,handler=function(h,...) { doMCMC(mlefit_hd) } )
+    tabmleA3[2,1] <- gWidgets::gbutton(text="Deconvolution",container=tabmleA3,handler=function(h,...) { doDC(mlefit_hd) }  )
+    tabmleA3[3,1] <- gWidgets::gbutton(text="Model validation",container=tabmleA3,handler=function(h,...) { doValidMLEModel(mlefit_hd,kit,"PP-plot under Hd") } )
+    tabmleA3[4,1] <- gWidgets::gbutton(text="Model fitted P.H.",container=tabmleA3,handler=function(h,...) { 
+      plotTop(mlefit_hd) #UPDATED v2.2.0
+    } )
 
 #ADD EASY MODE
-    if(get("optSetup",envir=mmTK)$easyMode) enabled(tabmleA3[1,1]) <- FALSE #deactivate MCMC
-
+    if(get("optSetup",envir=mmTK)$easyMode) {
+     gWidgets::enabled(tabmleA3[1,1]) <- FALSE #deactivate MCMC
+     gWidgets::enabled(tabmleA3[4,1]) <- FALSE #deactivate MCMC
+    }
     if(type=="EVID" || type=="START") { #used only for weight-of-evidence
-     tabmleB = glayout(spacing=0,container=(tabMLEtmp[1,2] <-gframe("Estimates under Hp",container=tabMLEtmp))) 
+     tabmleB = gWidgets::glayout(spacing=0,container=(tabMLEtmp[1,2] <-gWidgets::gframe("Estimates under Hp",container=tabMLEtmp))) 
      tableMLE(mlefit_hp$fit,tabmleB)
-     tabmleB3 = glayout(spacing=0,container=(tabmleB[3,1] <-gframe("Further Action",container=tabmleB))) 
-     tabmleB3[1,1] <- gbutton(text="MCMC simulation",container=tabmleB3,handler=function(h,...) { doMCMC(mlefit_hp) } )
-     tabmleB3[2,1] <- gbutton(text="Deconvolution",container=tabmleB3,handler=function(h,...) {  doDC(mlefit_hp) }  )
-     tabmleB3[3,1] <- gbutton(text="Model validation",container=tabmleB3,handler=function(h,...) { validMLEmodel(mlefit_hp,kit) } )
+     tabmleB3 = gWidgets::glayout(spacing=0,container=(tabmleB[3,1] <-gWidgets::gframe("Further Action",container=tabmleB))) 
+     tabmleB3[1,1] <- gWidgets::gbutton(text="MCMC simulation",container=tabmleB3,handler=function(h,...) { doMCMC(mlefit_hp) } )
+     tabmleB3[2,1] <- gWidgets::gbutton(text="Deconvolution",container=tabmleB3,handler=function(h,...) {  doDC(mlefit_hp) }  )
+     tabmleB3[3,1] <- gWidgets::gbutton(text="Model validation",container=tabmleB3,handler=function(h,...) { doValidMLEModel(mlefit_hp,kit,"PP-plot under Hp") } )
+     tabmleB3[4,1] <- gWidgets::gbutton(text="Model fitted P.H.",container=tabmleB3,handler=function(h,...) { 
+       plotTop(mlefit_hp) #UPDATED v2.2.0
+     } )
 
 #ADD EASY MODE
-     if(get("optSetup",envir=mmTK)$easyMode) enabled(tabmleB3[1,1]) <- FALSE #deactivate MCMC
+     if(get("optSetup",envir=mmTK)$easyMode) {
+      gWidgets::enabled(tabmleB3[1,1]) <- FALSE #deactivate MCMC
+      gWidgets::enabled(tabmleB3[4,1]) <- FALSE #deactivate Model fitted PH
+     }
     }
 
     #We show weight-of-evidence
-    tabmleD = glayout(spacing=5,container=(tabMLEtmp[2,1] <-gframe("Further evaluation",container=tabMLEtmp))) 
-    tabmleD[1,1] <- gbutton(text="Optimize model more",container=tabmleD,handler=function(h,...) { refreshTabMLE(type)  } )
+    tabmleD = gWidgets::glayout(spacing=5,container=(tabMLEtmp[2,1] <-gWidgets::gframe("Further evaluation",container=tabMLEtmp))) 
+    tabmleD[1,1] <- gWidgets::gbutton(text="Optimize model more",container=tabmleD,handler=function(h,...) { refreshTabMLE(type)  } )
 
 #ADD EASY MODE
-    if(get("optSetup",envir=mmTK)$easyMode) enabled(tabmleD[1,1]) <- FALSE #deactivate optimize model more
+    if(get("optSetup",envir=mmTK)$easyMode) gWidgets::enabled(tabmleD[1,1]) <- FALSE #deactivate optimize model more
 
-    tabmleE = glayout(spacing=0,container=(tabMLEtmp[2,2] <-gframe("Save results to file",container=tabMLEtmp))) 
-    tabmleE[1,1] <- gbutton(text="All results",container=tabmleE,handler=f_savetableALL,action=type)
+    tabmleE = gWidgets::glayout(spacing=0,container=(tabMLEtmp[2,2] <-gWidgets::gframe("Save results to file",container=tabMLEtmp))) 
+    tabmleE[1,1] <- gWidgets::gbutton(text="Create report",container=tabmleE,handler=f_savetableALL,action=type)
 
     fixmsg <- "The specified model could not explain the data.\nPlease re-specify the model."
-    if(is.infinite(mlefit_hd$fit$loglik)) gmessage(message=fixmsg,title="Wrong model specification",icon="error")
+    if(is.infinite(mlefit_hd$fit$loglik)) gWidgets::gmessage(message=fixmsg,title="Wrong model specification",icon="error")
 
 
     if(type=="EVID") {
-     if(!is.infinite(mlefit_hd$fit$loglik) && is.infinite(mlefit_hp$fit$loglik)) gmessage(message=fixmsg,title="Wrong model specification",icon="error")
+     if(!is.infinite(mlefit_hd$fit$loglik) && is.infinite(mlefit_hp$fit$loglik)) gWidgets::gmessage(message=fixmsg,title="Wrong model specification",icon="error")
 
      logLRmle <- mlefit_hp$fit$loglik - mlefit_hd$fit$loglik
      LRmle <- exp(logLRmle)
      LRlap <- exp(mlefit_hp$fit$logmargL - mlefit_hd$fit$logmargL)
-     LRi <- exp(logLiki(mlefit_hp)-logLiki(mlefit_hd))
+     LRi <- exp(logLiki(mlefit=mlefit_hp)-logLiki(mlefit=mlefit_hd))
      resEVID <- list(LRmle=LRmle,LRlap=LRlap,LRi=LRi) 
      assign("resEVID",resEVID,envir=mmTK) #store EVID calculations
     } 
@@ -2291,52 +2634,52 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      }
     } #end if start
     if(type=="EVID" || type=="START") {
-     tabmleC = glayout(spacing=0,container=(tabMLEtmp[1,3] <-gframe("Weight-of-evidence\n(MLE based)",container=tabMLEtmp))) 
-     tabmleC1 = glayout(spacing=0,container=(tabmleC[1,1] <-gframe("Joint LR",container=tabmleC))) 
-     tabmleC1[1,1] =  glabel(text="LR=",container=tabmleC1)
-     tabmleC1[1,2] =  glabel(text=format(LRmle,digits=dec),container=tabmleC1)
-     tabmleC1[2,1] =  glabel(text="log10LR=",container=tabmleC1)
-     tabmleC1[2,2] =  glabel(text=format(log10(LRmle),digits=dec),container=tabmleC1)
-     tabmleC3 = glayout(spacing=0,container=(tabmleC[2,1] <-gframe("LR for each locus",container=tabmleC))) 
+     tabmleC = gWidgets::glayout(spacing=0,container=(tabMLEtmp[1,3] <-gWidgets::gframe("Weight-of-evidence\n(MLE based)",container=tabMLEtmp))) 
+     tabmleC1 = gWidgets::glayout(spacing=0,container=(tabmleC[1,1] <-gWidgets::gframe("Joint LR",container=tabmleC))) 
+     tabmleC1[1,1] =  gWidgets::glabel(text="LR=",container=tabmleC1)
+     tabmleC1[1,2] =  gWidgets::glabel(text=format(LRmle,digits=dec),container=tabmleC1)
+     tabmleC1[2,1] =  gWidgets::glabel(text="log10LR=",container=tabmleC1)
+     tabmleC1[2,2] =  gWidgets::glabel(text=format(log10(LRmle),digits=dec),container=tabmleC1)
+     tabmleC3 = gWidgets::glayout(spacing=0,container=(tabmleC[2,1] <-gWidgets::gframe("LR for each locus",container=tabmleC))) 
      if(length(LRi)<= get("optSetup",envir=mmTK)$maxloc ) { #show all LR per loci only if less than maxloc
       for(i in 1:length(LRi)) {
-       tabmleC3[i,1] =  glabel(text=names(LRi)[i],container=tabmleC3)
-       tabmleC3[i,2] =  glabel(text=format(LRi[i],digits=dec),container=tabmleC3)
+       tabmleC3[i,1] =  gWidgets::glabel(text=names(LRi)[i],container=tabmleC3)
+       tabmleC3[i,2] =  gWidgets::glabel(text=format(LRi[i],digits=dec),container=tabmleC3)
       }
      }
-#     tabmleD[2,1] <- gbutton(text="Continuous LR\n(Bayesian based)",container=tabmleD,handler=function(h,...) { doINT("EVID") } )  #BUTTON REMOVED
-     tabmleD[2,1] <- gbutton(text="LR sensitivity",container=tabmleD,handler=function(h,...) { simLR(mlefit_hp,mlefit_hd) } ) 
-     tabmleE[2,1] <- gbutton(text="Only LR results",container=tabmleE,handler=f_savetableEVID)
+#     tabmleD[2,1] <- gWidgets::gbutton(text="Quantitative LR\n(Bayesian based)",container=tabmleD,handler=function(h,...) { doINT("EVID") } )  #BUTTON REMOVED
+     tabmleD[2,1] <- gWidgets::gbutton(text="LR sensitivity",container=tabmleD,handler=function(h,...) { simLR(mlefit_hp,mlefit_hd) } ) 
+     tabmleE[2,1] <- gWidgets::gbutton(text="Only LR results",container=tabmleE,handler=f_savetableEVID)
 
 #ADD EASY MODE
-    if(get("optSetup",envir=mmTK)$easyMode) enabled(tabmleE[2,1]) <- FALSE #deactivate save only LR results
+    if(get("optSetup",envir=mmTK)$easyMode) gWidgets::enabled(tabmleE[2,1]) <- FALSE #deactivate save only LR results
 
      #postanalysis
-     tabmleF = glayout(spacing=0,container=(tabMLEtmp[2,3] <-gframe("Non-contributor analysis",container=tabMLEtmp))) 
+     tabmleF = gWidgets::glayout(spacing=0,container=(tabMLEtmp[2,3] <-gWidgets::gframe("Non-contributor analysis",container=tabMLEtmp))) 
      tippets <- set$model$knownref_hd #known non-contributors under Hd
      if(!is.null(tippets)) {
       tN <- names(set$refData[[1]][tippets]) #tippet names
-      tabmleF[1,1] <- glabel( "Select reference to\nreplace with non-contributor:",container=tabmleF)
-      tabmleF[2,1] <- gcombobox( items=tN ,container=tabmleF)
-      tabmleF[3,1] <- gbutton(text="Sample maximum based",container=tabmleF,handler=function(x) {
+      tabmleF[1,1] <- gWidgets::glabel( "Select reference to\nreplace with non-contributor:",container=tabmleF)
+      tabmleF[2,1] <- gWidgets::gcombobox( items=tN ,container=tabmleF)
+      tabmleF[3,1] <- gWidgets::gbutton(text="Sample maximum based",container=tabmleF,handler=function(x) {
        # setValueUser(what1="optMLE",what2="obsLR",txt="Insert observed log10 LR (can be empty):") 
-   	  doTippet(tipind=tippets[which(tN==svalue(tabmleF[2,1]))],set,type="MLE")  #get tip-index in refData
+   	  doTippet(tipind=tippets[which(tN==gWidgets::svalue(tabmleF[2,1]))],set,type="MLE")  #get tip-index in refData
 	})
-      tabmleF[4,1] <- gbutton(text="Sample integrated based",container=tabmleF,handler=function(x) { 
+      tabmleF[4,1] <- gWidgets::gbutton(text="Sample integrated based",container=tabmleF,handler=function(x) { 
        # setValueUser(what1="optINT",what2="obsLR",txt="Insert observed log10 LR (can be empty):") 
-	  doTippet(tipind=tippets[which(tN==svalue(tabmleF[2,1]))],set,type="INT")  #get tip-index in refData
+	  doTippet(tipind=tippets[which(tN==gWidgets::svalue(tabmleF[2,1]))],set,type="INT")  #get tip-index in refData
 	})
 
 #ADD EASY MODE
-    if(get("optSetup",envir=mmTK)$easyMode) enabled(tabmleF[4,1]) <- FALSE #deactivate tippets for bayesian approach
+    if(get("optSetup",envir=mmTK)$easyMode) gWidgets::enabled(tabmleF[4,1]) <- FALSE #deactivate tippets for bayesian approach
 
      }
     } #end if EVID or START
-    if(type=="DB") tabmleD[2,1] <- gbutton(text="Search Database",container=tabmleD,handler=function(h,...) { doDB("MLE")} )
+    if(type=="DB") tabmleD[2,1] <- gWidgets::gbutton(text="Search Database",container=tabmleD,handler=function(h,...) { doDB("MLE")} )
   
 
-    visible(mainwin) <- TRUE
-    focus(mainwin) #focus window after calculations are done
+    gWidgets::visible(mainwin) <- TRUE
+    gWidgets::focus(mainwin) <- TRUE #focus window after calculations are done
   } #end refresh tab-frame of MLE-fit
 
   refreshTabMLE(type="START") #Show already calculted evidence-results when program starts
@@ -2345,29 +2688,29 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 ##############################################################
 ###############Tab 5: Deconvolution results:##################
 ##############################################################
- tabDCtmp <- glayout(spacing=spc,container=tabDC)
+ tabDCtmp <- gWidgets::glayout(spacing=spc,container=tabDC)
 
  f_savetableDC = function(h,...) {
    DCtables <- get("resDC",envir=mmTK) #get deconvolved result 
    if(is.null(DCtables)) {
-    tkmessageBox(message="There is no deconvolution results available!")
+    gWidgets::gmessage(message="There is no deconvolution results available!")
    } else {
     saveTable(DCtables[[h$action]], "txt") #save deconvolution results
    }
  }
- refreshTabDC = function(dctype=2) { #1=table1 (joint results), 2=table2 (marginal results)
+ refreshTabDC = function(dctype=1) { #1=table1 (top marginal results),2=table2 (joint results), 3=table3 (all marginal results per genotype), 4=table4 (all marginal results per alleles)
    DCtables <- get("resDC",envir=mmTK) #get deconvolved results
    if(!is.null(DCtables)) {
-    tabDCa = glayout(spacing=1,container=(tabDCtmp[1,1] <-glayout(spacing=0,container=tabDCtmp)),expand=TRUE) #table layout
-    tabDCb = glayout(spacing=1,container=(tabDCtmp[2,1] <-glayout(spacing=0,container=tabDCtmp)),expand=TRUE) #table layout
-    tabDCc = glayout(spacing=1,container=(tabDCtmp[3,1] <-glayout(spacing=0,container=tabDCtmp)),expand=TRUE) #table layout
-    itemvec = c("Joint","Marginal")
-    tabDCa[1,1] <- glabel("Select layout:",container=tabDCa)
-    tabDCa[1,2] <-  gradio(items=itemvec,selected=dctype,horizontal=TRUE,container=tabDCa,handler=function(x) {
-      refreshTabDC( which(itemvec==svalue(tabDCa[1,2])) )
+    tabDCa = gWidgets::glayout(spacing=1,container=(tabDCtmp[1,1] <-gWidgets::gframe(spacing=0,container=tabDCtmp)),expand=TRUE) #table layout
+    tabDCb = gWidgets::glayout(spacing=1,container=(tabDCtmp[2,1] <-gWidgets::gframe(spacing=0,container=tabDCtmp)),expand=TRUE) #table layout
+    tabDCc = gWidgets::glayout(spacing=1,container=(tabDCtmp[3,1] <-gWidgets::gframe(spacing=0,container=tabDCtmp)),expand=TRUE) #table layout
+    itemvec = c("Top Marginal","All Joint","All Marginal (G)","All Marginal (A)")
+    tabDCa[1,1] <- gWidgets::glabel("Select layout:",container=tabDCa)
+    tabDCa[1,2] <-  gWidgets::gradio(items=itemvec,selected=dctype,horizontal=TRUE,container=tabDCa,handler=function(x) {
+      refreshTabDC( which(itemvec==gWidgets::svalue(tabDCa[1,2])) )
     })
-    tabDCb[1,1] <- gWidgets::gtable(DCtables[[dctype]],container=tabDCb,height=mwH*0.5,width=mwW,height=mwH-2*mwH/3,do.autoscroll=TRUE,noRowsVisible=TRUE) #add to frame
-    tabDCc[1,1] <- gbutton(text="Save table",container=tabDCc,handler=f_savetableDC,action=dctype)  
+    tabDCb[1,1] <- gWidgets::gtable(NAtoSign(DCtables[[dctype]]),container=tabDCb,height=mwH*0.5,width=mwW,height=mwH-2*mwH/3,do.autoscroll=TRUE,noRowsVisible=TRUE) #add to frame
+    tabDCc[1,1] <- gWidgets::gbutton(text="Save table",container=tabDCc,handler=f_savetableDC,action=dctype)  
    }
  }
  refreshTabDC() #open results when program starts
@@ -2378,16 +2721,16 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
 ###############Tab 6: Database search:########################
 ##############################################################
 
- tabDBtmp <- glayout(spacing=spc,container=tabDB) #grid-layout
+ tabDBtmp <- gWidgets::glayout(spacing=spc,container=tabDB) #grid-layout
 
  f_savetableDB = function(h,...) {
    DBsearch <-get("resDB",envir=mmTK) #load results from environment
    if(is.null(DBsearch)) {
-    tkmessageBox(message="There is no database search results available.")
+    gWidgets::gmessage(message="There is no database search results available.")
     return()
    }
    sep="txt"
-   tabfile = gfile(text="Save table",type="save")
+   tabfile = gWidgets::gfile(text="Save table",type="save")
    if(!is.na(tabfile)) {
     if(length(unlist(strsplit(tabfile,"\\.")))==1) tabfile = paste0(tabfile,".",sep)
     ord <- order(as.numeric(DBsearch[,as.integer(h$action)+1]),decreasing=TRUE) 
@@ -2398,20 +2741,20 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
   }
 
  refreshTabDB = function(ranktype=2) {
-   DBtable <- get("resDB",envir=mmTK) #get deconvolved result 
+   DBtable <- get("resDB",envir=mmTK) #get database result 
    if(!is.null(DBtable)) {
     ord <- order(as.numeric(DBtable[,ranktype+1]),decreasing=TRUE) #need to convert to numeric!
-    tabDBa = glayout(spacing=1,container=(tabDBtmp[1,1] <-glayout(spacing=0,container=tabDBtmp)),expand=TRUE) #table layout
-    tabDBb = glayout(spacing=1,container=(tabDBtmp[2,1] <-glayout(spacing=0,container=tabDBtmp)),expand=TRUE) #table layout
-    tabDBc = glayout(spacing=1,container=(tabDBtmp[3,1] <-glayout(spacing=0,container=tabDBtmp)),expand=TRUE) #table layout
-    tabDBa[1,1] <- glabel("Sort table:",container=tabDBa)
-    itemvec <- c("contLR","qualLR","MAC","nLocs")
-    tabDBa[1,2] <- gradio(items=itemvec,selected=ranktype,horizontal=TRUE,container=tabDBa,handler=function(x) {
-      refreshTabDB( which(itemvec==svalue(tabDBa[1,2])) )
+    tabDBa = gWidgets::glayout(spacing=1,container=(tabDBtmp[1,1] <-gWidgets::gframe(spacing=0,container=tabDBtmp)),expand=TRUE) #table layout
+    tabDBb = gWidgets::glayout(spacing=1,container=(tabDBtmp[2,1] <-gWidgets::gframe(spacing=0,container=tabDBtmp)),expand=TRUE) #table layout
+    tabDBc = gWidgets::glayout(spacing=1,container=(tabDBtmp[3,1] <-gWidgets::gframe(spacing=0,container=tabDBtmp)),expand=TRUE) #table layout
+    tabDBa[1,1] <- gWidgets::glabel("Sort table:",container=tabDBa)
+    itemvec <- c("quanLR","qualLR","MAC","nLocs")
+    tabDBa[1,2] <- gWidgets::gradio(items=itemvec,selected=ranktype,horizontal=TRUE,container=tabDBa,handler=function(x) {
+      refreshTabDB( which(itemvec==gWidgets::svalue(tabDBa[1,2])) )
     })
     if(length(ord)<=1) tabDBb[1,1] <- gWidgets::gtable(DBtable,container=tabDBb,width=mwW,height=mwH*0.5,do.autoscroll=TRUE,noRowsVisible=TRUE) #add to frame
     if(length(ord)>1) tabDBb[1,1] <- gWidgets::gtable(DBtable[ord[1:min(get("optDB",envir=mmTK)$maxDB,length(ord))],] ,container=tabDBb,width=mwW,height=mwH*0.5,do.autoscroll=TRUE,noRowsVisible=TRUE) #add to frame
-    tabDBc[1,1] <- gbutton(text="Save table",container=tabDBc,handler=f_savetableDB,action=ranktype)  
+    tabDBc[1,1] <- gWidgets::gbutton(text="Save table",container=tabDBc,handler=f_savetableDB,action=ranktype)  
    }
  }
  refreshTabDB() #when program starts: Consider qual-rank
@@ -2433,36 +2776,36 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
    }
   }
   noSamples = function(hyp,M) { #helpfunction for tell user that wrong model assumption was used.
-    gmessage(message=paste0("No samples was accepted out of the first ",M," samples.\nPlease retry sampling or change hypothesis ",hyp),title="Wrong model specification",icon="error")
+    gWidgets::gmessage(message=paste0("No samples was accepted out of the first ",M," samples.\nPlease retry sampling or change hypothesis ",hyp),title="Wrong model specification",icon="error")
     stop()
   }  
 
  refreshTabLRMIX = function() {
-  require(forensim)
-  tabLRMIXtmp <- glayout(spacing=spc,container=(tabLRMIX[1,1,expand=TRUE] <- ggroup(container=tabLRMIX))) 
-  visible(mainwin) <- FALSE
+  require(forensim);
+  tabLRMIXtmp <- gWidgets::glayout(spacing=spc,container=(tabLRMIX[1,1,expand=TRUE] <- gWidgets::ggroup(container=tabLRMIX))) 
+  gWidgets::visible(mainwin) <- FALSE
  
   #helpfunction to make GUI-table with LR calculations
   tableLR = function(LRi) { 
    sig <- 4 #number of signif to show
-   tabLRmixB1[1,1] = glabel(text="Locus",container=tabLRmixB1)
-   tabLRmixB1[1,2] = glabel(text="LR",container=tabLRmixB1)
-   tabLRmixB1[1,3] = glabel(text="log10LR",container=tabLRmixB1)
+   tabLRmixB1[1,1] = gWidgets::glabel(text="Locus",container=tabLRmixB1)
+   tabLRmixB1[1,2] = gWidgets::glabel(text="LR",container=tabLRmixB1)
+   tabLRmixB1[1,3] = gWidgets::glabel(text="log10LR",container=tabLRmixB1)
 
    if(length(locs)<=get("optSetup",envir=mmTK)$maxloc) { #not given if more than 30 locs
     for(loc in locs) {
      i = which(loc==locs)
-     tabLRmixB1[i+1,1] = glabel(text=loc,container=tabLRmixB1)
-     tabLRmixB1[i+1,2] = glabel(text=format(LRi[i],digits=sig),container=tabLRmixB1)
-     tabLRmixB1[i+1,3] = glabel(text=format(log10(LRi[i]),digits=sig),container=tabLRmixB1)
+     tabLRmixB1[i+1,1] = gWidgets::glabel(text=loc,container=tabLRmixB1)
+     tabLRmixB1[i+1,2] = gWidgets::glabel(text=format(LRi[i],digits=sig),container=tabLRmixB1)
+     tabLRmixB1[i+1,3] = gWidgets::glabel(text=format(log10(LRi[i]),digits=sig),container=tabLRmixB1)
     }
    }
    #show jointly:
    totLR <- prod(LRi)
-   tabLRmixB2[1,1] = glabel(text="LR",container=tabLRmixB2)
-   tabLRmixB2[2,1] = glabel(text="log10LR",container=tabLRmixB2)
-   tabLRmixB2[1,2] = glabel(text=format(totLR,digits=sig),container=tabLRmixB2)
-   tabLRmixB2[2,2] = glabel(text=format(log10(totLR),digits=sig),container=tabLRmixB2)
+   tabLRmixB2[1,1] = gWidgets::glabel(text="LR",container=tabLRmixB2)
+   tabLRmixB2[2,1] = gWidgets::glabel(text="log10LR",container=tabLRmixB2)
+   tabLRmixB2[1,2] = gWidgets::glabel(text=format(totLR,digits=sig),container=tabLRmixB2)
+   tabLRmixB2[2,2] = gWidgets::glabel(text=format(log10(totLR),digits=sig),container=tabLRmixB2)
   }
 
   #helpfunction for calculating LR for each given dropout pD (takes a numeric)
@@ -2471,13 +2814,44 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
     pDhd <- rep(pD,mod$nC_hd)
     hpvec <- hdvec <- rep(1,length(locs))
     for(loc in locs) {
-      hpvec[which(loc==locs)] <- likEvid( Evidlist[[loc]],T=refList_hp[[loc]]$Ri,V=refList_hp[[loc]]$Ki,x=mod$nC_hp-refList_hp[[loc]]$nR,theta=par$fst, prDHet=pDhp, prDHom=pDhp^2, prC=par$prC, freq=set$popFreqQ[[loc]])
-      hdvec[which(loc==locs)] <- likEvid( Evidlist[[loc]],T=refList_hd[[loc]]$Ri,V=refList_hd[[loc]]$Ki,x=mod$nC_hd-refList_hd[[loc]]$nR,theta=par$fst, prDHet=pDhd, prDHom=pDhd^2, prC=par$prC, freq=set$popFreqQ[[loc]])
+      hpvec[which(loc==locs)] <- forensim::likEvid( Evidlist[[loc]],T=refList_hp[[loc]]$Ri,V=refList_hp[[loc]]$Ki,x=mod$nC_hp-refList_hp[[loc]]$nR,theta=par$fst, prDHet=pDhp, prDHom=pDhp^2, prC=par$prC, freq=set$popFreqQ[[loc]])
+      hdvec[which(loc==locs)] <- forensim::likEvid( Evidlist[[loc]],T=refList_hd[[loc]]$Ri,V=refList_hd[[loc]]$Ki,x=mod$nC_hd-refList_hd[[loc]]$nR,theta=par$fst, prDHet=pDhd, prDHom=pDhd^2, prC=par$prC, freq=set$popFreqQ[[loc]])
     }
     LRi <- hpvec/hdvec
     names(LRi) <- locs
     return(LRi)
   }
+
+  #Function to calculate the MLE based LR (qual):
+  qualLRmleBased = function() { #added function v1.11
+    neglikhp <- function(pD) {
+      pDhp <- rep(1/(1+exp(-pD)),mod$nC_hp)
+      hpvec <- rep(1,length(locs))
+      for(loc in locs) hpvec[which(loc==locs)] <- forensim::likEvid( Evidlist[[loc]],T=refList_hp[[loc]]$Ri,V=refList_hp[[loc]]$Ki,x=mod$nC_hp-refList_hp[[loc]]$nR,theta=par$fst, prDHet=pDhp, prDHom=pDhp^2, prC=par$prC, freq=set$popFreqQ[[loc]])
+      return( -sum(log(hpvec)) )
+    }
+
+    neglikhd <- function(pD) {
+       pDhd <-  rep(1/(1+exp(-pD)),mod$nC_hd)
+       hdvec <- rep(1,length(locs))
+       for(loc in locs) hdvec[which(loc==locs)] <- forensim::likEvid( Evidlist[[loc]],T=refList_hd[[loc]]$Ri,V=refList_hd[[loc]]$Ki,x=mod$nC_hd-refList_hd[[loc]]$nR,theta=par$fst, prDHet=pDhd, prDHom=pDhd^2, prC=par$prC, freq=set$popFreqQ[[loc]])
+       return( -sum(log(hdvec)) )
+    }
+	pDv = c(0.1,0.35,0.7) #Necessary to look for potential better start point than (0.1) to make optimizer more robust
+	loghp = Vectorize(neglikhp)( log(pDv/(1-pDv)) )
+    pD0 = pDv[which.min(loghp)] 
+    foohp <- nlm(Vectorize(neglikhp),log(pD0/(1-pD0)) )
+	
+    loghd = Vectorize(neglikhd)( log(pDv/(1-pDv)) )
+	pD0 = pDv[which.min(loghd)] 
+    foohd <- nlm(Vectorize(neglikhd),log(pD0/(1-pD0)) )
+
+    pDhat <- 1/(1+exp(-c(foohp$est,foohd$est))) #get estimated dropouts
+    print(paste0("logLik_hp=",-foohp$min)) #Print maximum likelihood under Hp 
+    print(paste0("logLik_hd=",-foohd$min)) #Print maximum likelihood under Hp 
+    log10LRmle =   (-foohp$min - (-foohd$min))/log(10) #get LR on log10 scale
+    return(c(log10LRmle,pDhat))
+  } #end qualLRmleBased
 
  #helpfunction to get conditional refs under a hypothesis
   getConds <- function(condOrder,knownref) {
@@ -2485,7 +2859,7 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
     Ri <- Ki <- NULL
     for(rr in cond ) Ri <- c(Ri,set$refDataQ[[loc]][[rr]])
     for(rr in knownref) Ki <- c(Ki,set$refDataQ[[loc]][[rr]])
-    return(list(Ri=Ri,Ki=Ki,nR=length(cond) ))
+    return(list(Ri=Ri,Ki=Ki,nR=length(Ri)/2 ))  #Updated in v1.9: consider number of alleles divided by 2
   }
 
   #take out relevant parameters from stored list
@@ -2498,37 +2872,48 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
   nS <- length(set$samples) #number of samples
  
   #Prepare Evidence and refs under each hypothesis:
+  #UPDATED FROM v1.11: STRINGS ARE ENCODED AS integers 1:n (with n as number of alleles), since LRmix require numerics. 
   Evidlist <- list()
   refList_hp <- list()
   refList_hd <- list()
   for(loc in locs) {
     Ei <- NULL #get evidence
+    avOld <- names(set$popFreqQ[[loc]]) #old names
+    names(set$popFreqQ[[loc]]) <- 1:length(set$popFreqQ[[loc]]) #encoded alleles (used for order of alleles) (popFreq2)
     for(ss in 1:nS) {
      if(ss>1) Ei <- c(Ei,0) #seperate with 0  
      adata <- set$samples[[ss]][[loc]]$adata
+     adata <- match(adata,avOld) #update names to be index of popFreq2
      if(length(adata)==0) adata=0 #is empty
      Ei <- c(Ei,adata)
     } 
     Evidlist[[loc]] <- Ei
-    refList_hp[[loc]] <- getConds(mod$condOrder_hp,mod$knownref_hp) #under hp
+    refList_hp[[loc]] <- getConds(condOrder=mod$condOrder_hp,knownref=mod$knownref_hp) #under hp
     refList_hd[[loc]] <- getConds(mod$condOrder_hd,mod$knownref_hd) #under hd
+ 
+    if(!is.null(refList_hp[[loc]]$Ri)) refList_hp[[loc]]$Ri <-  match(refList_hp[[loc]]$Ri,avOld) #update names to be index of popFreq2
+    if(!is.null(refList_hd[[loc]]$Ri)) refList_hd[[loc]]$Ri <-  match(refList_hd[[loc]]$Ri,avOld) #update names to be index of popFreq2
+    if(!is.null(refList_hp[[loc]]$Ki)) refList_hp[[loc]]$Ki <-  match(refList_hp[[loc]]$Ki,avOld) #update names to be index of popFreq2
+    if(!is.null(refList_hd[[loc]]$Ki)) refList_hd[[loc]]$Ki <-  match(refList_hd[[loc]]$Ki,avOld) #update names to be index of popFreq2
+    if(length(refList_hp[[loc]]$Ri)==0) refList_hp[[loc]]$Ri <- NULL #Updated in v1.9: Missing markers are supported for LRmix
+    if(length(refList_hd[[loc]]$Ri)==0) refList_hd[[loc]]$Ri <- NULL #Updated in v1.9: Missing markers are supported for LRmix
   }
-
-
+ 
   #GUI:
-  tabLRmixA = glayout(spacing=0,container=(tabLRMIXtmp[1,1] <-gframe("Analysis of qualitative LR",container=tabLRMIXtmp))) 
-  tabLRmixB = glayout(spacing=0,container=(tabLRMIXtmp[1,2] <-gframe("Weight-of-Evidence",container=tabLRMIXtmp))) 
+  tabLRmixA = gWidgets::glayout(spacing=0,container=(tabLRMIXtmp[1,1] <-gWidgets::gframe("Analysis of qualitative LR",container=tabLRMIXtmp))) 
+  tabLRmixB = gWidgets::glayout(spacing=0,container=(tabLRMIXtmp[1,2] <-gWidgets::gframe("Weight-of-Evidence",container=tabLRMIXtmp))) 
 
-  tabLRmixA1 = glayout(spacing=0,container=(tabLRmixA[1,1] <-gframe("Preanalysis",container=tabLRmixA)))  
-  tabLRmixA2 = glayout(spacing=0,container=(tabLRmixA[2,1] <-gframe("Calculation",container=tabLRmixA))) 
-  tabLRmixA3 = glayout(spacing=0,container=(tabLRmixA[3,1] <-gframe("Non-contributor analysis",container=tabLRmixA))) 
+  tabLRmixA1 = gWidgets::glayout(spacing=0,container=(tabLRmixA[1,1] <-gWidgets::gframe("Preanalysis",container=tabLRmixA)))  
+  tabLRmixA2 = gWidgets::glayout(spacing=0,container=(tabLRmixA[2,1] <-gWidgets::gframe("Calculation",container=tabLRmixA))) 
+  tabLRmixA3 = gWidgets::glayout(spacing=0,container=(tabLRmixA[3,1] <-gWidgets::gframe("Non-contributor analysis",container=tabLRmixA))) 
+  tabLRmixA4 = gWidgets::glayout(spacing=0,container=(tabLRmixA[4,1] <-gWidgets::gframe("MLE based",container=tabLRmixA)))  #Frame added in v1.11
 
-  tabLRmixB1 = glayout(spacing=0,container=(tabLRmixB[1,1] <-gframe("Loci",container=tabLRmixB)))  
-  tabLRmixB2 = glayout(spacing=0,container=(tabLRmixB[2,1] <-gframe("Joint",container=tabLRmixB)))  
+  tabLRmixB1 = gWidgets::glayout(spacing=0,container=(tabLRmixB[1,1] <-gWidgets::gframe("Loci",container=tabLRmixB)))  
+  tabLRmixB2 = gWidgets::glayout(spacing=0,container=(tabLRmixB[2,1] <-gWidgets::gframe("Joint",container=tabLRmixB)))  
 
 
   #Preanalysis (sensistivity and dropout plots)
-  tabLRmixA1[1,1] <- gbutton(text="Sensitivity",container=tabLRmixA1,handler=function(x) {
+  tabLRmixA1[1,1] <- gWidgets::gbutton(text="Sensitivity",container=tabLRmixA1,handler=function(x) {
     #get range from options under toolbar:
     optLRMIX <- get("optLRMIX",envir=mmTK) #options when integrating (reltol and boundaries)
     range <- optLRMIX$range
@@ -2544,19 +2929,18 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
     lines(spline(pDvec ,logLR,n=nTicks )) #use spline to interpolate points
     abline(h=0,col="gray")
    })
-  tabLRmixA1[2,1] <- gbutton(text="Conservative LR",container=tabLRmixA1,handler=function(x) {
+  tabLRmixA1[2,1] <- gWidgets::gbutton(text="Conservative LR",container=tabLRmixA1,handler=function(x) {
     optLRMIX <- get("optLRMIX",envir=mmTK) 
     nsample <- optLRMIX$nsample
     alpha <- optLRMIX$alpha
     qq <- c(alpha,0.5,1-alpha) #Dropout quantiles to consider 
     totA <-  sapply(  set$samples, function(x) sum(sapply(x,function(y) length(y$adata)) ) ) #number of alleles for each samples
     print("Total number of observed alleles for sample(s):")
-    print(totA)
+    printTable(totA)
     refHp <- refHd <- NULL
     if( any(mod$condOrder_hp>0) ) refHp <- lapply(set$refData ,function(x) x[mod$condOrder_hp]) #must have the original refData!
     if( any(mod$condOrder_hd>0) ) refHd <- lapply(set$refData ,function(x) x[mod$condOrder_hd]) #must have the original refData!
 
-  
     for(ss in 1:nS) { #for each sample (do dropout calculation)
      print(paste0("For evidence ",names(set$samples)[[ss]],":"))
      print("Estimating quantiles from allele dropout distribution under Hp...")
@@ -2564,12 +2948,12 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      DOdist <- simDOdistr(totA=totA[ss],nC=mod$nC_hp,popFreq=set$popFreq,refData=refHp,minS=nsample,prC=par$prC,M=Msamp)
      if(length(DOdist)==0) noSamples("Hp",Msamp)
      qqhp <- quantile(DOdist ,qq) #get estimated quantiles
-     print(qqhp)
+     printTable(qqhp)
      print("Estimating quantiles from allele dropout distribution under Hd...")
      DOdist <- simDOdistr(totA=totA[ss],nC=mod$nC_hd,popFreq=set$popFreq,refData=refHd,minS=nsample,prC=par$prC,M=Msamp)
      if(length(DOdist)==0) noSamples("Hd",Msamp)
      qqhd <- quantile(DOdist ,qq) #get estimated quantiles
-     print(qqhd)
+     printTable(qqhd)
      if(ss==1) consDO <- rbind(qqhp[-2],qqhd[-2])
      if(ss>1) {
       if(qqhp[1]<consDO[1,1]) consDO[1,1] <- qqhp[1]
@@ -2587,33 +2971,33 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
     selInd <- which.min(conslog10LR) #select reporting LR (which gives min LR)
     selDO <- consDO[selInd] #take out selected dropout
     LRi <- consLRi[,selInd] #take out selected LR-values
-    svalue(tabLRmixA2[1,2]) <- selDO  #update selected dropout
+    gWidgets::svalue(tabLRmixA2[1,2]) <- selDO  #update selected dropout
     assign("resEVIDLRMIX",LRi,envir=mmTK) #assign evidence weighting results - Based on LRmix
     tableLR(LRi) #update table with calculated LR
   })
   #Calculation
-  tabLRmixA2[1,1] <-  glabel(text="Dropout prob:",container=tabLRmixA2)
-  tabLRmixA2[1,2] <-  gedit(text="0.05",container=tabLRmixA2,width=8) #this is updated after dropout distr is ran
-  tabLRmixA2[2,1] <-  gbutton(text="Calculate LR",container=tabLRmixA2,handler=function(x) {
-    pD <- as.numeric(svalue(tabLRmixA2[1,2]))
+  tabLRmixA2[1,1] <-  gWidgets::glabel(text="Dropout prob:",container=tabLRmixA2)
+  tabLRmixA2[1,2] <-  gWidgets::gedit(text="0.05",container=tabLRmixA2,width=8) #this is updated after dropout distr is ran
+  tabLRmixA2[2,1] <-  gWidgets::gbutton(text="Calculate LR",container=tabLRmixA2,handler=function(x) {
+    pD <- as.numeric(gWidgets::svalue(tabLRmixA2[1,2]))
     checkProb(pD,"The allele dropout probability")
     LRi <- doLR(pD) 
     assign("resEVIDLRMIX",LRi,envir=mmTK) #assign evidence weighting results - Based on LRmix
     tableLR(LRi) #update table with calculated LR
   }) 
-  tabLRmixA2[2,2] <-  gbutton(text="Save table",container=tabLRmixA2,handler=f_savetableEVIDLRMIX)
+  tabLRmixA2[2,2] <-  gWidgets::gbutton(text="Save table",container=tabLRmixA2,handler=f_savetableEVIDLRMIX)
 
   #Tippet-analysis frame:
   tippets <- mod$knownref_hd #known non-contributors under Hd
   if(!is.null(tippets)) {
    tN <- names(set$refData[[1]][tippets]) #tippet names
-   tabLRmixA3[1,1] <- glabel( "Select reference to\nreplace with non-contributor:",container=tabLRmixA3)
-   tabLRmixA3[2,1] <- gcombobox( items=tN ,container=tabLRmixA3)
-   tabLRmixA3[3,1] <- gbutton(text="Sample non-contributors",container=tabLRmixA3,handler=function(x) {
+   tabLRmixA3[1,1] <- gWidgets::glabel( "Select reference to\nreplace with non-contributor:",container=tabLRmixA3)
+   tabLRmixA3[2,1] <- gWidgets::gcombobox( items=tN ,container=tabLRmixA3)
+   tabLRmixA3[3,1] <- gWidgets::gbutton(text="Sample non-contributors",container=tabLRmixA3,handler=function(x) {
 
      #calculate LR for all genotypes in original popFreq.
-     pD <- as.numeric(svalue(tabLRmixA2[1,2])) #take dropout-value as given in GUI
-     tipref <- svalue(tabLRmixA3[2,1]) #get name of reference to tippet
+     pD <- as.numeric(gWidgets::svalue(tabLRmixA2[1,2])) #take dropout-value as given in GUI
+     tipref <- gWidgets::svalue(tabLRmixA3[2,1]) #get name of reference to tippet
      Glist <- getGlist(set$popFreqQ) #get random man-Glist 
 
      print("Precalculating for non-contributor plot...")
@@ -2630,9 +3014,9 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
        nrefhdtmp <- refList_hd[[loc]]$Ki  #take out non-contributing replicates under Hd
        for(j in 1:nG) { #for each genotypes
         refhptmp[ 2*modtipind -c(1,0) ] <- Glist[[loc]]$G[j,] #insert genotype to reference
-        nrefhdtmp[ 2*tipsel-c(1,0) ] <- Glist[[loc]]$G[j,] #insert genotype to reference
-        hp0 <- likEvid( Evidlist[[loc]],T=refhptmp,V=refList_hp[[loc]]$Ki,x=mod$nC_hp-refList_hp[[loc]]$nR,theta=par$fst, prDHet=pDhp, prDHom=pDhp^2, prC=par$prC, freq=set$popFreqQ[[loc]])
-        hd0 <- likEvid( Evidlist[[loc]],T=refList_hd[[loc]]$Ri,V=nrefhdtmp,x=mod$nC_hd-refList_hd[[loc]]$nR,theta=par$fst, prDHet=pDhd, prDHom=pDhd^2, prC=par$prC, freq=set$popFreqQ[[loc]])
+        nrefhdtmp[ 2*tipsel-c(1,0) ] <- Glist[[loc]]$G[j,] #insert genotype to reference (noncontributor)
+        hp0 <- forensim::likEvid( Evidlist[[loc]],T=refhptmp,V=refList_hp[[loc]]$Ki,x=mod$nC_hp-length(refhptmp)/2,theta=par$fst, prDHet=pDhp, prDHom=pDhp^2, prC=par$prC, freq=set$popFreqQ[[loc]])  #updated line in v1.9 
+        hd0 <- forensim::likEvid( Evidlist[[loc]],T=refList_hd[[loc]]$Ri,V=nrefhdtmp,x=mod$nC_hd-refList_hd[[loc]]$nR,theta=par$fst, prDHet=pDhd, prDHom=pDhd^2, prC=par$prC, freq=set$popFreqQ[[loc]])
         Glist[[loc]]$LR[j] <- hp0/hd0 #store LR
        }
      } #end for each locus
@@ -2686,10 +3070,24 @@ if(0) {   #This block was introduced to rescale outliers. DONT IMPLEMENT
      } 
    }) #end TIPPET BUTTON
   } #end if not tippet possible
-  visible(mainwin) <- TRUE
-  focus(mainwin)
+
+  tabLRmixA4[1,1] <-  gWidgets::gbutton(text="Calculate LR",container=tabLRmixA4,handler=function(h,...) {
+   sig0 = 4   
+   fit <- qualLRmleBased() #Use maximum likelihood estimate
+   v1 <- signif(fit[1],digits=sig0)
+   v2 <- signif(10^fit[1],digits=sig0)
+   v3 <- signif(fit[2],digits=sig0)
+   v4 <- signif(fit[3],digits=sig0)
+   ans <- gWidgets::gconfirm(message=paste0("Results of MLE based LR:\nLR=",v2,"\nlog10LR=",v1,"\nEstimated pD under Hp=",v3,"\nEstimated pD under Hd=",v4,"\n\nDo you want to export the results?"),title="Maximum Likelihood based qualitative LR",icon="info")
+   if(ans) gWidgets::gmessage("Not implemented yet!")
+  })
+
+
+  gWidgets::visible(mainwin) <- TRUE
+  gWidgets::focus(mainwin) <- TRUE
  } #end refresh funtion
 
- visible(mainwin) <- TRUE
- focus(mainwin)
+ gWidgets::visible(mainwin) <- TRUE
+ gWidgets::focus(mainwin) <- TRUE
+
 } #end funcions

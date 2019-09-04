@@ -9,12 +9,14 @@
 #include <cmath> //includes special functions
 #include <stdio.h> //indludes printf-function
 #include <RcppArmadillo.h> //require RcppArmadillopackage and Namespaced defined
+//#include <Rcpp.h>
 //#include <armadillo> 
 #include <boost/math/special_functions/gamma.hpp> 
 using namespace std;
 using namespace arma;
 using namespace boost::math;
 const double PIVAL = std::acos(0.0)*2;
+const double INFVAL = std::numeric_limits<double>::infinity(); //used to define log(0)
 //#define DEBUG
 
  //About: We let allele-names be integers from 0:(N-1) where N are possible alleles in population (in popfreq). 
@@ -45,7 +47,7 @@ class recurseClassStutterRep { //recurse-class for each loci
 
   double *prC; //probability of dropin for each allele
   double *t0; //threshold for detecting peak height
-  Col<uword> *Abpind; //Indices of alleles
+  Col<uword> *ASind; //Indices of alleles
   double *lambda; //parameter for dropin-peak height exponential model
 
   //fst-correction:
@@ -70,11 +72,12 @@ class recurseClassStutterRep { //recurse-class for each loci
 
   //temporary variables:
   bool booldeg; //boolean for degeneration
+  int Unknown1Ind; //get index of 1st unknown -1 means no unknown (DEFAULT). Calculated in constructor. NEW IN v2.0
   Col<double> mui;
   Col<double> mutmp;
   Col<double> ri; //column vector
   Col<double> rhovec; //column vector, used for the rho vector
-  double Di; //residual sum squared
+  double Di,Di2; //residual sum squared
   double lik;
   double pGprod; //genotype probability product
   double pDprod; //dropout/in/nondrop probability product
@@ -97,7 +100,11 @@ class recurseClassStutterRep { //recurse-class for each loci
    int j,l; //used to traverse genotype probabilites
    uword l2; //used when comparing psi_elem
    for(j=0; j<*nGi; j++) { //for each loci we need to run recursion on each combination
-    if( (condVec.at(k))>=0 ) { j = condVec.at(k); } //Known genotype: insert static combination 
+    if( condVec.at(k)>=0 ) { 
+		j = condVec.at(k);   //Known genotype: insert static combination 
+	} else if (Unknown1Ind == k && pGvec->at(j) == 0) {  //otherwise if 1st unknown which has zero genotype prob. 
+		continue;  //continue loop j++. DONT CONSIDER If genotype prob was approximately zero for 1st unknown
+	}
     Zi->elem((Gset->row(j))) += 1; //update values in Zi. Updates twice if homozygote.
     if(k==(*nC-1) && *prC==0 && xi==0) { //if in last contributor, dropin-probability and stutterratio is zero -> 
      bool eval = true; //check if needed evaluation (i.e. drop-in)
@@ -117,8 +124,14 @@ class recurseClassStutterRep { //recurse-class for each loci
     } //END if in last contributor case without dropin,stutter
     Xij->elem((Gset->row(j) + k*(*nAalli))) += 1; //update elements in Xij-matrix
 	
-    if( (condVec.at(k))<0 ) { //only if no restriction
-     if(*fst>0) { //if theta-correction given
+    if( (condVec.at(k))<0 ) { //only if no restriction (i.e. unknown contributor)
+	 if(Unknown1Ind==k) { //If 1st unknown: use genotypes directly (has taken into account fst/relationship for the 1st unknown with calcGjoin function (prestep)
+	  pGenotmp->at(k) = pGvec->at(j);   //If unknown: multiply with unknown genotype product
+	  for (l = 0; l < 2; l++) { //for each allele, we must still count sampled alleles for given genotype
+	   mkvec->at(Gset->at(j, l)) += 1; //update counter of sampled allele
+	   (*nkval) += 1; //update with sampled 
+	  }
+	 } else {
       pGenotmp->at(k) = 1; //important to reset element first!
       for(l=0; l<2; l++) { //for each allele
        pGenotmp->at(k) *= ( mkvec->at(Gset->at(j,l))*(*fst) + (1-*fst)*pAvec->at(Gset->at(j,l)) ) / ( 1+(*nkval-1)*(*fst));
@@ -126,10 +139,8 @@ class recurseClassStutterRep { //recurse-class for each loci
        (*nkval)+=1; //update with sampled 
       }
       if(Gset->at(j,0)!=Gset->at(j,1)) pGenotmp->at(k)*=2; 
-      pGprod *=  pGenotmp->at(k);
-     } else { //use genotypes directly (Hardy Weinberg)
-      pGprod *= (pGvec->at(j));   //If unknown: multiply with unknown genotype product
      }
+	 pGprod *= pGenotmp->at(k); //multiply to prob jointG
     }
 
     if(k==(*nC-1)) { //IF IN LAST CONTRIBUTOR
@@ -141,7 +152,7 @@ class recurseClassStutterRep { //recurse-class for each loci
  	 if(xi>0) { //incorporate stutter ratio
       mutmp = mui;
       psiRind = find( *Zi>0 ); //Indices for contributing alleles WHICH HAS peak height
-      psitmp = Abpind->elem(psiRind); //gives index (starts from 1) of stuttered-alleles from contributing alleles.
+      psitmp = ASind->elem(psiRind); //gives index (starts from 1) of stuttered-alleles from contributing alleles.
       psiSind = find(psitmp>0); //indices to those beeing possible stuttered 
       if(psiSind.n_elem>0) {
         psiS = psitmp.elem(psiSind)-1; //find indices of stuttered alleles. Adjust index (starting from 0)
@@ -178,14 +189,21 @@ class recurseClassStutterRep { //recurse-class for each loci
          mutmp = mui.elem(psiYmu); //this is alpha-parameter!
          lik = lik + dot(mutmp,log(Ytmp)) - konstant*sum(mutmp)  - sum(log(Ytmp)) - sum(Ytmp)*konstant2; 
          for(l2=0;l2<psiYmu.n_elem;l2++) { //for each alleles in non-dropped out allees
-         lik = lik - std::tr1::lgamma(mui.at(psiYmu.at(l2))); //add last expression in sum 
-//          lik = lik - std::lgamma(mui.at(psiYmu.at(l2))); //add last expression in sum 
+//         lik = lik - std::tr1::lgamma(mui.at(psiYmu.at(l2))); //add last expression in sum 
+          lik = lik - lgamma(mui.at(psiYmu.at(l2))); //add last expression in sum 
          }
          if(psiDO.n_elem>0) { //there are drop.out elements (i.e. contributing genos gives peak 0)
           for(l2=0;l2<psiDO.n_elem;l2++) { //for each dropped out alleles (erf only takes elements)
            Di = mui.at(psiDO.at(l2)); //this is alpha-parameter!
-           Di = gamma_p(Di,(*t0)*konstant2); //see formula for cdf-gamma
-           lik = lik + log(Di);// - std::lgamma(mui.at(psiDO.at(l))*konstant2); //add log-probability
+           double bpar = (*t0)*konstant2;
+			//Rcpp::Rcout << Di << " " << bpar << "\n"; //debug part 
+			try{ //high values of Di with low values of bpar causes error -> Need to handle the exception to avoid crash
+			 Di2 = tgamma_lower(Di,bpar);
+			} catch(...) {
+			 Di2 = 0; //set as zero if error is thrown.
+			}
+            Di = log( Di2 ) -  lgamma(Di);  //is -Inf for invalid values
+		   lik = lik + Di;// - std::lgamma(mui.at(psiDO.at(l))*konstant2); //add log-probability
           }
          } //end dropout
        } else { //end possible combination
@@ -203,18 +221,14 @@ class recurseClassStutterRep { //recurse-class for each loci
     if(condVec.at(k)>=0) { 
      j = *nGi;  //end loop if known combination
     } else {
-     if(*fst>0) { //if theta-correction given
-      pGprod /=  pGenotmp->at(k);
-      mkvec->elem(Gset->row(j))-=1; //update counter of sampled allele
-      (*nkval)-=2; //update with sampled 
-     } else { //use genotypes directly (Hardy Weinberg)
-      pGprod /= (pGvec->at(j));   //If unknown: divide with unknown genotype product
-     }
+	 mkvec->elem(Gset->row(j)) -= 1; //update counter of sampled allele
+	 (*nkval) -= 2; //update with sampled 
+	 pGprod /= pGenotmp->at(k);
     }
    } //END for each combination j
   } //END recursive function (returns)
 
-  recurseClassStutterRep(int *S, double *pC, double *pG, double *pA, Row<int> condV, uword *A, double *H, uword *Gvec, int *C, int *nA, int *nAall, int *nG, Col<double> *omega, uword *allAbpind,double *theta2 ,double *t0in, double *fstin, int *mkvector, int *nkvalue, double *lam, double *bp) {
+  recurseClassStutterRep(int *S, double *pC, double *pG, double *pA, Row<int> condV, uword *A, double *H, uword *Gvec, int *C, int *nA, int *nAall, int *nG, Col<double> *omega, uword *allASind,double *theta2 ,double *t0in, double *fstin, int *mkvector, int *nkvalue, double *lam, double *bp) {
    nS = S;
 //   nAi = nA; //copy pointer to number of alleles in evidence
    nC = C; //copy pointer to number of contributors
@@ -230,8 +244,16 @@ class recurseClassStutterRep { //recurse-class for each loci
    tau = theta2[0];
    alpha = theta2[1];
    beta = theta2[2];
-   booldeg = fabs(beta-1.0)>0.00001;
+   booldeg = fabs(beta-1.0)>0.00001; //criterion for considering degradation param
    
+   //Get index of  1st unknown (if any). I.e. the first index of where condVec<0
+   Unknown1Ind = -1;
+   uvec inds = find(condVec < 0);
+   if (inds.n_elem > 0) { //if contained elements
+	   Unknown1Ind = int(inds(0)); //Notice casting from uint to int 
+   }
+
+
    xi = theta2[3];
    konstant = log(tau);
    konstant2 = 1/tau;
@@ -243,7 +265,7 @@ class recurseClassStutterRep { //recurse-class for each loci
    pGvec = new Col<double>( pG, *nGi, false); //insert genotype probabilities
    pAvec = new Col<double>( pA, *nAalli, false); //insert allele probabilities
    mkvec = new Col<int>( mkvector, *nAalli, false); //insert allele-sampled
-   Abpind = new Col<uword>( allAbpind, *nAalli, false); //insert allele evidence (allele indices)
+   ASind = new Col<uword>( allASind, *nAalli, false); //insert allele evidence (allele indices)
    bpvec = new Col<double>( bp, *nAalli, false); //insert base pair information (for each possible alleles)
 
    pGenotmp = new Col<double>(*nC); //init datavector
@@ -284,7 +306,7 @@ class recurseClassStutterRep { //recurse-class for each loci
    delete pAvec;
    delete bpvec;
    delete mkvec;
-   delete Abpind;
+   delete ASind;
    delete pGenotmp;
    delete Yi;
 
@@ -299,7 +321,7 @@ class recurseClassStutterRep { //recurse-class for each loci
 
 
 extern "C" {
-void loglikgammaC(double *logPE, double *theta, int *np,int *nC, int *nK, int *nL, int *nS, int *nA, double *allY, uword *allA , int *CnA,uword *allAbpind, int *nAall, int *CnAall, uword *Gvec, int *nG, int *CnG,int *CnG2, double *pG,  double *pA,  double *pC, int* condRef, double *t0, double *fst, int *mkvec, int *nkval, double *lambda, double *bp, int *isPhi) {
+void loglikgammaC(double *logPE, double *theta, int *np,int *nC, int *nK, int *nL, int *nS, int *nA, double *allY, uword *allA , int *CnA,uword *allASind, int *nAall, int *CnAall, uword *Gvec, int *nG, int *CnG,int *CnG2, double *pG,  double *pA,  double *pC, int* condRef, double *t0, double *fst, int *mkvec, int *nkval, double *lambda, double *bp, int *isPhi) {
  int i;
  double Li; //likelihood for a given locus
  Col<double> *omega; //mixture proportion 
@@ -343,18 +365,20 @@ void loglikgammaC(double *logPE, double *theta, int *np,int *nC, int *nK, int *n
   Mat<int> *condMatrix; //conditional matrix for each contributor (values equal Gset-indices)
   condMatrix = new Mat<int>(condRef, *nL, *nC,false); //insert condRef-matrix directly
   for(i=0; i<*nL; i++) {  //for each loci we need to run the recursion:
-   	 recurseClassStutterRep *rec = new recurseClassStutterRep(nS, pC, &pG[CnG[i]],&pA[CnAall[i]] ,condMatrix->row(i),&allA[CnA[(*nS)*i]],&allY[CnA[(*nS)*i]], &Gvec[CnG2[i]], nC, &nA[(*nS)*i], &nAall[i],&nG[i],  &mvec, &allAbpind[CnAall[i]], &theta[*nC-1]  , t0, fst, &mkvec[CnAall[i]], &nkval[i], lambda, &bp[CnAall[i]]); //create object of recursion
+   	 recurseClassStutterRep *rec = new recurseClassStutterRep(nS, pC, &pG[CnG[i]],&pA[CnAall[i]] ,condMatrix->row(i),&allA[CnA[(*nS)*i]],&allY[CnA[(*nS)*i]], &Gvec[CnG2[i]], nC, &nA[(*nS)*i], &nAall[i],&nG[i],  &mvec, &allASind[CnAall[i]], &theta[*nC-1]  , t0, fst, &mkvec[CnAall[i]], &nkval[i], lambda, &bp[CnAall[i]]); //create object of recursion
      Li = rec->bigsum; //extract likelihood
      delete rec; //delete recurse object
-     *logPE = (*logPE) + log(Li);
      if(Li==0) { //if the likelihood hits 0
-      break;  //stop and return
-     }
+      *logPE = -INFVAL;
+	  break;  //stop and return
+     } else {
+      *logPE = (*logPE) + log(Li);		 
+	 }
   } //end for each loci i:
 
   delete condMatrix;
  } else { //end calculations
-     *logPE = log(0); //return -Inf 
+     *logPE = -INFVAL; // v1.9.2 and up: CODE CHANGED FROM log(0); //return -Inf 
  }
  delete omega;
 } //end function

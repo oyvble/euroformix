@@ -1,5 +1,5 @@
 #' @title noncontrMLE
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description noncontrMLE Calculate random log-likelhood values by exchanging a reference with a random man from population
 #' @details The function simulates ntippet numbder of 
 #' @param mlefit A fitted mle object from contLikMLE function

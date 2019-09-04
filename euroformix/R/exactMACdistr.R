@@ -1,5 +1,5 @@
 #' @title exactMACdistr
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description Calculation of false positive probability of Matching allele counter.
 #' @details This function will calculate the false positive probability for a given range of allele matches.
 #' Thanks 1: Thore Egeland: Explicit formulas.

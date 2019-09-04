@@ -1,5 +1,5 @@
 #' @title plotEPG
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description EPG plotter created by Oskar Hansson.
 #' @details Plots peak height with corresponding allele for one sample for a given kit.
 #' @param Data List of adata- and hdata-elements.
@@ -39,10 +39,10 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 	# sampleName is used as title.
 	xlabel <- "bp" # X axis label:
 	ylabel <- "peak height (rfu)"	 # Y axis label:
-	peakHalfWidth <- 0.6 # Peak half width in base pair (width of peak = 2 * peakHalfWidth):
+	peakHalfWidth <- 0.4 # Peak half width in base pair (width of peak = 2 * peakHalfWidth):
 	alleleNameTxtSize <- 0.8 # Relative Allele name text size:	
-	yMarginTop <- 1.04 # Distance between the highest peak in a plot and the plot border (1.04 = 4% margin).
-      if(showPH) yMarginTop <- 1.3 
+	yMarginTop <- 1.05 # Distance between the highest peak in a plot and the plot border (1.04 = 4% margin).
+     if(showPH) yMarginTop <- 1.3 
 		
       kit <- getKit(typingKit) # Get kit information.
 	# Check if kit was found.	
@@ -112,15 +112,15 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
  		selectedMarkers <- dyeVector == colors[color]
 
             if (kitFound) {
-             markerByColorList[[color]] <- locusVectorKit[selectedMarkers] #EDIT by ØB: marker names
+             markerByColorList[[color]] <- locusVectorKit[selectedMarkers] #EDIT by OB: marker names
 		} else {
-             markerByColorList[[color]] <- locus #EDIT by ØB: marker names
+             markerByColorList[[color]] <- locus #EDIT by OB: marker names
             }
 		allelesByColor <- alleleList[selectedMarkers] # Extract all alleles in the same color channel.
 		heightsByColor <- heightList[selectedMarkers] # Extract all peak heights in the same color channel.		
 		offsetByColor <- offsetVector[selectedMarkers]# Extract all marker offsets in the same color channel.
 		repeatUnitByColor <- repeatUnitVector[selectedMarkers] # Extract all repeat unit sizes in the same color channel.
-            refByColor <- refList[selectedMarkers] #added ØB
+            refByColor <- refList[selectedMarkers] #added OB
 
 		# Loop over all markers in that color channel.
 		for(marker in 1:length(markerByColorList[[color]]) ){
@@ -166,8 +166,9 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 		}
 	}
 
-	# CREATE GRAPH
-
+     ################
+	# CREATE GRAPH #
+     ################
 	# Set up the plot window according to the number of color channels.
 	par(mfrow = c(nColors, 1))
 
@@ -179,10 +180,11 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 	# The default is c(5, 4, 4, 2) + 0.1
 	par(mar = c(2.3, 4, 1.5, 1) + 0.1)
 
-	# Define lower and upper bound for the x axis.
+	# Define lower and upper bound for the x/y axis.
 	xMin <- min(sapply( bpListByColorList,function(x) min(na.omit(x))))
 	xMax <- max(sapply( bpListByColorList,function(x) max(na.omit(x))))
 	yMaxCol <- sapply( phListByColorRep,function(x) max(sapply(x,function(y) max(na.omit(y)))) )  #get maximum of y per col
+        yMaxCol[is.infinite(yMaxCol)] = 1e-6 
 
 	#Loop over all color channels.
 	for (color in 1:nColors){
@@ -192,10 +194,10 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 		bpVecRep <- bpListByColorListRep[[color]]
 		hVec <- phListByColorRep[[color]]
 		aVec <- allelesByColorList[[color]]
-            if(isLab) rVec <- refByColorList[[color]] #references for each alleles
+          if(isLab) rVec <- refByColorList[[color]] #references for each alleles
 
 		# Create blank plot with axes.
-            yMax <- 1
+          yMax <- 1
 		noData <- FALSE
 		if(length(yMaxCol)>0) {
               yMax <- yMaxCol[color]
@@ -206,8 +208,10 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 
 	      plot(c(xMin, xMax), c(0, yMax), type="n", ylim = c(0, yMax * yMarginTop), ann = FALSE,axes=FALSE)
             axis(side = 2)
-            nl <- 25 #number of ticks
-            axis(side = 1,at=seq(xMin,xMax,l=nl),labels=rep("",nl))
+            bpgrid = 25
+            nl <- ceiling(xMax/bpgrid) #number of ticks (for each 25 bp)
+            xs = seq(0,bpgrid*nl,bpgrid)
+            axis(side = 1,at=xs,labels=rep("",length(xs)))
             if(isLab && color==1) legend("topright",legend=paste0("Label ",1:length(refnames)," = ",refnames),bty="n")
             abline(h=0)
             if(threshT>0) abline(h=threshT,col="gray",lwd=0.5) #plot threshold
@@ -215,16 +219,14 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 		if (color == 1) 	title(main = sampleName, col.main = "red", font.main = 4) # Create a title.
 		title(ylab = ylabel) # Label the y axes.
 
-		# Label the x axis: pos values of 1, 2, 3 and 4 indicate positions below, left, above and right of the coordinate.
-		mtext(paste(xlabel), side = 1, line = 0, adj = 0, cex = alleleNameTxtSize)
-
 		# Write allele names under the alleles.
 		# The additional par(xpd=TRUE) makes it possible to write text outside of the plot region.
-		text(bpVec, 0, labels = aVec, cex = alleleNameTxtSize, pos = 1, xpd = TRUE) 
-            if(isLab) text(bpVec,-yMax/20,labels=rVec,cex = alleleNameTxtSize,pos=1, xpd = TRUE)
-            text(bpmarkerByColorList[[color]],  yMax * yMarginTop ,markerByColorList[[color]],cex=1,font=2,xpd = TRUE)
-
-        	# Loop over all peaks.
+		if(length(bpVec)==0) next #skip if no info
+          text(bpVec, 0, labels = aVec, cex = alleleNameTxtSize, pos = 1, xpd = TRUE) 
+          if(isLab) text(bpVec,-yMax/20,labels=rVec,cex = alleleNameTxtSize,pos=1, xpd = TRUE)
+          text(bpmarkerByColorList[[color]],  yMax * yMarginTop ,markerByColorList[[color]],cex=1,font=2,xpd = TRUE)
+ 
+       	# Loop over all peaks.
 		for (peak in 1:length(bpVec)){
 			if (drawpeaks) { # Create corners of peak triangle.
                    ph <- hVec[[1]][peak]
@@ -327,6 +329,7 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
    } else {
     kitlocs <- locs
    }
+#typingKit=kitname;alleleList=alist;heightList=hlist;locus=kitlocs;sampleName=sname;refList=clist;refnames=names(refcond);showPH=showPH
    generateEPG(typingKit=kitname,alleleList=alist,heightList=hlist, locus=kitlocs,sampleName=sname, refList=clist,refnames=names(refcond),showPH=showPH)
 }
 

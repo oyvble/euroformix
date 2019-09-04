@@ -1,5 +1,5 @@
 #' @title logLiki
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description logLiki calculates the likelihood of each marker of the STR DNA mixture given a theta
 #' @details
 #' Function calls procedure in c++ by using the package Armadillo and Boost.
@@ -36,13 +36,13 @@ logLiki <- function(mlefit){
  } else {
   logLi <- numeric()
   logliktheta <- function() {   #call c++- function: 
-    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta2),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allAbpind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
+    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta2),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
     if(is.null(xi)) Cval <- Cval + log(model$pXi(theta[np]))
     return(Cval) 
   }
   for(loc in locs) { #traverse for each locus
    samples <- lapply(model$samples,function(x) x[loc])
-   ret <- prepareC(nC=nC,samples,popFreq=model$popFreq[loc],refData=model$refData[loc],condOrder=model$condOrder,knownRef=model$knownRef,kit=model$kit)
+   ret <- prepareC(nC=nC,samples,popFreq=model$popFreq[loc],refData=model$refData[loc],condOrder=model$condOrder,knownRef=model$knownRef,kit=model$kit,fst=model$fst,knownRel=model$knownRel,ibd=model$ibd,incS=is.null(xi) || xi>0)
    logLi <- c(logLi,logliktheta())
   }
  } #end case

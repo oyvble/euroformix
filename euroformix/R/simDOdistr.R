@@ -1,5 +1,5 @@
 #' @title simDOdistr
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description MCMC Allele dropout distribution sampler based on total number of alleles in an evidence.
 #' @export
 #' @details simDOdistr samples from the drop-out distribution based on total number of alleles in evidence under a specified prepositions. It returns if no samples was accepted in first iteration
@@ -150,8 +150,8 @@ simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=
    refs <- refData[[loc]]
    for(j in 1:length(refs)) {
     refvec[[loc]] <- c(refvec[[loc]], refs[[j]])
+    uH[i] <- uH[i] - as.integer(length(refs[[j]])>0) #number of unrestricted unknowns: Updated in v1.9  
    }
-   uH[i] <- nC - length(refs) #number of unrestricted unknowns  
   }
  }
  if(any(uH<0)) { print("There was more references than contributors"); return(NULL) }
@@ -171,10 +171,11 @@ simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=
   for(loc in locs) {
    i <- which(locs==loc)
    freq <- popFreq[[loc]]
-   freqN = as.numeric(names(freq))
+   freqN = names(freq) #updated: not convert to numeric
 
-   HRef = t(matrix(as.numeric(rep(refvec[[loc]],M)),ncol=M))
-   HA2 <- HA <- cbind(HRef,matrix(sample(freqN,2*M*uH[i],freq,replace=TRUE),nrow=M))
+   HRef = t(matrix(rep(refvec[[loc]],M),ncol=M))
+   HA2 <- cbind(HRef,matrix(sample(freqN,2*M*uH[i],freq,replace=TRUE),nrow=M))
+   HA <- matrix(1,ncol=ncol(HA2),nrow=nrow(HA2))
    for(j in 1:length(freqN))  HA[HA2==freqN[j]] = primtall[j]    #rename with primenumbers
 
    #generate dropout:
@@ -211,7 +212,7 @@ simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=
    #idea:
    # 1) generate number of dropouts
    # 2) For each size-number of contamination we generate prime numbers and
-    #check the number of the prime-products to see if the cont-alleles are unique
+   #check the number of the prime-products to see if the cont-alleles are unique
 
    #samples number of contaminations in each case:
    ncontam = sample(0:pos,M,prob=prC_vec,replace=TRUE) #sample number of dropin

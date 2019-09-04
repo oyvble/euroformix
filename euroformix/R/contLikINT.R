@@ -1,6 +1,6 @@
 
 #' @title contLikINT
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description contLikINT marginalizes the likelihood of the STR DNA mixture given some assumed a bayesian model by numerical integration.
 #' @details The procedure are doing numerical integration to approximate the marginal probability over the noisance parameters. Mixture proportions have flat prior.
 #' 
@@ -24,19 +24,21 @@
 #' @param kit shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
 #' @param scale used to make integrale calculateable for small numbers. For scale!=0, integrale must be scaled afterwards with exp(-scale) to be correct.
 #' @param maxEval Maximum number of evaluations in the adaptIntegrate function. Default is 0 which gives an infinite limit.
+#' @param knownRel gives the index of the reference which the 1st unknown is related to.
+#' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)
 #' @return ret A list(margL,deviation,nEvals) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
 #' @export 
 #' @references Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.
 #' @keywords continuous, Bayesian models, Marginalized Likelihood estimation
 
 
-contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0){
+contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0)){
  if(is.null(maxEval)) maxEval <- 0
  require(cubature) 
  if(length(lower)!=length(upper)) stop("Length of integral limits differs")
  np2 <- np <- nC + 2 + sum(is.null(xi)) #number of unknown parameters
  if(length(lower)!=np) stop("Length of integral limits differs from number of unknown parameters specified")
- ret <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit)
+ ret <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit,knownRel,ibd,fst,incS=is.null(xi) || xi>0)
  nodeg  <- is.null(kit) #boolean whether modeling degradation FALSE=YES, TRUE=NO
  if(nodeg) {
    np2 <- np2 - 1
@@ -58,7 +60,7 @@ contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL
   } else { #if xi known
     theta2 <- c(theta2,xi) #add xi param to parameters
   }
-  Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta2),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allAbpind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(prC), ret$condRef,as.numeric(threshT),as.numeric(fst),ret$mkvec,ret$nkval,as.numeric(lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
+  Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta2),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(prC), ret$condRef,as.numeric(threshT),as.numeric(fst),ret$mkvec,ret$nkval,as.numeric(lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
   if(is.null(xi)) Cval <- Cval + log(pXi(theta2[np2])) #weight with prior
   expCval <- exp(Cval+scale) #note the scaling given as parameter "scale".
   return(expCval) #weight with prior of tau and stutter.

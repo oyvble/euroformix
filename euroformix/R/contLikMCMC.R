@@ -1,6 +1,6 @@
 
 #' @title contLikMCMC
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description contLikMCMC simulates from the posterior distribution for a bayesian STR DNA mixture model.
 #' @details The procedure are doing MCMC to approximate the marginal probability over noisance parameters. Mixture proportions have flat prior.
 #' 
@@ -22,22 +22,23 @@ contLikMCMC = function(mlefit,niter=1e4,delta=10,maxxi=1) {
  #A mlefit object returned from contLikMLE is required to do MCMC!
  loglik0 <-  mlefit$fit$loglik #get maximized likelihood
  model <- mlefit$model
+ xi = model$xi
  th0 <- mlefit$fit$thetahat
  Sigma0 <- mlefit$fit$thetaSigma
  varnames <- names(mlefit$fit$thetahat) #variable names
  if(!all(length(th0)%in%dim(Sigma0))) stop("Length of th0 and dimension of Sigma was not the same!")
- ret <- prepareC(model$nC,model$samples,model$popFreq,model$refData,model$condOrder,model$knownRef,model$kit)
+ ret <- prepareC(model$nC,model$samples,model$popFreq,model$refData,model$condOrder,model$knownRef,model$kit,model$knownRel,model$ibd,model$fst,incS=is.null(xi) || xi>0)
  nC <- ret$nC
  np <- length(th0) #number of unknown parameters
  nodeg <- is.null(model$kit) #check for degradation
 
- if(is.null(model$xi)) {
+ if(is.null(xi)) {
    loglikYtheta <- function(theta) {   #call c++- function: length(phi)=nC+1
     if(any(theta<0)) return(-Inf) 
     xi1 <- theta[np] #value of xi
     if(theta[np]>maxxi) return(-Inf) #special case for xi which has a upper boundary
     if(nodeg) theta <- c(theta[1:(nC+1)],1,xi1)
-    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allAbpind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
+    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
     loglik <- Cval + model$pXi(xi1) #weight with prior of tau and 
     return(loglik) #weight with prior of tau and stutter.
    }
@@ -46,7 +47,7 @@ contLikMCMC = function(mlefit,niter=1e4,delta=10,maxxi=1) {
     if(nodeg) theta2 <- c(theta2,1)
     theta <- c(theta2,model$xi) #stutter-parameter added as known
     if(any(theta<0)) return(-Inf) 
-    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allAbpind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
+    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
     return(Cval)
    }
  }
@@ -65,7 +66,7 @@ contLikMCMC = function(mlefit,niter=1e4,delta=10,maxxi=1) {
    rlist <- list()
    if(nC>1) rlist[[length(rlist)+1]] <- 1:(nC-1)
    rlist[[length(rlist)+1]] <- nC:(nC+1+!nodeg)
-   if(is.null(model$xi))  rlist[[length(rlist)+1]] <- np
+   if(is.null(xi))  rlist[[length(rlist)+1]] <- np
    nB <- length(rlist) #number of blocks
    M2 <- nB*niter+1
    postth <- matrix(NA,ncol=np,nrow=M2) #accepted th

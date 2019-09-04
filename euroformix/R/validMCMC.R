@@ -1,5 +1,5 @@
 #' @title validMCMC
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description Validates aposteriori samples from MCMC method
 #' @details This function takes samples from the MCMC as given in a matrix and shows the aposterior functions.
 #' @param mcmcfit A object returned by contLikMCMC

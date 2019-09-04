@@ -1,6 +1,6 @@
 
 #' @title contLikMLEpara
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description Parallelization on contLikMLE using snow
 #' @details The procedure is doing parallelization of the contLikMLE function
 #' 
@@ -24,29 +24,31 @@
 #' @param delta Standard deviation of normal distribution when drawing random startpoints. Default is 10.
 #' @param kit Used to model degradation. Must be one of the shortnames of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}. 
 #' @param verbose Boolean whether printing optimization progress. Default is TRUE.
+#' @param maxIter Maximum number of iterations for the optimization. Default is 30.
+#' @param knownRel gives the index of the reference which the 1st unknown is related to.
+#' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)
 #' @return ret A list(fit,model,nDone,delta) where fit is Maximixed likelihood elements for given model.
 #' @export
 #' @references Cowell,R.G. et.al. (2014). Analysis of forensic DNA mixtures with artefacts. Applied Statistics, 64(1),1-32.
 #' @keywords continuous model, Maximum Likelihood Estimation
 
-contLikMLEpara = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,nDone=1,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=10,kit=NULL,verbose=TRUE){
- library(snow)
+contLikMLEpara = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,nDone=1,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=10,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0)){
  library(parallel, warn.conflicts = FALSE)
 
- ncores <- detectCores() #number of physical cores (parallel)
+ ncores <- parallel::detectCores() #number of physical cores (parallel)
  nCl <- min(ncores,nDone) #number of clusters
  print(paste0("\nNumber of optimalizations will be ",nCl ))
- if( nCl==1 || nCl%%2!=0) stop("Please change the number of startpoints to an even number. This is can be changed under Optimization.")
- cl <- snow::makeCluster(nCl,type="SOCK")
- inputlist <- list(nC=nC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,xi=xi,prC=prC,nDone=1,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,delta=delta,kit=kit,verbose=verbose)
+ #if( nCl==1 || nCl%%2!=0) stop("Please change the number of startpoints to an even number. This is can be changed under Optimization.")
+ cl <- parallel::makeCluster(nCl,type="PSOCK")
+ inputlist <- list(nC=nC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,xi=xi,prC=prC,nDone=1,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,delta=delta,kit=kit,verbose=verbose,maxIter=maxIter,knownRel=knownRel,ibd=ibd)
  inputlist <- rep(list(inputlist),nCl) #number of clusters
 
  fclust<-function(x) {
   library(euroformix)
-  return(euroformix::contLikMLE(x$nC,x$samples,x$popFreq,x$refData,x$condOrder,x$knownRef,x$xi,x$prC,x$nDone,x$threshT,x$fst,x$lambda,x$pXi,x$delta,x$kit,x$verbose))
+  return(euroformix::contLikMLE(x$nC,x$samples,x$popFreq,x$refData,x$condOrder,x$knownRef,x$xi,x$prC,x$nDone,x$threshT,x$fst,x$lambda,x$pXi,x$delta,x$kit,x$verbose,x$maxIter,x$knownRel,x$ibd))
  }
- retlist <- clusterApply(cl,inputlist,fclust)
- stopCluster(cl)
+ retlist <- parallel::clusterApply(cl,inputlist,fclust)
+ parallel::stopCluster(cl)
  ismax <- which.max(sapply(retlist,function(x) x$fit$loglik))[1]
  return(retlist[[ismax]])
 } #end function

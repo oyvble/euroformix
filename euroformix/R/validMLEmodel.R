@@ -1,14 +1,16 @@
 #' @title validMLEmodel
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description validMLEmodel makes model validation whether the observed peak heights fits the maximum likelihood fitted gamma distribution.
 #' @details The cumulative probability of the observed allele peaks are calculated and compared with a uniform distribution.
 #' Function calls procedure in c++ by using the package Armadillo and Boost.
 #'
 #' @param mlefit Fitted object using contLikMLE
 #' @param kit Shortname of kit used
+#' @param plottitle Maintitle text used in the PP-plot
+#' @param alpha The significance level used for the envelope test. Default is 0.01
 #' @return ret A vector for each marker with cumulative probabilities
 #' @export
-validMLEmodel <- function(mlefit,kit=NULL) {
+validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01) {
  require(cubature)
  delta <- 0.01 #relative error in integral
  theta2 <- theta <- mlefit$fit$thetahat #condition on mle parameter
@@ -27,38 +29,40 @@ validMLEmodel <- function(mlefit,kit=NULL) {
  mvec <- mlefit$fit$thetahat2[1:nC]
  mu <- theta[nC]
  sigma <- theta[nC+1]
- 
-if(is.null(model$xi)) { #stutter is unknown
+ xi <- model$xi 
+ fst <- model$fst
+
+if(is.null(xi)) { #stutter is unknown
   likYtheta <- function(yval) {   #call c++- function: length(theta)=nC+2
     ret$obsY[j] <- yval
-    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allAbpind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),as.numeric(ret$bp),as.integer(0),PACKAGE="euroformix")[[1]]
+    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),as.numeric(ret$bp),as.integer(0),PACKAGE="euroformix")[[1]]
     return(exp(Cval + log(model$pXi(theta[ret$nC+3])))) #weight with prior of tau and 
   }
 } else { #stutter is known. call c++- function: length(theta)=nC+1
   likYtheta <- function(yval) {   
     ret$obsY[j] <- yval
-    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allAbpind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),as.numeric(ret$bp),as.integer(0),PACKAGE="euroformix")[[1]]
+    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),as.numeric(ret$bp),as.integer(0),PACKAGE="euroformix")[[1]]
     return(exp(Cval))
   }
 }
 
-  alpha <- 0.001 #ensure very far out in quantile.
-  alpha2 <- alpha/sum(sapply(model$samples,function(x) sapply(x,function(y) length(y$adata)))) #"bonferroni outlier"
+  alphaQ <- 0.001 #ensure very far out in quantile (used for estimating probs in gamma-distribution).
+  alpha2 <- alphaQ/sum(sapply(model$samples,function(x) sapply(x,function(y) length(y$adata)))) #"bonferroni outlier"
   maxYobs <- max(sapply(model$samples,function(x) sapply(x,function(y) max(y$hdata)))) #max observation
   maxYexp <- qgamma(1-alpha2,2/sigma^2,scale=mu*sigma^2) #max observation in theory
   maxY <- ceiling(max(maxYobs,maxYexp)) #get max observed
   minY <- model$threshT
  
-  if(!is.null(kit)) kitinfo <- getKit(kit) #get kitinfo
-  if(length(kitinfo)==1) {
-   print("Wrong kit specified.")
+  if(!is.null(kit)) {
+   kitinfo <- getKit(kit) #get kitinfo
+   if(length(kitinfo)==1)  print("Wrong kit specified.")
   }
 
   cumprobi <- avec <- numeric()
   locvec <- dyevec <- numeric()
   for(loc in locs) { #traverse for each locus
    samples <- lapply(model$samples,function(x) x[loc])
-   ret <- prepareC(nC=model$nC,samples,popFreq=model$popFreq[loc],refData=model$refData[loc],condOrder=model$condOrder,knownRef=model$knownRef,kit=model$kit)
+   ret <- prepareC(nC=model$nC,samples,popFreq=model$popFreq[loc],refData=model$refData[loc],condOrder=model$condOrder,knownRef=model$knownRef,kit=model$kit,model$knownRel,model$ibd,fst,incS=is.null(xi) || xi>0)
    Yupper <- ret$obsY  #observed peak heights is upper limit in integral
    n <- length(Yupper) #number of observed peak heights 
    if(n==0) next #skip if none observed
@@ -78,15 +82,16 @@ if(is.null(model$xi)) { #stutter is unknown
     dyevec <- c(dyevec,dye) 
    }
   }
-  alpha2 <- 0.05/length(cumprobi) #0.05 significanse level with bonferroni correction
-  print(cbind(dyevec,locvec,avec,cumprobi)[cumprobi<(alpha2/2) | cumprobi>(1-alpha2/2),]) #two sided check
+
+  N <- length(cumprobi) #number of samples
+  print(paste0("Total number of peak height observation=",N))
+  alpha2 <- alpha/N #0.05 significanse level with bonferroni correction
   
-  N <- length(cumprobi)
-  cumunif <-  punif((1:N)-0.5,0,N)
+  cumunif <- ((1:N)-0.5)/N #=punif((1:N)-0.5,0,N)
   locind <- sapply(locvec,function(x) which(x==locs))
   #sum(cumprobi<=0.5)/N
   ord <- order(cumprobi)
-  plottitle <- "PP-plot between fitted model and theoretical model"
+  #plottitle <- "PP-plot between fitted model and theoretical model"
   xlab="Expected: Unif(0,1)"
   ylab="Observed: (Pr(Yj<=yj|Y_{-j}<=y_{-j},Yj>=thresh,model))"
   sz <- 1.5
@@ -115,14 +120,32 @@ if(is.null(model$xi)) { #stutter is unknown
   # fig 5, finally, the scatterplot-- needs regular axes, different margins
   par(mar = c(1,2,0,.5), xaxt="s", yaxt="s", bty="n")
  
-  #Goodness of fit test
-  #pval <- ks.test(cumprobi, "punif")$p.value
-  #txt <- paste0("p-value from Goodness-of-fit test = ",format(pval,digits=3))
-  #print(txt)
-  #par(mfrow=c(1,2))
-  #qqplot(cumunif,cumprobi,xlim=0:1,ylim=0:1,main=plottitle,xlab=xlab,ylab=ylab)
-  plot(0,0,ty="n",xlim=0:1,ylim=c(0,1),cex.axis=sz,asp=1)#,main="PP-plot between fitted model and theoretical model",xlab="Expected: Unif(0,1)",ylab="Observed: (Pr(Yj<=yj|Y_{-j}<=y_{-j},Yj>=thresh,model))")
+  plot(0,0,ty="n",xlim=0:1,ylim=c(0,1),cex.axis=sz,asp=1)
   segments(x0=0,y0=0,x1=1,y1=1,lwd=1.2)
+
+  #Goodness of fit test  #REMOVED: pval <- ks.test(cumprobi, "punif")$p.value
+  #Updated block in 0.6.2: DRAW ENVELOPE LINES FOR ORDER STATISTICS UNDER RANDOMNESS:
+  xsq <- seq(0,1,l=1000) #Draw envolope lines
+  ysq <- c(alpha,alpha2) #quantiles to consider
+  for(qq in ysq) {
+    lines(xsq,qbeta(qq/2,N*xsq,N-N*xsq+1),col=which(ysq==qq),lty=2)
+    lines(xsq,qbeta(1-qq/2,N*xsq,N-N*xsq+1),col=which(ysq==qq),lty=2)
+  }
+  legend("bottomright",legend=paste0("1-Envelope-coverage=",c("",paste0(alpha,"/",N,"=")),signif(ysq,2)),col=1:length(ysq),lty=2,cex=1.3)
+
+  #print points outside the bonferroni-adjusted envolopment
+  print(paste0("Significance level=",signif(alpha*100,digits=2),"%"))
+  print(paste0("Bonferroni-adjusted significance level=",signif(alpha2*100,digits=2),"%"))
+  print("List of observations outside the envelope (with the Bonferroni-level):") #two sided check
+
+  pval <- 1-pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1)
+  ind <- cumprobi[ord]<cumunif #those below the line  
+  pval[ind] <- pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1)[ind]
+
+#cumprobi<qbeta(alpha/2,N*cumunif,N-N*cumunif+1) | cumprobi<qbeta(1-alpha/2,N*cumunif,N-N*cumunif+1)
+  outside <- pval<alpha2/2 #criterion outside region
+  print(cbind(dyevec[ord],locvec[ord],avec[ord],cumprobi[ord],pval)[outside,]) #outside envelop
+  
 #  abline(0,1)
   points(cumunif,cumprobi[ord],pch=locind[ord]-1,cex=sz,col=dyevec[ord])
   legend("topleft",legend=locinfo[,1],pch=1:nrow(locinfo)-1,cex=sz,col=locinfo[,2])

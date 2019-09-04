@@ -1,5 +1,5 @@
 #' @title genDataset
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka 
 #' @description Function for generating replicated mixture samples given same contributors and model parameters.
 #' @details genDataset samples random mixture peak heights given as gamma(rho*sum(h_k),tau), with h_k as peak height of k-te contributor.
 #' genData conditions on alleles given by refData. Empty references are generated with population frequencies.
@@ -58,12 +58,16 @@ genDataset = function(nC,popFreq,mu=1000,sigma=0.1,sorted=FALSE,threshT=50,refDa
    nDropout <- nDropin <- nStutter <- rep(NA,nL) #counts dropout/dropin/stutters
 
    for(loc in locs) { 
-#loc=locs[16]
-    if( is.null(refData[[loc]])) refData[[loc]] <- list()     
-    nR <- length(refData[[loc]])
+#loc=locs[5]
+    if(is.null(refData[[loc]])) {
+       refData[[loc]] <- list()     
+       nR <- 0 
+    } else {
+       nR <- sum(sapply(refData[[loc]],function(x) length(x)>0)) #length(refData[[loc]]) #number of non-empty refs.
+    }
     mixA <- unlist(refData[[loc]]) #vectorize
     if(nR<nC) { #sample more alleles if missing
-     ran <- (nR+1):nC #new range
+     ran <- (nR+1):nC #new range of genref
      for(s in ran) {
       Asim <- refData[[loc]][[s]] <-  sample(names(popFreq[[loc]]),size=2,prob=popFreq[[loc]],replace=TRUE)
       mixA = c(mixA,Asim) #keep not droped

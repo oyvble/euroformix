@@ -1,6 +1,6 @@
 #' @title getKit
 #' @author Oskar Hansson
-#' @description Function to get kit information. Tided up by Øyvind Bleka
+#' @description Function to get kit information. Tided up by Oyvind Bleka
 #' @details Returns kit information
 #' @param kit shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
 #' @param what options: {"Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}

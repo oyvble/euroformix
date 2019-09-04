@@ -1,5 +1,5 @@
 #' @title iszerolik 
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description iszerolik Determine if the likelihood becomes zero
 #' @details The function is determining whether likelihood vil be 0 (TRUE or FALSE) assuming zero drop-in 
 #' @param evid A vector with allele names

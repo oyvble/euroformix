@@ -1,12 +1,12 @@
 
 #' @title contLikMLE
-#' @author Oyvind Bleka <Oyvind.Bleka.at.fhi.no>
+#' @author Oyvind Bleka
 #' @description contLikMLE optimizes the likelihood of the STR DNA mixture given some assumed a bayesian model.
 #' @details The procedure are doing numerical optimization to approximate the marginal probabilit over noisance parameters. Mixture proportions have flat prior.
 #' 
 #' The procedure also does a Laplace Approximation of the marginalized likelihood (theta integrated out) and returns the log-marginal likelihood as logmargL in the fit-list.
 #' 
-#' Function calls procedure in c++ by using the package Armadillo and Boost.
+#' Function calls procedure in C++ by using the package Armadillo and Boost.
 #'
 #' @param nC Number of contributors in model.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
@@ -14,7 +14,7 @@
 #' @param refData Reference objects with (2-size) allele-vector given in list element [[i]][[s]].
 #' @param condOrder Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model. 
 #' @param knownRef Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.
-#' @param xi A numeric giving stutter-ratio if it is known. Default is NULL, meaning it is integrated out.
+#' @param xi A numeric giving stutter-ratio if it is known. Default is NULL, meaning it is optimized/integrated out.
 #' @param prC A numeric for allele drop-in probability. Default is 0.
 #' @param nDone Maximum number of random evaluations nlm-optimizing routing. Default is 1.
 #' @param threshT The detection threshold given. Used when considering probability of allele drop-outs.
@@ -24,12 +24,15 @@
 #' @param delta Standard deviation of normal distribution when drawing random startpoints. Default is 10.
 #' @param kit Used to model degradation. Must be one of the shortnames of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}. 
 #' @param verbose Boolean whether printing optimization progress. Default is TRUE.
+#' @param maxIter Maximum number of iterations for the optimization. Default is 100.
+#' @param knownRel gives the index of the reference which the 1st unknown is related to.
+#' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)
 #' @return ret A list(fit,model,nDone,delta) where fit is Maximixed likelihood elements for given model.
 #' @export
 #' @references Cowell,R.G. et.al. (2014). Analysis of forensic DNA mixtures with artefacts. Applied Statistics, 64(1),1-32.
 #' @keywords continuous model, Maximum Likelihood Estimation
-contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,nDone=1,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=10,kit=NULL,verbose=TRUE){
- ret <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit)
+contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,nDone=1,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=10,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0)){
+ ret <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit,knownRel,ibd,fst,incS=is.null(xi) || xi>0)
  nodeg  <- is.null(kit) #boolean whether modeling degradation FALSE=YES, TRUE=NO
 
  #Prefitting data based on the model for sum of the peak heights  to find proper startvalues for MLE 
@@ -43,24 +46,15 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
    meanbp[ind] <- mean(ret$bp[rng2]) #take sum of the peak heights
   }
  }
-# plot(meanbp,sumY)
- negloglik <- function(th) {
-  th <- exp(th)
-  if(!nodeg)  val <- -sum(dgamma(sumY,shape=2/th[2]^2*th[3]^(meanbp),scale=th[1]*th[2]^2,log=TRUE)) 
-  if(nodeg)  val <- -sum(dgamma(sumY,shape=2/th[2]^2,scale=th[1]*th[2]^2,log=TRUE)) 
-  if(is.infinite(val)) val <- .Machine$integer.max 
-  return(val)
- }
- foo <- NULL
- if(!nodeg) suppressWarnings({ tryCatch({ foo <- nlm(negloglik, c(log(mean(sumY)),0.3,0.8) ) }, error = function(e) e) })
- if(nodeg) suppressWarnings({ tryCatch({ foo <- nlm(negloglik, c(log(mean(sumY)),0.3) ) }, error = function(e) e) })
- if(!is.null(foo)) {
-  th0 <- exp(foo$est)
- } else {
-  if(nodeg) alpha0 <- mean(sapply(samples,function(x) mean(sapply(x, function(y) sum(as.numeric(y$hdata)))))/(2)) #mean het. allele. peak height averaged on all markers used when no degradation
-  if(!nodeg) alpha0 <- mean(sapply(samples,function(x) max(sapply(x, function(y) sum(as.numeric(y$hdata)))))/(2)) #mean het. allele. peak height at largest marker when degradation
-  th0 <-  c(alpha0,0.4) #guess sigma param
-  if(!nodeg)   th0 <-  c(th0,0.8) #guess beta param 
+
+ if(!nodeg) { #if degradation 
+   alpha0 <- mean(sapply(samples,function(x) max(sapply(x, function(y) sum(as.numeric(y$hdata)))))/(2)) #mean het. allele. peak height at largest marker when degradation
+   th0 <- c(alpha0,0.4,0.8)
+   suppressWarnings({ tryCatch({  th0 <- fitgammamodel(sumY,x=meanbp,niter=1,delta=0,offset=0,scale=1)  }, error = function(e) e) }) #fit model with DEG
+   } else { #if no degradation
+   alpha0 <- mean(sapply(samples,function(x) mean(sapply(x, function(y) sum(as.numeric(y$hdata)))))/(2)) #mean het. allele. peak height averaged on all markers used when no degradation
+   th0 <- c(alpha0,0.4)
+   suppressWarnings({ tryCatch({ th0 <- fitgammamodel(sumY,niter=1,delta=0)  }, error = function(e) e) }) #fit sum of peak height model
  }
  if(verbose) print(paste0("theta0=",paste0(th0,collapse=",")))  
 
@@ -77,11 +71,11 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
   } else { #if xi known
     phi2 <- c(phi2,xi) #add xi param to parameters
   }
-  loglik <- .C("loglikgammaC",as.numeric(0),as.numeric(phi2),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allAbpind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(prC), ret$condRef,as.numeric(threshT),as.numeric(fst),ret$mkvec,ret$nkval,as.numeric(lambda),as.numeric(ret$bp),as.integer(1),PACKAGE="euroformix")[[1]]
+  loglik <- .C("loglikgammaC",as.numeric(0),as.numeric(phi2),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(prC), ret$condRef,as.numeric(threshT),as.numeric(fst),ret$mkvec,ret$nkval,as.numeric(lambda),as.numeric(ret$bp),as.integer(1),PACKAGE="euroformix")[[1]]
   if(is.null(xi))  loglik <- loglik + log(pXi(1/(1+exp(-phi[np2])))) #weight with prior of tau and 
   return(-loglik) #weight with prior of tau and stutter.
  }
- maxITER <- 100 #number of possible times to be INF or not valid optimum before any acceptance
+ maxITERS <- 100 #number of possible times to be INF or not valid optimum before any acceptance
  np2 <- np <- nC + 2 + sum(is.null(xi)) #number of unknown parameters (including degeneration param)
  if(nodeg) np2 <- np2 - 1
  maxL <- -Inf #
@@ -97,7 +91,7 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
 	 nITER <- nITER + 1	 
     } else {
      tryCatch( {
-       foo <- nlm(f=negloglikYphi, p=p0,hessian=TRUE)
+       foo <- nlm(f=negloglikYphi, p=p0,hessian=TRUE,iterlim=maxIter)
        Sigma <- solve(foo$hessian)
        if(all(diag(Sigma)>=0) && foo$code%in%c(1,2) && foo$iterations>2) { #REQUIREMENT FOR BEING ACCEPTED
      	  nITER <- 0 #reset INF if accepted
@@ -108,7 +102,7 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
          maxPhi <- foo$est #set as topfoo     
          maxSigma <- Sigma 
          if(verbose) print(paste0("loglik=",maxL))
-         if(verbose) print(paste0("maxPhi=",paste0(maxPhi,collapse=",")))
+        # if(verbose) print(paste0("maxPhi=",paste0(maxPhi,collapse=","))) #removed in v2.0
         }
 	  if(verbose) print(paste0("Done with ",nOK,"/",nDone," optimizations"))
         flush.console()
@@ -117,7 +111,7 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
        }
      },error=function(e) e) #end trycatch 
     }
-    if(nOK==0 && nITER>maxITER) {
+    if(nOK==0 && nITER>maxITERS) {
      nOK <- nDone #finish loop
      maxL <- -Inf #maximized likelihood
      maxPhi <- rep(NA,np2) #Set as NA
@@ -239,7 +233,7 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
  }
  fit <- list(phihat=maxPhi,thetahat=thetahat,thetahat2=thetahat2,phiSigma=maxSigma,thetaSigma=Sigma,thetaSigma2=Sigma2,loglik=maxL,thetaSE=thetaSE,logmargL=logmargL)
  #store model:
- model <- list(nC=nC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,xi=xi,prC=prC,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,kit=kit)
+ model <- list(nC=nC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,xi=xi,prC=prC,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,kit=kit,knownRel=knownRel,ibd=ibd)
  ret <- list(fit=fit,model=model,nDone=nDone,delta=delta)
  return(ret)
 } #end function
