@@ -52,7 +52,7 @@ efm = function(envirfile=NULL) {
   }
 
  if(is.null(envirfile)) {
-  mmTK = new.env( parent = emptyenv() ) #create new envornment object (must be empty)
+  mmTK = new.env( parent = globalenv() ) #create new envornment object (must be empty)
 
   #Toolbar options: can be changed any time by using toolbar
   assign("optSetup",optSetup,envir=mmTK) 
