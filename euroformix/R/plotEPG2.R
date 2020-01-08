@@ -10,6 +10,7 @@
 #' @param dyeYmax A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
 #' @param plotRepsOnly A boolean of whether only replicate-plot is shown in case of multiple samples (TRUE is default) 
 #' @param options A list of possible plot configurations. See comments below
+#' @return sub A plotly widget
 #' @export
 
 plotEPG2 = function(mixData,kit,refData=NULL,AT=NULL,ST=NULL,dyeYmax=TRUE,plotRepsOnly=TRUE,options=NULL) {
@@ -42,13 +43,13 @@ plotEPG2 = function(mixData,kit,refData=NULL,AT=NULL,ST=NULL,dyeYmax=TRUE,plotRe
  dyes2[dyes=="green"] = "forestgreen" #exchange col because of illcondtioned
 
  nrows = length(dyes) #number of dyes/rows
- if(is.null(options$h0)) h0 = 1200 # 5500/nrows #standard height for each dye (depends on number of rows? No)
- if(is.null(options$w0)) w0 = 1800 # standard witdh when printing plot
- if(is.null(options$marg0)) marg0 = 0.02
- if(is.null(options$txtsize0)) txtsize0 = 15
- if(is.null(options$locsize0)) locsize0 = 20
- if(is.null(options$minY)) minY = 100 #default minimum Y-axis length
- if(is.null(options$ymaxscale)) ymaxscale = 1.05 #default minimum Y-axis length
+ if(is.null(options$h0)) { h0 = 1200  } else { h0 = options$h0 }  # 5500/nrows #standard height for each dye (depends on number of rows? No)
+ if(is.null(options$w0)) { w0 = 1800 } else { w0 = options$w0 }  # standard witdh when printing plot
+ if(is.null(options$marg0)) { marg0 = 0.02  } else { marg0 = options$marg0 } 
+ if(is.null(options$txtsize0)) { txtsize0 = 15 } else { txtsize0 = options$txtsize0 }  
+ if(is.null(options$locsize0)) { locsize0 = 20 } else { locsize0 = options$locsize0 } 
+ if(is.null(options$minY)) { minY = 100 } else { minY = options$minY }  #default minimum Y-axis length
+ if(is.null(options$ymaxscale)) { ymaxscale = 1.05 } else { ymaxscale = options$ymaxscale }  #default minimum Y-axis length
 
  #Create list with dye,marker,bp (for observed data)
  bprng = range(kitinfo$Size) #get range (same range for all plots)
@@ -155,10 +156,11 @@ for(ss in sn) { #create a seperate EPG plot for each samples
   plist[[dye]] = p
  }
  sub = plotly::subplot(plist, nrows = nrows, shareX = TRUE, shareY = FALSE,margin=marg0,titleY= TRUE)
- sub = plotly::layout(sub ,title=ss,barmode = 'group',xaxis = list(title = ""))
- print(  sub%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) ) 
+ sub = plotly::layout(sub ,title=ss,barmode = 'group',xaxis = list(title = ""))%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
+ print(sub) 
+
+ if(nS==1) return(sub) #return function if no replicates
 }
-if(nS==1) return() #return function if no replicates
 
 } #end if
 repcols = c("black","red","blue","forestgreen","orange","purple") [1:nS]
@@ -195,8 +197,10 @@ repcols = c("black","red","blue","forestgreen","orange","purple") [1:nS]
   plist[[dye]] = p
  }
  sub = plotly::subplot(plist, nrows = nrows, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE) 
- sub = plotly::layout(sub ,title=paste0(sn,collapse="/"),barmode = 'group') 
- print(  sub%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) ) 
+ sub = plotly::layout(sub ,title=paste0(sn,collapse="/"),barmode = 'group')%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
+ print(sub)
+
+ return(sub)
 } #end function
 
 

@@ -52,7 +52,7 @@ efm = function(envirfile=NULL) {
   }
 
  if(is.null(envirfile)) {
-  mmTK = new.env( parent = emptyenv() ) #create new envornment object (must be empty)
+  mmTK = new.env( parent = globalenv() ) #create new envornment object (must be empty)
 
   #Toolbar options: can be changed any time by using toolbar
   assign("optSetup",optSetup,envir=mmTK) 
@@ -264,7 +264,7 @@ efm = function(envirfile=NULL) {
   }
  }
  f_openproj = function(h,...) {
-  projfile = gWidgets::gfile(text="Open project",type="open", filter=list("Project"=list(patterns=list("*.Rdata"))))
+  projfile = gWidgets::gfile(text="Open project",type="open", filter=list("Project"=list(patterns=list("*.Rdata")) , "All files"=list(patterns=list("*"))))
   if(!is.na(projfile)) {
    gWidgets::dispose(mainwin)
    efm(projfile) #send environment into program
@@ -273,7 +273,7 @@ efm = function(envirfile=NULL) {
  f_saveproj = function(h,...) {
   projfile = gWidgets::gfile(text="Save project",type="save")
   if(!is.na(projfile)) {
-   if(length(unlist(strsplit(projfile,"\\.")))==1) projfile = paste0(projfile,".Rdata")
+   if(length(unlist(strsplit(projfile,"\\.")))==1) projfile = paste0(projfile,".Rdata") #add extension if missing
    tmp = sort(sapply(mmTK,object.size)/1e6,decreasing=TRUE)
    print(paste0("Size of stored objects (in MB): ",round(sum(tmp),2))) #prints size of each stored object
    print(tmp) #prints size of each stored object
@@ -1629,7 +1629,7 @@ efm = function(envirfile=NULL) {
  
    tabmodelA3[nR+3,1] <-  gWidgets::gcombobox(items=rownames(relatednessIBD),container=tabmodelA3,editable=FALSE) 
    tabmodelA3[nR+4,1] <-  gWidgets::glabel(text="to",container=tabmodelA3)
-   refSel2 <- c("All knowns",refSel) #selection list of references
+   refSel2 <- c("",refSel) #selection list of references
    tabmodelA3[nR+5,1] <-  gWidgets::gcombobox(items=refSel2,container=tabmodelA3,editable=FALSE)
 
    #Case if SNP data:
@@ -1839,7 +1839,7 @@ efm = function(envirfile=NULL) {
          rel_ref <-  which(refSel==rel_refName) #get index
          names(rel_ref) <- rel_refName
       }
-      knownref_hd
+      #knownref_hd
       #get input to list: note: "fit_hp" and "fit_hd" are list-object from fitted model
       model <- list(nC_hp=nC_hp,nC_hd=nC_hd,condOrder_hp=condOrder_hp,condOrder_hd=condOrder_hd,knownref_hp=knownref_hp,knownref_hd=knownref_hd,ibd=rel_ibd,knownRel=rel_ref) #proposition
       param <- list(xi=xi,prC=prC,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,kit=kit) 
@@ -1873,7 +1873,7 @@ efm = function(envirfile=NULL) {
       }
       #plot EPG:
       kit <- get("selPopKitName",envir=mmTK)[1] #get selected kit
-      if(is.na(getKit(kit))) return()
+      if(is.na(getKit(kit))) return() #don't show epg if kit not defined
       plotEPG(set$samples,kitname=kit,threshT=set$param$threshT) #plot epg's
      })
      if(type=="DB") { #add database-names if included:
@@ -2508,7 +2508,8 @@ if(0) { #removed from v1.9.3 and up
            print("RUNNING PARALLELIZATION...No response given before it is done!")
  	      time <- system.time({     mlefit_hp <- contLikMLEpara(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter)     })[3]
       } else {
-#nC=mod$nC_hp;samples=set$samples;popFreq=set$popFreqQ;refData=set$refDataQ;condOrder=mod$condOrder_hp;knownRef=mod$knownref_hp;xi=par$xi;prC=par$prC;nDone=opt$nDone;threshT=par$threshT;fst=par$fst;lambda=par$lambda;pXi=par$pXi;delta=opt$delta;kit=par$kit;verbose=TRUE;maxIter=opt$maxIter
+#nC=mod$nC_hp;samples=set$samples;popFreq=set$popFreqQ;refData=set$refDataQ;condOrder=mod$condOrder_hp;knownRef=mod$knownref_hp;xi=par$xi;prC=par$prC;nDone=opt$nDone;threshT=par$threshT;fst=par$fst;lambda=par$lambda;pXi=par$pXi;delta=opt$delta;kit=par$kit;verbose=TRUE;maxIter=opt$maxIter;knownRel=set$model$knownRel;ibd=set$model$ibd
+
            time <- system.time({     mlefit_hp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter)     })[3]      
       }
       print(paste0("Optimizing under Hp took ",format(time,digits=5),"s"))

@@ -360,8 +360,8 @@ void loglikgammaC(double *logPE, double *theta, int *np,int *nC, int *nK, int *n
      theta[*nC+2] = 1/(1+exp(-theta[*nC+2])); //inv-logit transformation if different from C+2 unknown parameters.
    }
   } //end if phi-dimension
-  theta[*nC] = 1/(theta[*nC]*theta[*nC]);  //sigma to alpha
-  theta[*nC-1] = theta[*nC-1]/theta[*nC]; //mu and sigma to tau
+  theta[*nC] = 1/(theta[*nC]*theta[*nC]);  //sigma to alpha (shape)
+  theta[*nC-1] = theta[*nC-1]/theta[*nC]; //mu and sigma to tau (scale)
   Mat<int> *condMatrix; //conditional matrix for each contributor (values equal Gset-indices)
   condMatrix = new Mat<int>(condRef, *nL, *nC,false); //insert condRef-matrix directly
   for(i=0; i<*nL; i++) {  //for each loci we need to run the recursion:

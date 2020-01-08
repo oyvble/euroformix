@@ -2,17 +2,20 @@
 #' @author Oyvind Bleka
 #' @description validMLEmodel makes model validation whether the observed peak heights fits the maximum likelihood fitted gamma distribution.
 #' @details The cumulative probability of the observed allele peaks are calculated and compared with a uniform distribution.
-#' Function calls procedure in c++ by using the package Armadillo and Boost.
+#' Function calls procedure in C++ by using the package Armadillo and Boost.
 #'
 #' @param mlefit Fitted object using contLikMLE
 #' @param kit Shortname of kit used
 #' @param plottitle Maintitle text used in the PP-plot
 #' @param alpha The significance level used for the envelope test. Default is 0.01
-#' @return ret A vector for each marker with cumulative probabilities
+#' @param createplot Boolean of whether plot should be created
+#' @param verbose Boolean of whether printing out information about significant alleles
+#' @return retinfo A dataframe with information from the calculated validation model
 #' @export
-validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01) {
- require(cubature)
- delta <- 0.01 #relative error in integral
+
+validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createplot=TRUE,verbose=TRUE) {
+ require(cubature) #Necessary to calculate the integrals
+ pchmax = 26 #number of possible point types
  theta2 <- theta <- mlefit$fit$thetahat #condition on mle parameter
  np <- length(theta) #number of unknown parameters
  model <- mlefit$model #take out assumed model with given data
@@ -46,11 +49,15 @@ if(is.null(xi)) { #stutter is unknown
   }
 }
 
+  delta <- 0.01 #relative error in integral
   alphaQ <- 0.001 #ensure very far out in quantile (used for estimating probs in gamma-distribution).
   alpha2 <- alphaQ/sum(sapply(model$samples,function(x) sapply(x,function(y) length(y$adata)))) #"bonferroni outlier"
-  maxYobs <- max(sapply(model$samples,function(x) sapply(x,function(y) max(y$hdata)))) #max observation
-  maxYexp <- qgamma(1-alpha2,2/sigma^2,scale=mu*sigma^2) #max observation in theory
-  maxY <- ceiling(max(maxYobs,maxYexp)) #get max observed
+  
+ suppressWarnings({ #don't show missing allele warning
+   maxYobs <- max(sapply(model$samples,function(x) sapply(x,function(y) max(y$hdata)))) #max observation
+   maxYexp <- qgamma(1-alpha2,2/sigma^2,scale=mu*sigma^2) #max observation in theory
+   maxY <- ceiling(max(maxYobs,maxYexp)) #get max observed
+ }) 
   minY <- model$threshT
  
   if(!is.null(kit)) {
@@ -84,20 +91,38 @@ if(is.null(xi)) { #stutter is unknown
   }
 
   N <- length(cumprobi) #number of samples
-  print(paste0("Total number of peak height observation=",N))
   alpha2 <- alpha/N #0.05 significanse level with bonferroni correction
   
   cumunif <- ((1:N)-0.5)/N #=punif((1:N)-0.5,0,N)
   locind <- sapply(locvec,function(x) which(x==locs))
   #sum(cumprobi<=0.5)/N
   ord <- order(cumprobi)
+  ord2 <- match(1:length(ord),ord) #get reverse index
   #plottitle <- "PP-plot between fitted model and theoretical model"
-  xlab="Expected: Unif(0,1)"
-  ylab="Observed: (Pr(Yj<=yj|Y_{-j}<=y_{-j},Yj>=thresh,model))"
+  xlab="Expected probabilities"#: Unif(0,1)"
+  ylab="Observed probabilities"#: (Pr(Yj<=yj|Y_{-j}<=y_{-j},Yj>=thresh,model))"
   sz <- 1.5
   dyevec[dyevec=="yellow"] <- "orange" 
  
-  #plot
+  pval <- 1-pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1) #one sided p-value
+  ind <- cumprobi[ord]<cumunif #those below the line (two-sided p-value)
+  pval[ind] <- pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1)[ind]
+ #cumprobi<qbeta(alpha/2,N*cumunif,N-N*cumunif+1) | cumprobi<qbeta(1-alpha/2,N*cumunif,N-N*cumunif+1)
+  outside <- pval[ord2] < (alpha2/2) #criterion outside region (divide by 2 to get two-sided)
+
+ if(verbose) { #print info:
+  #print points outside the bonferroni-adjusted envolopment
+  print(paste0("Total number of peak height observation=",N))
+  print(paste0("Significance level=",signif(alpha*100,digits=2),"%"))
+  print(paste0("Bonferroni-adjusted significance level=",signif(alpha2*100,digits=2),"%"))
+  print("List of observations outside the envelope (with the Bonferroni-level):") #two sided check
+  outtab = cbind(dyevec,locvec,avec,cumprobi,pval[ord2])
+  colnames(outtab) = c("Dye","Marker","Allele","ProbObserved","pvalue")
+  print(outtab[outside,]) #outside envelop
+ }
+
+  #plot   
+ if(createplot) {
   zones <- matrix(c(1,1,1, 2,5,4, 0,3,0), ncol = 3, byrow = TRUE)
   layout(zones, widths=c(0.3,7,1), heights = c(1,7,.75))
   par(xaxt="n", yaxt="n",bty="n",  mar = c(0,0,0,0))   # for all three titles: 
@@ -109,12 +134,11 @@ if(is.null(xi)) { #stutter is unknown
   text(0,0,paste(xlab), cex=2)  
   # fig 4:
   par(mar = c(1,0,0,0))
-  locinfo <- unique(cbind(locvec,dyevec))
-  cols <- unique(locinfo[,2])
+  cols <- unique(dyevec)
   plot(0,0,xlim=0:1,ylim=0:1,ty="n")
   for(i in 1:length(cols)) {
    inds <- cols[i]==dyevec
-   points(rep(i/(length(cols)+1),sum(inds)), cumprobi[inds],pch=locind[inds]-1,col=cols[i],cex=sz)
+   points(rep(i/(length(cols)+1),sum(inds)), cumprobi[inds],pch=(locind[inds]-1)%%pchmax,col=cols[i],cex=sz)
   }
   rect(0,0,1,1)
   # fig 5, finally, the scatterplot-- needs regular axes, different margins
@@ -132,28 +156,21 @@ if(is.null(xi)) { #stutter is unknown
     lines(xsq,qbeta(1-qq/2,N*xsq,N-N*xsq+1),col=which(ysq==qq),lty=2)
   }
   legend("bottomright",legend=paste0("1-Envelope-coverage=",c("",paste0(alpha,"/",N,"=")),signif(ysq,2)),col=1:length(ysq),lty=2,cex=1.3)
-
-  #print points outside the bonferroni-adjusted envolopment
-  print(paste0("Significance level=",signif(alpha*100,digits=2),"%"))
-  print(paste0("Bonferroni-adjusted significance level=",signif(alpha2*100,digits=2),"%"))
-  print("List of observations outside the envelope (with the Bonferroni-level):") #two sided check
-
-  pval <- 1-pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1)
-  ind <- cumprobi[ord]<cumunif #those below the line  
-  pval[ind] <- pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1)[ind]
-
-#cumprobi<qbeta(alpha/2,N*cumunif,N-N*cumunif+1) | cumprobi<qbeta(1-alpha/2,N*cumunif,N-N*cumunif+1)
-  outside <- pval<alpha2/2 #criterion outside region
-  print(cbind(dyevec[ord],locvec[ord],avec[ord],cumprobi[ord],pval)[outside,]) #outside envelop
-  
+   
 #  abline(0,1)
-  points(cumunif,cumprobi[ord],pch=locind[ord]-1,cex=sz,col=dyevec[ord])
-  legend("topleft",legend=locinfo[,1],pch=1:nrow(locinfo)-1,cex=sz,col=locinfo[,2])
+  points(cumunif,cumprobi[ord],pch=(locind[ord]-1)%%pchmax,cex=sz,col=dyevec[ord])
+
+  locinfo <- unique(cbind(locvec,dyevec,locind)) #info to show in legend
+  legend("topleft",legend=locinfo[,1],pch=(as.numeric(locinfo[,3])-1)%%pchmax,cex=sz,col=locinfo[,2])
   dev.new()
   op <- par(no.readonly = TRUE)
   dev.off()
   par(op)
-  return(cumunif)
+ } #end createplot
+
+  #return information
+  retinfo = data.frame(Dye=dyevec,Marker=locvec,Allele=avec,ProbObs=cumprobi,pvalue=pval[ord2],Significant=outside,stringsAsFactors=FALSE)
+  return(retinfo)
 }
 
 

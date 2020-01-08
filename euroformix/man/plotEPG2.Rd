@@ -24,6 +24,9 @@ plotEPG2(mixData, kit, refData = NULL, AT = NULL, ST = NULL,
 
 \item{kitname}{Short name of kit: See supported kits with getKit()}
 }
+\value{
+sub A plotly widget
+}
 \description{
 EPG data visualizer (interactive)
 }

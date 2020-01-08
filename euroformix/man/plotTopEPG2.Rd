@@ -18,6 +18,9 @@ plotTopEPG2(MLEobj, DCobj = NULL, kit = NULL, AT = NULL, ST = NULL,
 
 \item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[dye]] list.}
 }
+\value{
+sub A plotly widget
+}
 \description{
 EPG data visualizer (interactive)
 }

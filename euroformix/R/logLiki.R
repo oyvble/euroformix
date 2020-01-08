@@ -2,7 +2,7 @@
 #' @author Oyvind Bleka
 #' @description logLiki calculates the likelihood of each marker of the STR DNA mixture given a theta
 #' @details
-#' Function calls procedure in c++ by using the package Armadillo and Boost.
+#' Function calls procedure in C++ by using the package Armadillo and Boost.
 #'
 #' @param mlefit Fitted object using contLikMLE
 #' @return ret A vector with log-likelihood-values for each locus for given model

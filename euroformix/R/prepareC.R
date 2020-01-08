@@ -50,8 +50,9 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  #loci-order follows as in mixData: "locs". Rearrange names:
  popFreq <- popFreq[locs] #order popFreq to mixData-order
  
- #if(!is.null(knownRef) && !is.null(knownRel) && ibd[1]<1 && knownRel%in%knownRef) knownRef = setdiff(knownRef,knownRel) #ENSURE THAT REF GIVEN RELATIONSHIP (different from unrelated) IS NOT GIVEN AS NON-CONTRIBUTOR - THIS IS THE LRMIX MODEL
- #warning("The typed related individual was also included as a known non-contributor. This means that he/she is typed twice! This will deviate from LRmix!")
+ #if(!is.null(knownRef) && !is.null(knownRel) && ibd[1]<1 && knownRel%in%knownRef) knownRef = setdiff(knownRef,knownRel) #activated in v2.3.0. THIS IS THE LRMIX MODEL: ENSURE THAT REF GIVEN AS RELATED IS NOT GIVEN AS KNOWN NON-CONTRIBUTOR.
+ #else: warning("The typed related individual was also included as a known non-contributor. This means that he/she is typed twice! This will deviate from LRmix!")
+ if( !is.null(knownRel) && ibd[1]<1 && fst>0 && !knownRel%in%c(knownRef,which(condOrder>0)) ) error("The related reference must be included as either a contributor or a known non-contributor! Please re-specify the hypothesis.")  #activated in v2.3.0: be sure that knownRel is already in knownRef (the non-contributor under Hd). Alternative  #knownRef = c(knownRef,knownRel) , but then also must considered as known non-contributor under Hp
 
  #Get probability of 1st unknown for all genotype outcomes (may contain related)
  Gset <- Gprob <- list() #store in a list for each markers
@@ -98,7 +99,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  getLUSstutter = function(x) { #get the stuttered variants of LUS
    tmp = as.numeric(x) 
    stutt2 <- paste0(tmp[1]-1,LUSsymbol,tmp[2]-1) #stutter-allele
-   if(length(tmp)>2) stutt2 <- paste0(stutt2,tmp[-(1:2)],collapse=LUSsymbol) #add other LUS variants
+   if(length(tmp)>2) stutt2 <- paste0(c(stutt2,tmp[-(1:2)]),collapse=LUSsymbol) #add other LUS variants
    return(stutt2)
  }
 
@@ -108,6 +109,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  #Potential stutters first be added to both popFreq (old) and popFreq2 (new), since genotypes must be recognized 
  allASind <- as.numeric() #vector with allele indices (starts from index 1) used to denote what allele an allele backward-stutters to.
  for(loc in locs) { #for each marker
+#loc=locs[23]
    anames <- names(popFreq[[loc]]) #old names
    ASind <- rep(0,length(anames)) #default is no stutter indicing 
    if(!all(anames%in%Qallele) && incS) { #If no system dropout (i.e. only allele 99 is present) or stutters are included

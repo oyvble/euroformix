@@ -22,6 +22,9 @@ plotTopMPS2(MLEobj, DCobj = NULL, AT = NULL, ST = NULL,
 
 \item{options}{A list of possible plot configurations. See comments below}
 }
+\value{
+sub A plotly widget
+}
 \description{
 MPS data visualizer (interactive)
 }

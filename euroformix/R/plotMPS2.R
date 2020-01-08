@@ -9,18 +9,19 @@
 #' @param grpsymbol A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.
 #' @param locYmax A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
 #' @param options A list of possible plot configurations. See comments below
+#' @return sub A plotly widget
 #' @export
 
 plotMPS2 = function(mixData,refData=NULL,AT=NULL,ST=NULL,grpsymbol="_",locYmax=TRUE,options=NULL) {
  require(plotly) #required package
- if(is.null(options$h0)) h0 = 300 # 5500/nrows #standard height for each dye (depends on number of rows? No)
- if(is.null(options$w0)) w0 = 1800 # standard witdh when printing plot
- if(is.null(options$marg0)) marg0 = 0.015 #Margin between subplots
- if(is.null(options$txtsize0)) txtsize0 = 12 #text size for alleles
- if(is.null(options$locsize0)) locsize0 = 20 #text size for loci
- if(is.null(options$minY)) minY = 100 #default minimum Y-axis length
- if(is.null(options$ymaxscale)) ymaxscale = 1.06 #y-axis scaling to the locus name positions
- if(is.null(options$grptype)) grptype="group"#,"stack" "group" is default 
+ if(is.null(options$h0)) { h0 = 300 } else { h0 = options$h0 } # 5500/nrows #standard height for each dye (depends on number of rows? No)
+ if(is.null(options$w0)) { w0 = 1800 } else { w0 = options$w0 } # standard witdh when printing plot
+ if(is.null(options$marg0)) { marg0 = 0.015 } else { marg0 = options$marg0 } #Margin between subplots
+ if(is.null(options$txtsize0)) { txtsize0 = 12 } else { txtsize0 = options$txtsize0 } #text size for alleles
+ if(is.null(options$locsize0)) { locsize0 = 20 } else { locsize0 = options$locsize0 } #text size for loci
+ if(is.null(options$minY)) { minY = 100 } else { minY = options$minY } #default minimum Y-axis length
+ if(is.null(options$ymaxscale)) { ymaxscale = 1.06 } else { ymaxscale = options$ymaxscale } #y-axis scaling to the locus name positions
+ if(is.null(options$grptype)) { grptype="group" } else { grptype = options$grptype }#,"stack" "group" is default 
 
  sn = names(mixData) #get samples names
  nS = length(sn) #number of replicates
@@ -106,6 +107,8 @@ ymax1 <- ymaxscale*max(minY,df$Height) #global max y
 ncols = 5 #number of locs per row (depend on amax)?
 maxA = max(aggregate(df$Height,by=list(df$Sample,df$Marker),length)$x)
 if(maxA<=2 && nL>40) ncols=10 #Number of cols should depend on allele outcome (SNP vs STR)
+if(!is.null(options$ncols)) ncols=options$ncols #use number of column specified in options 
+
 h1 = h0*ncols #standard height for each graph (DEPEND ON NUMBER COLS)	
 nrows0=ceiling((nL+1)/ncols) #number of rows to use (use 10 per column)
 if(nrefs>0) nrows0=ceiling((nL+1)/ncols) #number of rows to use (use 10 per column)
@@ -122,7 +125,7 @@ hline <- function(y = 0, color = "black",xr=0:1) {
 }
 repcols = c("black","red","blue","green","orange","purple") 
 
-#SEPARATE PLOTS
+#SEPARATE PLOTS FOR EACH SINGLE SAMPLES
 
 for(ss in sn) {
  #ss = sn[1]
@@ -188,8 +191,8 @@ for(ss in sn) {
   plist[[nL+1]] = p
  }
  #sub = subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)%>%hide_legend()
- sub = plotly::subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)%>%plotly::layout(title=ss,barmode = grptype)%>%plotly::hide_legend()
- print(  sub%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) ) 
-}
-
+ sub = plotly::subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)%>%plotly::layout(title=ss,barmode = grptype)%>%plotly::hide_legend()%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0))
+ print(sub)
+ } #end for each samples
+ return(sub) #return last created
 } #end function

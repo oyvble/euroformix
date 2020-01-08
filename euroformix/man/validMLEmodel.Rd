@@ -5,7 +5,7 @@
 \title{validMLEmodel}
 \usage{
 validMLEmodel(mlefit, kit = NULL, plottitle = "PP-plot",
-  alpha = 0.01)
+  alpha = 0.01, createplot = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{mlefit}{Fitted object using contLikMLE}
@@ -15,16 +15,20 @@ validMLEmodel(mlefit, kit = NULL, plottitle = "PP-plot",
 \item{plottitle}{Maintitle text used in the PP-plot}
 
 \item{alpha}{The significance level used for the envelope test. Default is 0.01}
+
+\item{createplot}{Boolean of whether plot should be created}
+
+\item{verbose}{Boolean of whether printing out information about significant alleles}
 }
 \value{
-ret A vector for each marker with cumulative probabilities
+retinfo A dataframe with information from the calculated validation model
 }
 \description{
 validMLEmodel makes model validation whether the observed peak heights fits the maximum likelihood fitted gamma distribution.
 }
 \details{
 The cumulative probability of the observed allele peaks are calculated and compared with a uniform distribution.
-Function calls procedure in c++ by using the package Armadillo and Boost.
+Function calls procedure in C++ by using the package Armadillo and Boost.
 }
 \author{
 Oyvind Bleka

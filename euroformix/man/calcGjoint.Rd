@@ -29,7 +29,7 @@ Glist A list with genotypes and genotype probabilities
 getGlist Returns a list of joint genotypes with corresponding joing probabilities for unknowns contributors for a given marker.
 }
 \details{
-The function returns the list of all possible genotypes, with corresponding Hardy-Weinberg assumed probabilities. The allele-names in popFreq needs to be numbers.
+The function returns the list of all possible genotypes, with corresponding probabilities. The allele-names in popFreq needs to be numbers.
 }
 \examples{
 freq = rgamma(8,1,1)

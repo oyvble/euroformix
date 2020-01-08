@@ -29,11 +29,17 @@ genDataset = function(nC,popFreq,mu=1000,sigma=0.1,sorted=FALSE,threshT=50,refDa
   nL<-length(popFreq)
   locs <- names(popFreq)
   if(is.null(locs)) locs = paste0("locus",1:nL)
+
+  isNotSimplex = function(x) { #helpfunction of consider being simplex
+	return( round(sum(x),6)!=1 || any(x < 0 | x > 1) )
+  }
+  if( any( sapply(popFreq,isNotSimplex) ) ) stop("Some of the frequency elements  was not a simplex")
+
   if(is.null(mx)) {
    mx <- rgamma(nC,1)
    mx=mx/sum(mx) #rdirichlet(1,rep(1,nC))  #simulate mx for contributors
   } else {
-   if( sum(mx)!=1 || any(mx < 0 | mx > 1) ) stop("mx is not a simplex")
+   if( isNotSimplex(mx)) stop("mx is not a simplex")
    if(length(mx)!=nC) stop("Length of mx not equal nC!")
   }
   if(sorted)  mx  <- sort(mx,decreasing=TRUE)

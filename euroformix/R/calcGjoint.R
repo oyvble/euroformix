@@ -1,7 +1,7 @@
 #' @title calcGjoint
 #' @author Oyvind Bleka
 #' @description getGlist Returns a list of joint genotypes with corresponding joing probabilities for unknowns contributors for a given marker.
-#' @details The function returns the list of all possible genotypes, with corresponding Hardy-Weinberg assumed probabilities. The allele-names in popFreq needs to be numbers.
+#' @details The function returns the list of all possible genotypes, with corresponding probabilities. The allele-names in popFreq needs to be numbers.
 #' @param freq A vector of allele frequencies for a given population.  
 #' @param nU Number of unknowns (where the first is a related)
 #' @param fst Assumed theta/fst-correction
@@ -18,14 +18,13 @@
 #' system.time({ foo = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE) })
 #' system.time({ foo = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=TRUE) })
 
-#source("C:\\Users\\oyvbl\\Dropbox\\Forensic\\euroformix0\\dev_v2\\calcGjoint.R")
-#source("D:\\Dropbox\\Forensic\\euroformix0\\dev_v2\\calcGjoint.R")
 calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=FALSE) {
  if(nU==0) stop("You must specify at least one unknown to use this function!")
  if(!is.numeric(freq))  stop("freq argument must be numeric!") 
  if(!all.equal(sum(freq),1))  stop("freq argument must sum to one!") 
  #Function calculates genotypes for all possib
- nG <- length(freq)*(1+length(freq))/2 #number of allele outcome
+ nn = length(freq) #number of alleles
+ nG <- nn*(1+nn)/2 #number of allele outcome
  #nG^nU #NUMBER OF ITERATIONS
  #print(nG^nU)
 
@@ -34,11 +33,12 @@ calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=
  suppressWarnings({   
    if(!any(is.na(as.numeric(av))) )  av <-  as.numeric(av) #convert to numbers if 
  })
- G = t(as.matrix(expand.grid(rep(list(av,av)))))
- keep = G[2, ] >= G[1, ]
- G <- G[, keep]
- G <- t(matrix(as.character(G), nrow = 2))
 
+ #Modified in v2.3.0: Gmatrix is the vectorized upper triangular (1,1),(1,2),...,(1,n),(2,2),(2,3),...,(2,n),....,(n,n)
+ G = numeric()
+ for(i in 1:nn) {
+  G = rbind(G, cbind( av[rep(i,nn - i + 1)], av[i:nn] ))
+ }
  if(nrow(G)!=nG) warning("The size of the genotype outcome is not as expected!") #Must be true!
  Gprob1 = rep(NA,nG) #used to store genotype prob
 
@@ -64,13 +64,11 @@ calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=
   for(i in 1:nG) { #for each genotype
    refG <- G[i,] #get proposed genotype
    indf <- match(refG,names(freq)) #get index of frequency
-   if(ishomG[i]) { #if homozygous
-     antR <- sum(refG==refR) #count number of alleles already typed
-     Gprob0[i] <- P(freq[indf[1]],ni=antR+mkvec[indf[1]],n=2+sum(mkvec))*P(freq[indf[1]],ni=antR+1+mkvec[indf[1]],n=3+sum(mkvec)) #get hom freq
-   } else {#if heterozygous
-     antR <- rep(NA,2) 
-     for(j in 1:2) antR[j] = sum(refG[j]==refR) #be careful of order.
-     Gprob0[i] <- 2*P(freq[indf[1]],ni=antR[1]+mkvec[indf[1]],n=2+sum(mkvec))*P(freq[indf[2]],ni=antR[2]+mkvec[indf[2]],n=3+sum(mkvec)) #get het freq
+   tmpval = P(freq[indf[1]],ni=mkvec[indf[1]],n=sum(mkvec))
+   if(ishomG[i]) { 
+     Gprob0[i] <- tmpval*P(freq[indf[2]],ni=mkvec[indf[2]]+1,n=sum(mkvec)+1) #get hom freq
+   } else {
+	 Gprob0[i] <- 2*tmpval*P(freq[indf[2]],ni=mkvec[indf[2]],n=sum(mkvec)+1) #get het freq   
    }
   } #end for each type
   #sum(Gprob0) #MUST BE 1
@@ -98,24 +96,25 @@ calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=
   indUse[ind1[ind]] <-  A2ind[ind & ind1] 
 
   if(ishomR) {
-    Gprob1[ind] <- Gprob0[ind]*ibd[1]  + P(freq[indUse],ni=mkvec[indUse],n=2+sum(mkvec))*ibd[2]
+    Gprob1[ind] <- Gprob0[ind]*ibd[1]  + P(freq[indUse],ni=mkvec[indUse],n=sum(mkvec))*ibd[2]
   } else {
-    Gprob1[ind] <- Gprob0[ind]*ibd[1]  + P(freq[indUse],ni=mkvec[indUse],n=2+sum(mkvec))/2*ibd[2] 
+    Gprob1[ind] <- Gprob0[ind]*ibd[1]  + P(freq[indUse],ni=mkvec[indUse],n=sum(mkvec))/2*ibd[2] 
   }
   ind <- mac==3 #ONE SHARING BUT WITH G AS homozygous variants 
-  Gprob1[ind] <- Gprob0[ind]*ibd[1]  + P(freq[A1ind[ind]],ni=1+mkvec[A1ind[ind]],n=2+sum(mkvec))/2*ibd[2]  #USING ONLY pA1 always OK?
+  Gprob1[ind] <- Gprob0[ind]*ibd[1]  + P(freq[A1ind[ind]],ni=mkvec[A1ind[ind]],n=sum(mkvec))/2*ibd[2]  #USING ONLY pA1 always OK?
 
   #FOR SHARING BOTH ALLELE VARIANTS (K0+K1+K2 only)
   ind <- mac==2 #this will be only one of the variants
   if(ishomR) {
-   Gprob1[ind] <- Gprob0[ind]*ibd[1] + P(freq[A1ind[ind]],ni=2+mkvec[A1ind[ind]],n=2+sum(mkvec))*ibd[2] + ibd[3] #formula ok for ref hom/het
+   Gprob1[ind] <- Gprob0[ind]*ibd[1] + P(freq[A1ind[ind]],ni=mkvec[A1ind[ind]],n=sum(mkvec))*ibd[2] + ibd[3] #formula ok for ref hom/het
   } else {
-   Gprob1[ind] <- Gprob0[ind]*ibd[1] + (P(freq[A1ind[ind]],ni=1+mkvec[A1ind[ind]],n=2+sum(mkvec)) + P(freq[A2ind[ind]],ni=1+mkvec[A2ind[ind]],n=2+sum(mkvec)))/2*ibd[2] + ibd[3] #formula ok for ref hom/het
+   Gprob1[ind] <- Gprob0[ind]*ibd[1] + (P(freq[A1ind[ind]],ni=mkvec[A1ind[ind]],n=sum(mkvec)) + P(freq[A2ind[ind]],ni=mkvec[A2ind[ind]],n=sum(mkvec)))/2*ibd[2] + ibd[3] #formula ok for ref hom/het
   }
   #sum(Gprob1) #MUST BE 1
   rm(Gprob0);gc() #remove tmp calcs.
 
  } else { #end if kinship case
+ 
    for(i in 1:nG) { #for each genotype
     pGenotmp <- 1
     mkvectmp <- mkvec
