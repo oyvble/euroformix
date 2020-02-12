@@ -59,10 +59,10 @@ Qassignate <- function(samples,popFreq,refData=NULL,doQ=TRUE,incR=TRUE,incS=FALS
 
   if(doQ) {#if Q-assignate, i.e. setting non-observed alleles of references as Qallele ("99")
    tmp <- popFreq[[loc]][names(popFreq[[loc]])%in%evid] #find observed alleles
-  # if(length(tmp)<length(popFreq[[loc]])) {  #this requirement has been removed! Potential leading to wrong results!
+   if(length(tmp)<length(popFreq[[loc]])) {  #This is equivalent to sum(tmp)<1 (approximate)
     tmp <- c(tmp,1-sum(tmp))
     names(tmp)[length(tmp)] <- Qallele
-#   }
+   }
    popFreq[[loc]] <- tmp
    if(!incR && !is.null(refData)) { #insert 99 as default allele of missing refs
     newP <- names(popFreq[[loc]]) 
