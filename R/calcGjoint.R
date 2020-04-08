@@ -12,13 +12,19 @@
 #' @return Glist A list with genotypes and genotype probabilities 
 #' @export 
 #' @examples
+#' \dontrun{
 #' freq = rgamma(8,1,1)
 #' freq = freq/sum(freq) 
 #' names(freq) <- 1:length(freq)
-#' system.time({ foo = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE) })
-#' system.time({ foo = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=TRUE) })
+#' foo1 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
+#'  refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
+#' foo2 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
+#'  refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=TRUE)
+#' }
 
 calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=FALSE) {
+ if(length(fst)!=1) stop("Wrong input length for fst")
+ if(length(nU)!=1) stop("Wrong input length for number of unknowns (nU)")
  if(nU==0) stop("You must specify at least one unknown to use this function!")
  if(!is.numeric(freq))  stop("freq argument must be numeric!") 
  if(!all.equal(sum(freq),1))  stop("freq argument must sum to one!") 
@@ -44,7 +50,7 @@ calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=
 
  #COUNT NUMBER OF ALLELES IN refK:
  mkvec <- rep(0,length(av)) #count number of typed alleles
- if(!is.null(refK)) {
+ if(!is.null(refK) && length(refK)>0 ) {
   tab <- table(unlist(refK))
   mkvec[match(names(tab),av)] <- tab  #add counted alleles
   names(mkvec) <- av
@@ -63,12 +69,12 @@ calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=
   #prepare Gprobs for K0:
   for(i in 1:nG) { #for each genotype
    refG <- G[i,] #get proposed genotype
-   indf <- match(refG,names(freq)) #get index of frequency
-   tmpval = P(freq[indf[1]],ni=mkvec[indf[1]],n=sum(mkvec))
+   indf <- match(refG,names(freq)) #get (allele) index of frequency
+   tmpval = P(freq[indf[1]],ni=mkvec[indf[1]],n=sum(mkvec)) #prob. of 1st allele
    if(ishomG[i]) { 
      Gprob0[i] <- tmpval*P(freq[indf[2]],ni=mkvec[indf[2]]+1,n=sum(mkvec)+1) #get hom freq
    } else {
-	 Gprob0[i] <- 2*tmpval*P(freq[indf[2]],ni=mkvec[indf[2]],n=sum(mkvec)+1) #get het freq   
+ 	   Gprob0[i] <- 2*tmpval*P(freq[indf[2]],ni=mkvec[indf[2]],n=sum(mkvec)+1) #get het freq   
    }
   } #end for each type
   #sum(Gprob0) #MUST BE 1

@@ -8,7 +8,8 @@ contLikINT(nC, samples, popFreq, lower, upper, refData = NULL,
   condOrder = NULL, knownRef = NULL, xi = NULL, prC = 0,
   reltol = 0.01, threshT = 50, fst = 0, lambda = 0,
   pXi = function(x) 1, kit = NULL, scale = 0, maxEval = 0,
-  knownRel = NULL, ibd = c(1, 0, 0))
+  knownRel = NULL, ibd = c(1, 0, 0), xiFW = 0, pXiFW = function(x)
+  1, maxThreads = 32, verbose = TRUE)
 }
 \arguments{
 \item{nC}{Number of contributors in model.}
@@ -41,7 +42,7 @@ contLikINT(nC, samples, popFreq, lower, upper, refData = NULL,
 
 \item{pXi}{Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.}
 
-\item{kit}{shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}}
+\item{kit}{shortname of kit: Obtained from getKit()}
 
 \item{scale}{used to make integrale calculateable for small numbers. For scale!=0, integrale must be scaled afterwards with exp(-scale) to be correct.}
 
@@ -50,17 +51,23 @@ contLikINT(nC, samples, popFreq, lower, upper, refData = NULL,
 \item{knownRel}{gives the index of the reference which the 1st unknown is related to.}
 
 \item{ibd}{the identical by decent coefficients of the relationship (specifies the type of relationship)}
+
+\item{xiFW}{A numeric giving FW stutter-ratio if it is known.Default is 0, meaning stutter is not used.}
+
+\item{pXiFW}{Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.}
+
+\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
+
+\item{verbose}{Boolean whether printing limits to integrate over. Printing progress if maxEval>0. Default is TRUE.}
 }
 \value{
-ret A list(margL,deviation,nEvals) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
+ret A list(margL,deviation,nEvals,scale) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
 }
 \description{
 contLikINT marginalizes the likelihood of the STR DNA mixture given some assumed a bayesian model by numerical integration.
 }
 \details{
 The procedure are doing numerical integration to approximate the marginal probability over the noisance parameters. Mixture proportions have flat prior.
-
-Function calls procedure in c++ by using the package Armadillo and Boost.
 }
 \references{
 Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.

@@ -3,94 +3,137 @@
 #' @description deconvolve ranks the set of the most conditional posterior probability of genotypes the STR DNA mixture given a fitted model under a hypothesis.
 #' @details The procedure calculates the likelihood for each single locus. Then it combines the most probable genotypes from each loci to produce a ranked list of deconvolved profiles.
 #' 
-#' Function calls procedure in c++ by using the package Armadillo and Boost.
+#' Function calls the likelihood procedure in C++ by using the package Boost.
 #'
 #' @param mlefit Fitted object using contLikMLE function.
 #' @param alpha Required sum of the listed posterior probabilities.
 #' @param maxlist The ranked deconvolved profile list will not exceed this number (used to avoid endless search).
+#' @param verbose Boolean whether printing deconvolution progress. Default is TRUE.
 #' @return ret A list(table1,table2,table3,table4,rankGi,rankG,pG) where rankG is the ranked genotypes with corresponding probabilities in pG. rankgGi is the same, but per marker. table1 is rankG and pG combined (joint results). table2 uses rankGi to find marginal results for top-genotypes. table3 and table4 shows this marginalized on genotypes and alleles per contributor 
 #' @export
 #' @references Cowell,R.G. et.al. (2014). Analysis of forensic DNA mixtures with artefacts. Applied Statistics, 64(1),1-32.
 #' @keywords deconvolution
-deconvolve = function(mlefit,alpha=0.95,maxlist=1000){
- theta2 <- theta <- mlefit$fit$thetahat #condition on mle parameter
+deconvolve = function(mlefit,alpha=0.95,maxlist=1000,verbose=TRUE){ #alpha=0.95;maxlist=1000;verbose=TRUE
+ thhat <- mlefit$fit$thetahat #condition on mle parameter
  model <- mlefit$model #take out assumed model with given data
- locs <- names(model$popFreq)
- nL <- length(locs)
- nC <- model$nC
- xi <- model$xi
- fst <- model$fst
- np <- length(theta)#number of unknown parameters
- loglikYtheta <- function() {   #call c++- function: length(theta)=nC+1
-   Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),fst,ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
-   return(Cval) #weight with prior of tau and 
- }
- nodeg <- is.null(model$kit) #check for degradation
- if(nodeg) theta <- c(theta[1:(nC+1)],1) #insert beta variable equal 1
- if(!is.null(xi)) {
-  theta <- c(theta,as.numeric(xi))
- } else {
-  if(nodeg) theta <- c(theta,theta2[np])
- }
- #Using information in ret to try out different genotypes:
 
+ c <- mlefit$prepareC #returned from prepareC
+ locs = c$locs #will be same as names(model$popFreq) #get loci names to evaluate
+ nC = c$nC #number of contributors
+ usedeg <- !is.null(model$kit) #check for degradation model
+ 
+ #Prepare fixed params:
+ nM = c$nM #number of markers to evaluate
+ ATv = model$threshT
+ pCv = model$prC
+ lambdav = model$lambda
+ fstv = model$fst
+ 
+ #Prepare estimated params:
+ mixprop = head(thhat,nC-1)# fitted mix proportions
+ mu1 = thhat[nC] #fitted PHexp
+ sig1 = thhat[nC+1] #fitted PHvar
+ 
+ #Obtain remaining params
+ beta1 = 1 #set default values
+ xiB = model$xi #set default values
+ xiF = model$xiFW #set default values
+ indsel = nC + 2  #get index to insert estimated variable form param vector(thhat)
+ if(!is.null(model$kit)) {
+   beta1 = thhat[indsel] #get degrad param
+   indsel = indsel + 1 #update index
+ }
+ if(is.null(xiB)) {
+   xiB = thhat[indsel] #get BWstutter param
+   indsel = indsel + 1 #update index
+ }
+ if(is.null(xiF)) xiF = thhat[indsel] #get FWstutter param
+ 
  #Step 1) Calculate L(E|g,thetahat) for each marker
- dlist <- list()  #log-likelihood per genotype combinations per marker
+ dlist <- list()  #joint genotype probs for each combinations per marker
  GClist2 <- list() #get index of ranked combined genotypes for all genotypes
  Glist2 <- list() #used to store names of genotypes 
- for(loc in locs) {
-  samples <- lapply(model$samples,function(x) x[loc])
-  ret <- prepareC(nC=nC,samples,popFreq=model$popFreq[loc],refData=model$refData[loc],condOrder=model$condOrder,knownRef=model$knownRef,kit=model$kit,model$knownRel,model$ibd,fst,incS=is.null(xi) || xi>0)
-  uind <- which(ret$condRef==-1) #unknown genotype indices
-  kind <- which(ret$condRef!=-1) #known genotype indices
+ 
+ startIndPS = 0; #start marker index for potential stutters (own vectors)
+ startIndMarker1=0;#start marker index (1 rep)
+ startIndMarker2=0;#start marker index (nRep[m] reps)
+ 
+ progcount  = 1 #progress counter
+ if(verbose) progbar <- txtProgressBar(min = 0, max =nM, style = 3) #create progress bar
+ 
+ for(m in 1:nM) { #extract info in c relevant for each markers:
+  loc = locs[m]
+  ind1 = startIndMarker1 + 1:c$nA[m] #get index of 1 repitition
+  ind2 = startIndMarker2 + 1:(c$nA[m]*c$nRep[m]) #get index of 1 repitition
+  indPS = startIndPS +  1:c$nPS[m] #get index of potential stutters
+  if(c$nPS[m]==0) indPS = numeric()
+  indKnownGind = (nC*(m-1)+1):(nC*m) #get index where the genotype indices are
+  knownGind = c$knownGind[indKnownGind] #extract the vector with genotype indices (-1 means unknown)
+  
+  uind <- which(knownGind==-1) #unknown genotype indices
+  kind <- which(knownGind!=-1) #known genotype indices
   nU <- length(uind) #number of unknowns
   if(nU==0) { #if no unknowns
     dlist[[loc]] <- 0
-    GClist2[[loc]] <- t(as.matrix(ret$condRef + 1)) #insert the conditioned ones
+    GClist2[[loc]] <- t(as.matrix(knownGind + 1)) #insert the conditional genotypes
     Glist2[[loc]] <- calcGjoint(freq=model$popFreq[[loc]],nU=1)$G #Get genotypes
-    next
+    next #skip to next marker
   }
   #CALCULATING JOINT PROB GENOTYPE FOR ALL COMBINATIONS:
   #MUST SPECIFY MODEL OF model object here
-  pGlist = calcGjoint(freq=model$popFreq[[loc]],nU=nU,fst = model$fst, refK = unlist(model$refData[[loc]][model$knownRef]), refR = unlist(model$refData[[loc]][model$knownRel]), ibd = model$ibd, sortComb = TRUE)
-  Glist2[[loc]] =  pGlist$G #store original genotype outcomes
+  if(!all(model$popFreq[[loc]]==c$FvecLong[ind1])) stop("Frequencies in model$popFreq and prepareC was different!") #extract frequencies
+  refInd = c(which(model$condOrder>0),model$knownRef) #obtain ref index of BOTH conditional contr and known non-contributors (must be given as known ref alleles)
+  pGlist = calcGjoint(freq=model$popFreq[[loc]],nU=nU,fst = fstv[m], refK = unlist(model$refData[[loc]][refInd]) , refR = unlist(model$refData[[loc]][model$knownRel]), ibd = model$ibd, sortComb = TRUE)
+  Gset <- Glist2[[loc]] <- pGlist$G #genotype possibilities
 
-  ret$nK <- nC  #number of known is equal number of contributors
-  Gset <- matrix(ret$Gvec,ncol=2) #genotype possibilities
-  Glist <- list()
+  Glist <- list() #get genotype index list of all outcome
   for(k in 1:nU) {
-   Glist[[k]] <- 1:nrow(Gset)
+    Glist[[k]] <- 1:nrow(Gset)
   }
   combGind <- expand.grid(Glist) #get all combinations
   combGind <- as.matrix(combGind,nrow=nrow(combGind))
   dvec <- rep(NA,nrow(combGind))
-
+  
   #calculate for each genotypes:
   for(gind in 1:nrow(combGind)) { #for each possible genotypes:
-   genoUind = combGind[gind,] #get row
-   ret$condRef[uind] <- as.integer(genoUind - 1) #insert genotypes to consider
-   dvec[gind] <- loglikYtheta() #insert log P(E|G)
+    genoUind = combGind[gind,] #get row
+    knownGind2 = knownGind 
+    knownGind2[uind] =  as.integer(genoUind - 1) #insert genotypes to consider
+#    Gset[knownGind2+1,] #show Genotype combinations
+    dvec[gind]  = .C("loglikgammaC",as.numeric(0),as.integer(nC),as.integer(nC),as.integer(knownGind2),as.numeric(mixprop),as.numeric(mu1),as.numeric(sig1),as.numeric(beta1),as.numeric(xiB),as.numeric(xiF),as.numeric(ATv[m]),as.numeric(pCv[m]),as.numeric(lambdav[m]),as.numeric(fstv[m]),c$nReps[m],as.integer(1),c$nA[m],c$YvecLong[ind2],c$FvecLong[ind1],c$nTypedLong[m],c$maTypedLong[ind1],c$basepairLong[ind1],c$BWvecLong[ind1],c$FWvecLong[ind1],c$nPS[m],c$BWPvecLong[indPS],c$FWPvecLong[indPS],as.integer(1),as.integer(0),as.integer(0),c$relGind,c$ibdLong,PACKAGE="euroformix")[[1]] #Note: genotype probailities (related) is not considered here, since the prob is calculated after
 
-   if(nU>2) genoUind[-1] <- sort(genoUind[-1],decreasing=TRUE) #sort the indices to be ordered from 2.index
-   pg = pGlist$Gprob[ rbind(genoUind) ]  #CALCULATING JOINT PROB GENOTYPE
-   dvec[gind] <- dvec[gind] + log(pg) #insert log joint prob
- # dvec[gind] <- dvec[gind] + sum(log(ret$pG[combGind[gind,]])) #PREV VERSION
+    if(nU>2) genoUind[-1] <- sort(genoUind[-1],decreasing=TRUE) #sort the indices to be ordered from 2.index
+    pg = pGlist$Gprob[ rbind(genoUind) ]  #CALCULATING JOINT PROB GENOTYPE (may include relatedness probs)
+    dvec[gind] <- dvec[gind] + log(pg) #insert log joint prob
   }
-  combGind2 <- numeric()
-  for(c in 1:nC) {
-   if(c%in%kind) combGind2 <- cbind(combGind2, rep(ret$condRef[c]+1,nrow(combGind)) ) #add genotype index of the reference
-   if(c%in%uind) combGind2 <- cbind(combGind2, combGind[,which(c==uind)]) #add genotype index of the reference
+  
+  #Update indices for next marker:
+  startIndMarker1 = startIndMarker1 + c$nA[m] #get start position of marker m+1 (1 rep)
+  startIndMarker2 = startIndMarker2 + c$nA[m]*c$nRep[m]; #get start position of marker m+1 (nRep), used only for Peaks only
+  startIndPS = startIndPS + c$nPS[m]; #add number of potential stutters
+  
+  combGind2 <- numeric() #including the genotype of all contributors:
+  for(k in 1:nC) { #for each contributors
+    if(k%in%kind) combGind2 <- cbind(combGind2, rep(knownGind[k]+1,nrow(combGind)) ) #add genotype index of the reference
+    if(k%in%uind) combGind2 <- cbind(combGind2, combGind[,which(k==uind)]) #add genotype index of the reference
   }
   isOK <- !is.infinite(dvec) #remove genotypes giving zero likelihood
-  combGind2 <- combGind2[isOK,,drop=F]
+  combGind2 <- combGind2[isOK,,drop=F] #removing genotypes which gives zero likelihood 
   dvec <- dvec[isOK]
-  rank <- order(dvec,decreasing=TRUE)
+  rank <- order(dvec,decreasing=TRUE) #order the genotypes wrt post prob values
   dlist[[loc]] <- dvec[rank]   #log-likelihood per per marker per
   GClist2[[loc]] <- combGind2[rank,,drop=F] #get index of ranked combined genotypes 
- }
-
- kvec <- 1:nC
- colN <- paste0("C",kvec) #column name
+  
+  if(verbose) { #only show progressbar if verbose (update)
+    setTxtProgressBar(progbar,progcount)
+    progcount <- progcount + 1
+  } 
+  
+ } #end for each loci
+ 
+ #POST PROCESSING:
+ kvec <- 1:nC #index of contributors
+ colN <- paste0("C",kvec) #column name of contributors
 
  #Step 3) Convert rank-list to list with allele-names
  deconvlisti <- list() #list per locus for all contributors
@@ -102,10 +145,9 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000){
    deconvlisti[[loc]] <- cbind(deconvlisti[[loc]], pGi/sum(pGi) ) #add probabilities per makers
    colnames(deconvlisti[[loc]]) <- c(colN,"Probability")
  }
-
  #Step4) Create table layouts:
 
- #A) Calculate marginal probabilities for all contributors (genotypes and alleles):
+ #Helpfunctions to obtain marginal probabilities
  getMarg <- function(x,y) { #get marginal of genotypes
   agg <- aggregate(y,by=list(x),sum) #get probabilities
   ord <- order(agg[,2],decreasing=TRUE)
@@ -123,6 +165,9 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000){
   agg <- data.frame(Allele=unA[ord],Probability=prob[ord])
   return(agg)
  }
+ maxI <- function(p) min(min(which(cumsum(p)>=alpha)),maxlist,length(p))  #helpfunction to obtain a maximum size of a vector (bounded in both length and probability)
+ 
+ #A) Calculate marginal probabilities for all contributors (genotypes and alleles):
  deconvlistic <- list() #genotype list per contributor
  deconvlistica <- list() #allele list per contributor
  cn <-  c("TopGenotype","probability","ratioToNextGenotype") #names for each contributor
@@ -144,7 +189,7 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000){
   toplist[[loc]] <- tab
  }
  
- maxI <- function(p) min(min(which(cumsum(p)>=alpha)),maxlist,length(p))
+ 
  #B) Create tables
  table1 <- table2 <- table3 <- table4 <- numeric()
  for(loc in locs) {

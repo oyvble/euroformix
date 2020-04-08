@@ -11,7 +11,7 @@ plotTopEPG(MLEobj, DCobj = NULL, kitname = NULL, threshT = 0)
 
 \item{DCobj}{An object returned from devonvolve: Must be run with same object as MLEobj}
 
-\item{kitname}{Name of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}}
+\item{kitname}{Name of kit:  Obtained from getKit()}
 
 \item{threshT}{The detection threshold can be shown in gray in the plot.}
 }

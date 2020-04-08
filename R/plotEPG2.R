@@ -3,10 +3,10 @@
 #' @description EPG data visualizer (interactive)
 #' @details Plots peak height with corresponding allele for sample(s) for a given kit.
 #' @param mixData List of mixData[[ss]][[loc]] =list(adata,hdata), with samplenames ss, loci names loc, allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
+#' @param kit Short name of kit: See supported kits with getKit()
 #' @param refData List of refData[[rr]][[loc]] or refData[[loc]][[rr]] to label references (flexible). Visualizer will show dropout alleles. 
-#' @param kitname Short name of kit: See supported kits with getKit()
-#' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a AT[[dye]] list.
-#' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[dye]] list.
+#' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
+#' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param dyeYmax A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
 #' @param plotRepsOnly A boolean of whether only replicate-plot is shown in case of multiple samples (TRUE is default) 
 #' @param options A list of possible plot configurations. See comments below
@@ -15,7 +15,6 @@
 
 plotEPG2 = function(mixData,kit,refData=NULL,AT=NULL,ST=NULL,dyeYmax=TRUE,plotRepsOnly=TRUE,options=NULL) {
  #AT (analyitcal threshold),ST (stochastic threshold). Can be given marker/dye specific
- require(plotly) #required package
 
  sn = names(mixData) #get samples names
  nS = length(sn) #number of replicates
@@ -45,9 +44,9 @@ plotEPG2 = function(mixData,kit,refData=NULL,AT=NULL,ST=NULL,dyeYmax=TRUE,plotRe
  nrows = length(dyes) #number of dyes/rows
  if(is.null(options$h0)) { h0 = 1200  } else { h0 = options$h0 }  # 5500/nrows #standard height for each dye (depends on number of rows? No)
  if(is.null(options$w0)) { w0 = 1800 } else { w0 = options$w0 }  # standard witdh when printing plot
- if(is.null(options$marg0)) { marg0 = 0.02  } else { marg0 = options$marg0 } 
- if(is.null(options$txtsize0)) { txtsize0 = 15 } else { txtsize0 = options$txtsize0 }  
- if(is.null(options$locsize0)) { locsize0 = 20 } else { locsize0 = options$locsize0 } 
+ if(is.null(options$marg0)) { marg0 = 0.02  } else { marg0 = options$marg0 }  #margin
+ if(is.null(options$txtsize0)) { txtsize0 = 15 } else { txtsize0 = options$txtsize0 } #txt size  
+ if(is.null(options$locsize0)) { locsize0 = 20 } else { locsize0 = options$locsize0 } #locus name size
  if(is.null(options$minY)) { minY = 100 } else { minY = options$minY }  #default minimum Y-axis length
  if(is.null(options$ymaxscale)) { ymaxscale = 1.05 } else { ymaxscale = options$ymaxscale }  #default minimum Y-axis length
 
@@ -128,19 +127,20 @@ for(ss in sn) { #create a seperate EPG plot for each samples
 
  for(dye in dyes) {
 #   dye=dyes[1]
-  AT1 <- AT #temporary on analytical threshold
-  ST1 <- ST #temporary on stochastic threshold
-  if(!is.null(AT) && is.list(AT) ) AT1 = AT[[dye]] #ignores dye if not found
-  if(!is.null(ST) && is.list(ST) ) ST1 = ST[[dye]] #ignores dye if not found
-
-  dyeind = which(dyes==dye)
-  dye2 = dyes2[dyeind]
-  loctab = POS[POS[,1]==dye,-1,drop=FALSE]
+  dyeind = which(dyes==dye) 
+  dye2 = dyes2[dyeind] #get dye color
+  loctab = POS[POS[,1]==dye,-1,drop=FALSE] #extract table with loci
   locs = toupper(as.character(loctab[,1])) #get locs 
   poslocs = loctab[,2] #get corresponding positions
+   
+  AT1 <- AT #temporary on analytical threshold
+  ST1 <- ST #temporary on stochastic threshold
+  if(!is.null(AT) && length(AT)>1 ) AT1 = AT[ toupper(names(AT))%in%locs ][1]  #extract dye specific AT
+  if(!is.null(ST) && length(ST)>1 ) ST1 = ST[ toupper(names(ST))%in%locs ][1]  #extract dye specific ST
 
   dfs = df[df$Sample==ss & df$Marker%in%locs,] #extract subset 
-  if(dyeYmax) ymax1 = 1.05*max(minY,AT1,ST1,dfs$Height)  #get max 
+  if(dyeYmax) ymax1 =  ymaxscale*max( na.omit(c(minY,AT1,ST1,dfs$Height)) )  #get max 
+
 
   p = plotly::plot_ly(colors=dye2,mode="lines",height=h0) #df,x = ~bp,y=~Height,type="scatter",mode="markers",colors=dye2,name=~Allele)
   if(!is.null(AT1)) p <- plotly::add_lines(p,x = bprng, y = rep(AT1,2),color=factor(1),line=list(dash = 'dot',width=2),showlegend = FALSE)
@@ -169,20 +169,21 @@ repcols = c("black","red","blue","forestgreen","orange","purple") [1:nS]
  plist = list() #create plot object for each color
  for(dye in dyes) {
 #   dye=dyes[1]
-  AT1 <- AT #temporary on analytical threshold
-  ST1 <- ST #temporary on stochastic threshold
-  if(!is.null(AT) && is.list(AT) ) AT1 = AT[[dye]] #ignores dye if not found
-  if(!is.null(ST) && is.list(ST) ) ST1 = ST[[dye]] #ignores dye if not found
-
   dyeind = which(dyes==dye)
   dye2 = dyes2[dyeind]
   loctab = POS[POS[,1]==dye,-1,drop=FALSE]
   locs = toupper(as.character(loctab[,1])) #get locs 
+   
+  AT1 <- AT #temporary on analytical threshold
+  ST1 <- ST #temporary on stochastic threshold
+  if(!is.null(AT) && length(AT)>1 ) AT1 = AT[ toupper(names(AT))%in%locs ][1]  #extract dye specific AT
+  if(!is.null(ST) && length(ST)>1 ) ST1 = ST[ toupper(names(ST))%in%locs ][1]  #extract dye specific ST
+  
   poslocs = loctab[,2] #get corresponding positions
   dfs = df[df$Marker%in%locs,] #extract subset 
   dfs1 = unique( subset(dfs,select=c("Marker","Allele","bp","reftxt") ) ) #extract unique info (to label loci/alleles etc)
 
-  if(dyeYmax) ymax1 = ymaxscale*max(minY,AT1,ST1,dfs$Height)  #get max 
+  if(dyeYmax) ymax1 = ymaxscale*max( na.omit(c(minY,AT1,ST1,dfs$Height)) )  #get max 
   p = plotly::plot_ly(dfs,type = "bar",height=h0, colors=repcols,showlegend = FALSE)
   if(!is.null(AT1)) p = plotly::add_segments(p,x = bprng[1], xend = bprng[2], y = AT1, yend = AT1,color=I(dye2),line=list(dash = 'dot',width=2))#,inherit=FALSE)
   if(!is.null(ST1)) p <- plotly::add_lines(p,x = bprng, y = rep(ST1,2),color=factor(1),line=list(dash = 'dash',width=2),showlegend = FALSE)

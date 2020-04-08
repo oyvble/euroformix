@@ -5,15 +5,15 @@
 \title{prepareC}
 \usage{
 prepareC(nC, samples, popFreq, refData = NULL, condOrder = NULL,
-  knownRef = NULL, kit = NULL, knownRel = NULL, ibd = c(1, 0, 0),
-  fst = 0, incS = FALSE)
+  knownRef = NULL, kit = NULL, knownRel = NULL, ibd = NULL,
+  fst = 0, incS = FALSE, incFS = FALSE)
 }
 \arguments{
 \item{nC}{Number of contributors in model.}
 
 \item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
 
-\item{popFreq}{A list of allele frequencies for a given population.}
+\item{popFreq}{A list of allele frequencies for a given population (possibly including "99" Q-alleles).}
 
 \item{refData}{Reference objects with list element [[s]][[i]]. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.}
 
@@ -21,15 +21,17 @@ prepareC(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 
 \item{knownRef}{Specify known non-contributing references from refData (indices). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.}
 
-\item{kit}{shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler","ForenSeq"}}
+\item{kit}{shortname of kit: Obtained from getKit()}
 
 \item{knownRel}{Specify the index of the related contributing reference from refData (one index). For instance knownRel=2 means that unknown1 is related to reference 2 with ibd specified relationship.}
 
-\item{ibd}{the identical by decent coefficients of the relationship (specifies the type of relationship)}
+\item{ibd}{the identical by decent coefficients list of the relationship for each unknowns (specifies the type of relationship). Default is NULL, meaning no related inds}
 
-\item{fst}{The co-ancestry coefficient. Default is 0.}
+\item{fst}{The co-ancestry coefficient. Default is 0. Can be a vector following markers.}
 
-\item{incS}{A boolean whether to include potential stutters to the allele outcome. Default is FALSE.}
+\item{incS}{A boolean whether potential BW stutters are included}
+
+\item{incFS}{A boolean whether potential FW stutters are included}
 }
 \value{
 ret A list of data input to call the C-code with
@@ -38,7 +40,22 @@ ret A list of data input to call the C-code with
 prepareC is used in the functions contLikMLE,contLikMarg and contLikMCMC to prepare input to C-call
 }
 \details{
-The function builds the data input to the C-code
+Assumes that all PH below threshold are removed. The function builds the data input to the C-code
+}
+\examples{
+\dontrun{
+kit = "ESX17"
+popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
+ paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
+evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
+ sep=.Platform$file.sep)
+reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),
+ sep=.Platform$file.sep)
+popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
+samples = sample_tableToList(tableReader(evidfn))
+dat = prepareData(samples,popFreq=popFreq) #obtain data to use for analysis
+prepCobj = prepareC(nC=2,samples=dat$samples,popFreq= dat$popFreq,kit=kit)
+}
 }
 \author{
 Oyvind Bleka

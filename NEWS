@@ -1,0 +1,79 @@
+
+EuroForMix v3.0.0 (Release date: 2020-04-01)
+=============================================
+Summary of version 3 updates:
+- Faster calculations due to paralellization on deeper level; causes speed to scale with the number of logical CPU cores (threads).
+- Progress bar for all types of calculations. Time estimates given for the MLE method (if time exceeds 10s).
+- Automatic model selection for the MLE method (number of contributors, Degradation (ON/OFF), BW-stutter (ON/OFF), FW-stutter (ON/OFF) decided based on the AkaikeInformationCriterion)
+- Model extensions: Forward stutter model and Marker/Dye specific settings for analytical thresholds, dropin model and fst.
+- Validation plots created (almost) instantly
+- Seed settings: The MCMC and conservative LR values are now reproducible. Also optional seed can be given for the MLE method (reproducible start values, useful for time comparisons).
+- Upper boundary of Likelihood Ratio provided in GUI (1/'Random match probability').
+
+
+Details of the update:
+ - GUI changes (efm):
+	- In 'Generate data' panel: New layout. Includes Forward stutter. 
+	- In 'Model specification' panel: Possibility of forward stutter model added.
+	- In 'MLE fit' panel: New layout for better per-marker space. 
+		- 'Only LR results' removed. 
+		- adj.loglik added to loglik: adj.loglik = loglik - nparam
+	- In create report this was added: 1) Frequency for rare alleles and 2) information of whether the frequencies were normalized after imputing rare alleles.
+	
+ - Bug fixes:
+	- In function deconvolve: The genotype of known contributors were not taken into account when doing deconvolution with theta-correction (only known non-contributors).
+	- In function plotTopMPS2: Inserting base pair of closest allele (for missing bp)
+
+ - New implementation of the C++ engine (Armadillo/Rcpp not used any more):
+	 - The C++ engine performs parallelization on genotype marginalisation over one for-loop which makes the speed scale with the number of CPU cores.
+
+ - Model extensions:
+	 - Forward stutter model.
+	 - Marker dependent AT/pC/lambda/Fst parameters (also implemented for qualitative model).
+
+ - New features:
+ 	- Monitoring progress (a progressbar is provided in console)
+	- Automatic model selection (based on the AIC): Number of contributors, Degradation (ON/OFF), BW-stutter (ON/OFF), FW-stutter (ON/OFF)
+ 	- Seeds added to following functions: contLikMCMC,contLikMLE 
+	- Optional 'normalization' handling of rare alleles (missing alleles in population frequency data): 
+		- Can be changed under "Frequencies -> Set whether to normalize frequencies" (1=Yes, 0=No) 
+		- Allele frequencies are by default normalized after including new alleles. In EFM v2 the default was not to normalize - set option equal 0=No for concordant results.
+
+ - Following functions has been modified and updated because of the new C++ implementation:
+	- prepareC
+	- contLikMLE
+	- contLikINT
+	- contLikMCMC (depends on contLikMLE output)
+	- validMLEmodel (depends on contLikMLE output)
+	- deconvolve (depends on contLikMLE output)
+	- logLiki (depends on contLikMLE output)
+
+ - Following functions are not used anymore (but still there): contLikMCMCpara (calls contLikMCMC), contLikMLEpara (calls contLikMLE), iszerolik
+
+ - Added functions: 
+	- runexample: Illustration of using the most important methods in euroformix.
+	- calcRMP: Calculates the random match probability of a specific profile.
+	- conLikSearch: Searches through all model outcomes and shows the optimal model in the MLE panel. Table is visualised and also stored in report file.
+	- sample_listToTable: Converts list structure to table (used by exporting)
+	- sample_tableToList: Converts tables to list (used by importing)
+	- prepareData: preparing data with Qassignation and filter data wrt analytical thresholds (possibly per marker)
+
+ - Modified functions:
+	- genDataset: Also includes forward stutter simulation and marker based analytical threshold
+	- getKit: The user can specify other kit files than the one by default (more flexibility)
+	- simDOdistr: The function now accepts dropin probability per marker (if provided)
+ 
+ - Includes automated testing of the numerical calculations by C++ using 'testthat' (compares with manual R implementations)
+	- See separete presentation "EFM3numtestPres" for a description
+ 
+ - Other notes:
+	- Degradation slope param can never exceed 1. This was possible before 
+	- New optimization strategy for MLE (contLikMLE): 
+		-> New strategy: Require nDone number of obtained local maximum values (set to 2 as default).
+		-> Random start points are better chosen: Mixture proportions (flat, but sorted for unknowns), PHexp/PHvar/stuttprop/degradslope have lower variation.
+		-> Faster convergence in nlm, but about same accuracy (minimum step tolerance (steptol) set to 1e-3 instead of 1e-6).
+	- New sampling strategy for MCMC: No block-wise sampling provided and only one chain is run.
+	- The parallel versions contLikMLEpara and contLikMCMCpara are no longer used (calls the original functions)
+	- The likelihood of underflow numbers are now shown in MLE results.
+	- CaseSolver v1.7 or newer should be used with this version.
+

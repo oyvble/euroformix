@@ -12,9 +12,9 @@ plotMPS2(mixData, refData = NULL, AT = NULL, ST = NULL,
 
 \item{refData}{List of refData[[rr]][[loc]] or refData[[loc]][[rr]] to label references (flexible). Visualizer will show dropout alleles.}
 
-\item{AT}{A detection threshold can be shown in a dashed line in the plot (constant). Possibly a AT[[loc]] list.}
+\item{AT}{A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names}
 
-\item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[loc]] list.}
+\item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names}
 
 \item{grpsymbol}{A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.}
 

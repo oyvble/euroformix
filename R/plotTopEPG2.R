@@ -5,21 +5,18 @@
 #' @param MLEobj An object returned from contLikMLE
 #' @param DCobj An object returned from devonvolve: Must be run with same object as MLEobj
 #' @param kit Short name of kit: See supported kits with getKit(). Argument ignored if degradation model used.
-#' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a AT[[dye]] list.
-#' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[dye]] list.
+#' @param dyeYmax A boolean of whether the Y-axis scale should be dye specific
+#' @param plotRepsOnly A boolean of whether only replicates are plotted 
+#' @param options Layout options can be provided: w0 (layout width),marg0 (margin), txtsize0 (text size), locsize0 (locus name size), minY (minimum Y-axis height), ymaxscale (Scaling maximum Y-axis height)
 #' @return sub A plotly widget
 #' @export
 
-plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,AT=NULL,ST=NULL,dyeYmax=TRUE,plotRepsOnly=TRUE,options=NULL) {
- #AT[[dye]] or constant
- #ST[[dye]] or constant
- #AT (analyitcal threshold),ST (stochastic threshold). Can be given marker/dye specific
- require(plotly) #required package
- Qallele = "99"
+plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRUE,options=NULL) {
+  Qallele = "99"
  mixData=MLEobj$model$samples #copy
  refData=MLEobj$model$refData #copy
 
- if(is.null(DCobj)) DCobj <- deconvolve(MLEobj,maxlist=1) #get top candidate profiles
+ if(is.null(DCobj)) DCobj <- deconvolve(MLEobj,maxlist=1,verbose=FALSE) #get top candidate profiles
  #extract info from DC (deconvolution) object
  topG <- sapply(DCobj$rankGi,function(x) x[1,-ncol(x),drop=F])
  if(is.null(nrow(topG))) topG <- t(topG) #consider as matrix
@@ -27,6 +24,7 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,AT=NULL,ST=NULL,dyeYmax=TRUE,
  names(pG) = toupper(colnames(topG)) #assign loci names
 
  #estimates:
+ AT = MLEobj$model$threshT #extract detection threholds from object
  thhat <- MLEobj$fit$thetahat2 #get estimates
  nC <- MLEobj$model$nC #number of contributors
  mx <- thhat[1:nC]   
@@ -41,7 +39,7 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,AT=NULL,ST=NULL,dyeYmax=TRUE,
  nS = length(sn) #number of replicates
  locs = names(mixData[[1]]) #get locus names
 
- nrefs = 0 
+ nrefs = 0  #number of references
  if(!is.null(refData)) {
   refn = names(refData[[1]])
   refn = refn[MLEobj$model$condOrder>0] #ref names conditioned on
@@ -121,21 +119,21 @@ for(dye in dyes) {
     ind = match(av,tmp$Allele) #get index to extract
     bv = tmp$Size[ind]  #get sizes directly from lookup
     isna = which(is.na(ind)) #which alleles are missing?
-	if(length(isna)>0) avuse = as.numeric(tmp$Allele) #alleles available (called only once)
-    for(missind in isna) {#impute missing bp:
-      if( av[missind]==Qallele) {
-       bv[missind] = max(tmp$Size)
-      } else {
-       newa = as.numeric(av[missind])
-       impuse = which.min(abs(newa - avuse )) #index of closest allele 
-       newa2 =  avuse[impuse] #closest allele 
-       diff = newa - newa2
-       bpadd1 = floor(diff)*tmp$Repeat[impuse]  #integer add
-       bpadd2 = (diff-floor(diff))*10  #decimal add
-       bv[missind] = tmp$Size[impuse] + bpadd1 + bpadd2  #estimate bp to insert
+  	if(length(isna)>0) avuse = as.numeric(tmp$Allele) #alleles available (called only once)
+      for(missind in isna) {#impute missing bp:
+        if( av[missind]==Qallele) {
+         bv[missind] = max(tmp$Size)
+        } else {
+         newa = as.numeric(av[missind])
+         impuse = which.min(abs(newa - avuse )) #index of closest allele 
+         newa2 =  avuse[impuse] #closest allele 
+         diff = newa - newa2
+         bpadd1 = floor(diff)*tmp$Repeat[impuse]  #integer add
+         bpadd2 = (diff-floor(diff))*10  #decimal add
+         bv[missind] = tmp$Size[impuse] + bpadd1 + bpadd2  #estimate bp to insert
+        }
       }
-    }
-  
+    
     #GET EXPECTation (and std) of PH
     EYv = rep("",length(av))
     SDv = rep("",length(av))
@@ -155,16 +153,16 @@ df = data.frame(Sample=df[,1],Marker=df[,2], Allele=df[,3],Height=as.numeric(df[
 EYmax <- max(as.numeric(unlist( strsplit(df$EXP,"/") )))
 ymax1 =  ymaxscale*max(minY,EYmax,df$Height) #global max y
       
-getTcol <- function(color, deg = .5) {
+getTcol <- function(color, deg = .5) { #helpfunction to get transparant colors
   rgb.val <- col2rgb(color)
-  return( rgb(rgb.val[1], rgb.val[2], rgb.val[3],max = 255, alpha = (1-deg)*255))
+  return( rgb(rgb.val[1], rgb.val[2], rgb.val[3],maxColorValue = 255, alpha = (1-deg)*255))
 }
 
-col0 = getTcol("black",0.3) #color of all peak heights
+col0 = getTcol("black",0.3) #color of all peak heights (will be transparant)
 
 #SEPARATE PLOTS
 if(nS==1 || !plotRepsOnly) { #plot separate plot only in this case
-transdeg = .4
+transdeg = .4 #transparancy degree (could be put in options)
 
 for(ss in sn) { #create a seperate EPG plot for each samples
 # ss =sn[1]
@@ -172,23 +170,21 @@ for(ss in sn) { #create a seperate EPG plot for each samples
 
  for(dye in dyes) {
 #   dye=dyes[1]
-  AT1 <- AT #temporary on analytical threshold
-  ST1 <- ST #temporary on stochastic threshold
-  if(!is.null(AT) && is.list(AT) ) AT1 = AT[[dye]] #ignores dye if not found
-  if(!is.null(ST) && is.list(ST) ) ST1 = ST[[dye]] #ignores dye if not found
-
+   
   dyeind = which(dyes==dye)
   loctab = POS[POS[,1]==dye,-1,drop=FALSE]
   locs = toupper(as.character(loctab[,1])) #get locs 
   poslocs = loctab[,2] #get corresponding positions
-
+  
+  AT1 <- AT #temporary on analytical threshold
+  if(!is.null(AT) && length(AT)>1 ) AT1 = AT[ toupper(names(AT))%in%locs ][1]  #extract dye specific AT
+  
   dfs = df[df$Sample==ss & df$Marker%in%locs,] #extract subset 
-  if(dyeYmax) ymax1 = ymaxscale*max(minY,AT1,ST1,as.numeric(unlist( strsplit(dfs$EXP,"/") )),dfs$Height)  #get max 
+  if(dyeYmax) ymax1 = ymaxscale*max( na.omit( c(minY,AT1,as.numeric(unlist( strsplit(dfs$EXP,"/") )),dfs$Height) ) )  #get max 
 
   p = plotly::plot_ly(colors=col0,mode="lines",height=h0) #df,x = ~bp,y=~Height,type="scatter",mode="markers",colors=dye2,name=~Allele)
   if(!is.null(AT1)) p <- plotly::add_lines(p,x = bprng, y = rep(AT1,2),color=factor(1),line=list(dash = 'dot',width=2),showlegend = FALSE)
-  if(!is.null(ST1)) p <- plotly::add_lines(p,x = bprng, y = rep(ST1,2),color=factor(1),line=list(dash = 'dash',width=2),showlegend = FALSE)
-  for(j in 1:nrow(dfs))  p = add_trace(p,x =dfs$bp[j] + 1*c( -1/4,0,1/4),y =c(0,dfs$Height[j],0 ),name=as.character(dfs$Allele[j]),type = "scatter" , mode = "lines", fill = "tozeroy",fillcolor=col0,showlegend = FALSE,color=factor(1))
+  for(j in 1:nrow(dfs))  p = plotly::add_trace(p,x =dfs$bp[j] + 1*c( -1/4,0,1/4),y =c(0,dfs$Height[j],0 ),name=as.character(dfs$Allele[j]),type = "scatter" , mode = "lines", fill = "tozeroy",fillcolor=col0,showlegend = FALSE,color=factor(1))
   for(loc in locs) { #for each loci: color name for different probabilities 
    dye2 = col0 
    prob = pG[names(pG)==toupper(loc)]
@@ -241,23 +237,21 @@ repcols = rep("gray",nS) #c("black","red","blue","forestgreen","orange","purple"
  plist = list() #create plot object for each color
  for(dye in dyes) {
 #   dye=dyes[1]
-  AT1 <- AT #temporary on analytical threshold
-  ST1 <- ST #temporary on stochastic threshold
-  if(!is.null(AT) && is.list(AT) ) AT1 = AT[[dye]] #ignores dye if not found
-  if(!is.null(ST) && is.list(ST) ) ST1 = ST[[dye]] #ignores dye if not found
-
   dyeind = which(dyes==dye)
   dye2 = dyes2[dyeind]
   loctab = POS[POS[,1]==dye,-1,drop=FALSE]
   locs = toupper(as.character(loctab[,1])) #get locs 
+   
+  AT1 <- AT #temporary on analytical threshold
+  if(!is.null(AT) && length(AT)>1 ) AT1 = AT[ toupper(names(AT))%in%locs ][1]  #extract dye specific AT
+
   poslocs = loctab[,2] #get corresponding positions
   dfs = df[df$Marker%in%locs,] #extract subset 
   dfs1 = unique( subset(dfs,select=c("Marker","Allele","bp","reftxt") ) )
-  if(dyeYmax) ymax1 = ymaxscale*max(minY,AT1,ST1,dfs$Height)  #get max 
+  if(dyeYmax) ymax1 = ymaxscale*max(na.omit( c(minY,AT1,dfs$Height) ))  #get max 
 
   p = plotly::plot_ly(dfs,type = "bar",height=h0, colors=repcols,showlegend = FALSE)
   if(!is.null(AT1)) p = plotly::add_segments(p,x = bprng[1], xend = bprng[2], y = AT1, yend = AT1,color=I(dye2),line=list(dash = 'dot',width=2))#,inherit=FALSE)
-  if(!is.null(ST1)) p = plotly::add_lines(p,x = bprng, y = rep(ST1,2),color=factor(1),line=list(dash = 'dash',width=2),showlegend = FALSE)
   p = plotly::add_trace(p,x=~bp,y=~Height,name=~Sample,showlegend = FALSE,color=~Sample,hoverlabel=list(font=list(size=14),namelength=1000,namecolor="black"),text =~Allele) #dfs,x = ~bp,y=~Height,type="scatter",mode="markers",colors=dye2,name=~Allele)
 
   for(loc in locs) { #for each loci: color name for different probabilities 

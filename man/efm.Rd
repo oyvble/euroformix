@@ -7,7 +7,7 @@
 efm(envirfile = NULL)
 }
 \arguments{
-\item{envirfile}{A file to a saved environment of a project}
+\item{envirfile}{A Rdata file including a saved environment of a project}
 }
 \description{
 efm (EuroForMix) is a GUI wrapper for euroformix

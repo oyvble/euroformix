@@ -5,7 +5,7 @@
 \title{validMLEmodel}
 \usage{
 validMLEmodel(mlefit, kit = NULL, plottitle = "PP-plot",
-  alpha = 0.01, createplot = TRUE, verbose = TRUE)
+  alpha = 0.01, createplot = TRUE, verbose = TRUE, maxThreads = 32)
 }
 \arguments{
 \item{mlefit}{Fitted object using contLikMLE}
@@ -19,6 +19,8 @@ validMLEmodel(mlefit, kit = NULL, plottitle = "PP-plot",
 \item{createplot}{Boolean of whether plot should be created}
 
 \item{verbose}{Boolean of whether printing out information about significant alleles}
+
+\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
 \value{
 retinfo A dataframe with information from the calculated validation model
@@ -28,7 +30,7 @@ validMLEmodel makes model validation whether the observed peak heights fits the 
 }
 \details{
 The cumulative probability of the observed allele peaks are calculated and compared with a uniform distribution.
-Function calls procedure in C++ by using the package Armadillo and Boost.
+Function calls a 'cumulative procedure' in C++ which uses the package Boost and performs paralellisation (OpenMP).
 }
 \author{
 Oyvind Bleka

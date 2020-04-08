@@ -4,7 +4,14 @@
 \alias{tableReader}
 \title{tableReader}
 \usage{
-tableReader(filename, header = TRUE)
+tableReader(filename, header = TRUE, delims = c("\\t", ",", ";"))
+}
+\arguments{
+\item{filename}{Name of file to be read.}
+
+\item{header}{Boolean of whether header should be included or not}
+
+\item{delims}{delimiter options to use when reading table}
 }
 \description{
 A robust function for reading tables

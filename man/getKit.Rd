@@ -4,18 +4,23 @@
 \alias{getKit}
 \title{getKit}
 \usage{
-getKit(kit = NULL, what = NA)
+getKit(kit = NULL, what = NA, fileName = "kit.txt",
+  folderName = NULL)
 }
 \arguments{
-\item{kit}{shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}}
+\item{kit}{Short name of kit: See supported kits with getKit()}
 
 \item{what}{options: {"Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}}
+
+\item{fileName}{Name of kit file used to extract kitinformation}
+
+\item{folderName}{Name of folder containing the kit file 'fileName'. Using package folder if not specified.}
 }
 \value{
 res A data frame with kit information
 }
 \description{
-Function to get kit information. Tided up by Oyvind Bleka
+Function to get kit information. Tided up and slightly modified by Oyvind Bleka
 }
 \details{
 Returns kit information

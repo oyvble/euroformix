@@ -12,6 +12,11 @@
  getGlist <- function(popFreq,fst=0,refKlist=NULL,refRlist=NULL,ibd=c(1,0,0)) {
   locs <- names(popFreq)
   Glist <- list()
-  for (loc in locs) Glist[[loc]] = calcGjoint(freq=popFreq[[loc]],nU=1,fst=fst,refK=refKlist[[loc]],refR=refRlist[[loc]],ibd=ibd) 
+  for (loc in locs) {
+    fstMarker = fst #set to default (can be a vector)
+    if(length(fst)>1) fstMarker = fst[names(fst)==loc] #extract fst to use for marker
+    if(length(fstMarker)==0) stop("The locus name in fst vector was not recognized!")
+    Glist[[loc]] = calcGjoint(freq=popFreq[[loc]],nU=1,fst=fstMarker,refK=refKlist[[loc]],refR=refRlist[[loc]],ibd=ibd) 
+  } 
   return(Glist)
  }

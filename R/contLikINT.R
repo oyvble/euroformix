@@ -4,8 +4,6 @@
 #' @description contLikINT marginalizes the likelihood of the STR DNA mixture given some assumed a bayesian model by numerical integration.
 #' @details The procedure are doing numerical integration to approximate the marginal probability over the noisance parameters. Mixture proportions have flat prior.
 #' 
-#' Function calls procedure in c++ by using the package Armadillo and Boost.
-#'
 #' @param nC Number of contributors in model.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
 #' @param popFreq A list of allele frequencies for a given population.
@@ -21,51 +19,103 @@
 #' @param fst is the coancestry coeffecient. Default is 0.
 #' @param lambda Parameter in modeled peak height shifted exponential model. Default is 0.
 #' @param pXi Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.
-#' @param kit shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
+#' @param kit shortname of kit: Obtained from getKit()
 #' @param scale used to make integrale calculateable for small numbers. For scale!=0, integrale must be scaled afterwards with exp(-scale) to be correct.
 #' @param maxEval Maximum number of evaluations in the adaptIntegrate function. Default is 0 which gives an infinite limit.
 #' @param knownRel gives the index of the reference which the 1st unknown is related to.
 #' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)
-#' @return ret A list(margL,deviation,nEvals) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
+#' @param xiFW A numeric giving FW stutter-ratio if it is known.Default is 0, meaning stutter is not used.
+#' @param pXiFW Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.
+#' @param maxThreads Maximum number of threads to be executed by the parallelization
+#' @param verbose Boolean whether printing limits to integrate over. Printing progress if maxEval>0. Default is TRUE.
+#' @return ret A list(margL,deviation,nEvals,scale) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
 #' @export 
 #' @references Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.
 #' @keywords continuous, Bayesian models, Marginalized Likelihood estimation
 
 
-contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0)){
+contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,maxThreads=32,verbose=TRUE){
  if(is.null(maxEval)) maxEval <- 0
- require(cubature) 
  if(length(lower)!=length(upper)) stop("Length of integral limits differs")
- np2 <- np <- nC + 2 + sum(is.null(xi)) #number of unknown parameters
- if(length(lower)!=np) stop("Length of integral limits differs from number of unknown parameters specified")
- ret <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit,knownRel,ibd,fst,incS=is.null(xi) || xi>0)
- nodeg  <- is.null(kit) #boolean whether modeling degradation FALSE=YES, TRUE=NO
- if(nodeg) {
-   np2 <- np2 - 1
-   if(length(lower)>np2) {
-    lower <- lower[-(nC+2)] #remove beta boundary
-    upper <- upper[-(nC+2)] #remove beta boundary
-   }
+ np = length(lower)
+
+ c <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit,knownRel,ibd,fst,incS=is.null(xi) || xi>0,incFS=is.null(xiFW) || xiFW>0)
+ usedeg  <- !is.null(kit) #boolean whether modeling degradation TRUE=YES, FALSE=NO
+ 
+ #Prepare fixed params:
+ nM = c$nM #number of markers to evaluate
+ 
+ #Check AT:
+ if(length(threshT)==1) {
+   ATv = rep(threshT,nM) #common detection threshold for all markers
+ } else {
+   ATv = setVecRightOrder(threshT,  c$locs) #get right order of vector 
  }
- if(length(lower)!=np2) stop("The length integral limits was not the same as number of parameters!")
- liktheta <- function(theta) {   
-  theta2 <- theta[1:(nC+1)] #take out mx,mu,sigma
-  if(nodeg) {
-    theta2 <- c(theta2,1) #add beta=1 to parameters
-  } else {
-    theta2 <- c(theta2,theta[nC+2]) #add beta to parameters
-  }
-  if(is.null(xi)) {  #if xi unknown
-    theta2 <- c(theta2,theta[np2]) #add xi param to parameters
-  } else { #if xi known
-    theta2 <- c(theta2,xi) #add xi param to parameters
-  }
-  Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta2),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(prC), ret$condRef,as.numeric(threshT),as.numeric(fst),ret$mkvec,ret$nkval,as.numeric(lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
-  if(is.null(xi)) Cval <- Cval + log(pXi(theta2[np2])) #weight with prior
-  expCval <- exp(Cval+scale) #note the scaling given as parameter "scale".
-  return(expCval) #weight with prior of tau and stutter.
+ 
+ #Check dropin prob
+ if(length(prC)==1) {
+   pCv = rep(prC,nM) #common dropin prob for all markers
+ } else {
+   pCv = setVecRightOrder(prC,  c$locs) 
  }
- nU <- nC-ret$nK #number of unknowns
+ 
+ #Check hyperparam DI
+ if(length(lambda)==1) {
+   lambdav = rep(lambda,nM) #common hyperparam DI for all markers
+ } else {
+   lambdav = setVecRightOrder(lambda,  c$locs) 
+ }
+ 
+ #Check theta correction
+ if(length(fst)==1) {
+   fstv = rep(fst,nM) #common theta correction for all markers
+ } else {
+   fstv = setVecRightOrder(fst,  c$locs)
+ }
+ names(ATv) <- names(pCv) <- names(lambdav) <- names(fstv) <- c$locs #insert locus names (correct order)
+ 
+ #PREPEARING THE LIKELIHOOD OPTIMZATION (what parameters are provided?):
+ useParamOther = rep(TRUE,3)  #index of parameters used (set NA if fixed)
+ if(!usedeg) useParamOther[1] = FALSE #degrad not used
+ if(!is.null(xi)) useParamOther[2] = FALSE #BW stutter not used
+ if(!is.null(xiFW)) useParamOther[3] = FALSE  #FW stutter not used
+ indexParamOther = rep(NA,3)
+ if(any(useParamOther)) indexParamOther[useParamOther] = 1:sum(useParamOther) #init indices
+ 
+ liktheta <- function(theta) {
+  mixprop = as.numeric() #Length zero for 1 contributor
+  if(nC>1) mixprop = theta[1:(nC-1)] #extract parms
+  muv = rep(theta[nC],nM)   #common param for each locus
+  sigmav = rep(theta[nC+1],nM)  #common param for each locus
+
+  #Prepare the remaining variables
+  beta1 = 1.0 #set default values
+  xiB = xi #set default values
+  xiF = xiFW #set default values
+  tmp = theta[ (nC+1) + indexParamOther ] #obtain params
+  if(useParamOther[1]) beta1 = tmp[1]
+  if(useParamOther[2]) xiB = tmp[2]
+  if(useParamOther[3]) xiF = tmp[3]
+  betav = rep(beta1,nM) #common param for each locus
+  xiBv = rep(xiB,nM) #common param for each locus
+  xiFv = rep(xiF,nM) 
+    
+  loglik = .C("loglikgammaC",as.numeric(0),c$nC,c$NOK,c$knownGind,as.numeric(mixprop),as.numeric(muv),as.numeric(sigmav),as.numeric(betav),as.numeric(xiBv),as.numeric(xiFv),as.numeric(ATv),as.numeric(pCv),as.numeric(lambdav),as.numeric(fstv),c$nReps,c$nM,c$nA,c$YvecLong,c$FvecLong,c$nTypedLong,c$maTypedLong,c$basepairLong,c$BWvecLong,c$FWvecLong,c$nPS,c$BWPvecLong,c$FWPvecLong,as.integer(maxThreads),as.integer(0),c$anyRel,c$relGind,c$ibdLong,PACKAGE="euroformix")[[1]]
+  if(is.null(xi))  loglik <- loglik + log(pXi(xiB)) #weight with prior of xi
+  if(is.null(xiFW))  loglik <- loglik + log(pXiFW(xiF)) #weight with prior of xiFW
+  likval <- exp(loglik+scale) #note the scaling given as parameter "scale".
+  
+  if(verbose && maxEval>0) { #only show progressbar if verbose
+    progcount <<- progcount + 1
+    setTxtProgressBar(progbar,progcount)
+  } 
+  
+  return(likval) #weight with prior of tau and stutter.
+ }
+ 
+ #DERIVED RESTRICTION FOR MIXTURE PROPORTIONS:
+ nK = sum(condOrder>0) #number of conditionals
+ nU <- nC-nK #number of unknowns
  if(nC==2 && nU==2) {
   lower[1] <- max(1/2,lower[1]) #restrict to 1/2-size
  }
@@ -120,12 +170,22 @@ contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL
    comb2 <- rep(1,nC-1) - (upper[1:(nC-1)]-lower[1:(nC-1)])
    comb <- round(1/prod(comb2[comb2>0]))
  }
- foo <- adaptIntegrate(liktheta, lowerLimit = lower , upperLimit = upper , tol = reltol, maxEval=maxEval)#10000)
+ if(verbose) {
+   print(paste0("lower=",paste0(prettyNum(lower),collapse="/")))
+   print(paste0("upper=",paste0(prettyNum(upper),collapse="/")))
+
+   #Inititate progressbar if maxEval given
+   progcount = 1  #counter
+   if( maxEval>0 ) progbar <- txtProgressBar(min = 0, max = maxEval, style = 3) #create progress bar
+ }
+ 
+ 
+ foo <- cubature::adaptIntegrate(liktheta, lowerLimit = lower , upperLimit = upper , tol = reltol, maxEval=maxEval)#10000)
  val <- foo$integral
  dev <- val + c(-1,1)*foo$error
  nEvals <- foo[[3]]
  val <- comb*val
  dev <- comb*dev
- return(list(margL=val,deviation=dev,nEvals=nEvals))
+ return(list(margL=val,deviation=dev,nEvals=nEvals,scale=scale))
 }
 

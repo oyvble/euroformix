@@ -1,19 +1,22 @@
 #' @title getKit
 #' @author Oskar Hansson
-#' @description Function to get kit information. Tided up by Oyvind Bleka
+#' @description Function to get kit information. Tided up and slightly modified by Oyvind Bleka
 #' @details Returns kit information
-#' @param kit shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
+#' @param kit Short name of kit: See supported kits with getKit()
 #' @param what options: {"Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}
+#' @param fileName Name of kit file used to extract kitinformation
+#' @param folderName Name of folder containing the kit file 'fileName'. Using package folder if not specified.
 #' @return res A data frame with kit information
 #' @export
 
-getKit <- function(kit=NULL, what=NA) {  
+getKit <- function(kit=NULL, what=NA, fileName = "kit.txt", folderName=NULL) {  
   .separator <- .Platform$file.sep # Platform dependent path separator. 
- #  packagePath <- "C:/Users/oebl/Dropbox/Forensic/MixtureProj/myDev/quantLR/euroformix0"
-  packagePath <- path.package("euroformix", quiet = FALSE) # Get package path.
-  subFolder <- "extdata"
-  fileName <- "kit.txt"
-  filePath <- paste(packagePath, subFolder, fileName, sep=.separator)
+  
+  if(is.null(folderName)) {
+    packagePath <- path.package("euroformix", quiet = FALSE) # Get package path.
+    folderName <- paste(packagePath,"extdata",sep=.separator) #get folder containing the filename
+  }
+  filePath <- paste(folderName, fileName, sep=.separator) #get full pathname of kit file
   .kitInfo <- read.delim(file=filePath, header = TRUE, sep = "\t", quote = "\"",dec = ".", fill = TRUE, stringsAsFactors=FALSE)
  
   # Available kits. Must match else if construct.

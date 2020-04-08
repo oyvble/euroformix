@@ -4,7 +4,8 @@
 \alias{contLikMCMCpara}
 \title{contLikMCMCpara}
 \usage{
-contLikMCMCpara(mlefit, niter = 10000, delta = 10, maxxi = 1)
+contLikMCMCpara(mlefit, niter = 10000, delta = 2, maxxi = 1,
+  maxxiFW = 1, verbose = TRUE, seed = NULL, maxThreads = 32)
 }
 \arguments{
 \item{mlefit}{Fitted object using contLikMLE}
@@ -14,24 +15,21 @@ contLikMCMCpara(mlefit, niter = 10000, delta = 10, maxxi = 1)
 \item{delta}{A numerical parameter to scale with the covariance function Sigma. Default is 2. Should be higher to obtain lower acception rate.}
 
 \item{maxxi}{Upper boundary of the xi-parameters}
+
+\item{maxxiFW}{Upper boundary of the xiFW-parameters}
+
+\item{verbose}{Boolean whether printing simulation progress. Default is TRUE}
+
+\item{seed}{The user can set seed if wanted}
+
+\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
 \value{
 ret A list (margL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
 }
 \description{
-Parallelization on contLikMCMC using snow
-}
-\details{
-The procedure is doing parallelization of the contLikMCMC function
-}
-\references{
-Craiu,R.V. and Rosenthal, J.S. (2014). Bayesian Computation Via Markov Chain Monte Carlo. Annu. Rev. Stat. Appl., 1,179-201.
+Same as the contLikMCMC function (dummy function)
 }
 \author{
 Oyvind Bleka
 }
-\keyword{BayesianModels,}
-\keyword{MCMC,}
-\keyword{MarginalizedLikelihoodEstimation}
-\keyword{MetropolisHastings,}
-\keyword{continuous,}

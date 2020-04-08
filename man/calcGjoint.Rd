@@ -32,11 +32,15 @@ getGlist Returns a list of joint genotypes with corresponding joing probabilitie
 The function returns the list of all possible genotypes, with corresponding probabilities. The allele-names in popFreq needs to be numbers.
 }
 \examples{
+\dontrun{
 freq = rgamma(8,1,1)
 freq = freq/sum(freq) 
 names(freq) <- 1:length(freq)
-system.time({ foo = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE) })
-system.time({ foo = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=TRUE) })
+foo1 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
+ refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
+foo2 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
+ refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=TRUE)
+}
 }
 \author{
 Oyvind Bleka

@@ -4,23 +4,30 @@
 \alias{noncontrMLE}
 \title{noncontrMLE}
 \usage{
-noncontrMLE(mlefit, tipind = NULL, ntippet = 100)
+noncontrMLE(mlefit, tipind = NULL, ntippet = 100, verbose = FALSE,
+  seed = NULL, maxThreads = 32)
 }
 \arguments{
-\item{mlefit}{A fitted mle object from contLikMLE function}
+\item{mlefit}{A fitted mle object from contLikMLE function (assuming Hp fitted object)}
 
 \item{tipind}{Index in condOrder which are replaced with a random man}
 
 \item{ntippet}{Number of samples to draw}
+
+\item{verbose}{Boolean whether printing optimization progress. Default is FALSE.}
+
+\item{seed}{The user can set seed if wanted}
+
+\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
 \value{
-TRUE/FALSE A boolean whether the likelihood vil be zero.
+logL log-likelihood values of noncontributors
 }
 \description{
-noncontrMLE Calculate random log-likelhood values by exchanging a reference with a random man from population
+noncontrMLE calculate random log-likelhood values by exchanging a reference with a random man from population
 }
 \details{
-The function simulates ntippet numbder of
+The function simulates ntippet non-contributors
 }
 \author{
 Oyvind Bleka

@@ -4,17 +4,13 @@
 \alias{plotTopMPS2}
 \title{plotTopMPS2}
 \usage{
-plotTopMPS2(MLEobj, DCobj = NULL, AT = NULL, ST = NULL,
-  grpsymbol = "_", locYmax = TRUE, options = NULL)
+plotTopMPS2(MLEobj, DCobj = NULL, grpsymbol = "_", locYmax = TRUE,
+  options = NULL)
 }
 \arguments{
 \item{MLEobj}{An object returned from contLikMLE}
 
 \item{DCobj}{An object returned from devonvolve: Must be run with same object as MLEobj}
-
-\item{AT}{A detection threshold can be shown in a dashed line in the plot (constant). Possibly a AT[[loc]] list.}
-
-\item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[loc]] list.}
 
 \item{grpsymbol}{A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.}
 

@@ -4,7 +4,6 @@
 #' @description contLikMCMC simulates from the posterior distribution for a bayesian STR DNA mixture model.
 #' @details The procedure are doing MCMC to approximate the marginal probability over noisance parameters. Mixture proportions have flat prior.
 #' 
-#' If no initial values or covariance matrix has been provided to the function, a call to the MLE function is applied.
 #' The Metropolis Hastings routine uses a Multivariate Normal distribution with mean 0 and covariance as delta multiplied with the inverse negative hessian with MLE inserted as transistion kernel.
 #' Function calls procedure in c++ by using the package Armadillo and Boost.
 #' Marginalized likelihood is estimated using Metropolis Hastings with the "Gelfand and Dey" method.
@@ -13,99 +12,132 @@
 #' @param niter Number of samples in the MCMC-sampling.
 #' @param delta A numerical parameter to scale with the covariance function Sigma. Default is 2. Should be higher to obtain lower acception rate.
 #' @param maxxi Upper boundary of the xi-parameters
+#' @param maxxiFW Upper boundary of the xiFW-parameters
+#' @param verbose Boolean whether printing simulation progress. Default is TRUE
+#' @param seed The user can set seed if wanted
+#' @param maxThreads Maximum number of threads to be executed by the parallelization
 #' @return ret A list (margL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
 #' @export 
-#' @references Craiu,R.V. and Rosenthal, J.S. (2014). Bayesian Computation Via Markov Chain Monte Carlo. Annu. Rev. Stat. Appl., 1,179-201.
-#' @keywords continuous, BayesianModels, MCMC, MetropolisHastings, MarginalizedLikelihoodEstimation
 
-contLikMCMC = function(mlefit,niter=1e4,delta=10,maxxi=1) {
- #A mlefit object returned from contLikMLE is required to do MCMC!
+contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,seed=NULL,maxThreads=32) {
+ if(!is.null(seed)) set.seed(seed) #set seed if provided
+  
  loglik0 <-  mlefit$fit$loglik #get maximized likelihood
  model <- mlefit$model
- xi = model$xi
- th0 <- mlefit$fit$thetahat
- Sigma0 <- mlefit$fit$thetaSigma
- varnames <- names(mlefit$fit$thetahat) #variable names
- if(!all(length(th0)%in%dim(Sigma0))) stop("Length of th0 and dimension of Sigma was not the same!")
- ret <- prepareC(model$nC,model$samples,model$popFreq,model$refData,model$condOrder,model$knownRef,model$kit,model$knownRel,model$ibd,model$fst,incS=is.null(xi) || xi>0)
- nC <- ret$nC
+ xi = model$xi #get BW stutter setting
+ xiFW = model$xiFW  #get FW stutter setting
+ th0 <- mlefit$fit$thetahat #estimate params
+ Sigma0 <- mlefit$fit$thetaSigma #estimated covariance of param estimtates
  np <- length(th0) #number of unknown parameters
- nodeg <- is.null(model$kit) #check for degradation
+ varnames <- names(mlefit$fit$thetahat) #variable names
+ if(np!=ncol(Sigma0)) stop("Length of th0 and dimension of Sigma was not the same!")
+ c <- mlefit$prepareC #returned from prepareC
+ nC = model$nC #number of contributors
+ usedeg <- !is.null(model$kit) #check for degradation
+ 
+ #Prepare fixed params:
+ nM = c$nM #number of markers to evaluate
+ ATv = model$threshT
+ pCv = model$prC
+ lambdav = model$lambda
+ fstv = model$fst
+ 
+ #PREPEARING THE LIKELIHOOD OPTIMZATION (what parameters are provided?):
+ useParamOther = rep(TRUE,3)  #index of parameters used (set NA if fixed)
+ if(!usedeg) useParamOther[1] = FALSE #degrad not used
+ if(!is.null(xi)) useParamOther[2] = FALSE #BW stutter not used
+ if(!is.null(xiFW)) useParamOther[3] = FALSE  #FW stutter not used
+ indexParamOther = rep(NA,3)
+ if(any(useParamOther)) indexParamOther[useParamOther] = 1:sum(useParamOther) #init indices
+ 
+ logliktheta <- function(theta) {  
+   if(any(theta<0)) return(-Inf) #Never consider negative params
+   mixprop = as.numeric() #Length zero for 1 contributor
+   if(nC>1) mixprop = theta[1:(nC-1)] #extract parms
+   muv = rep(theta[nC],nM)   #common param for each locus
+   sigmav = rep(theta[nC+1],nM)  #common param for each locus
+   
+   #Prepare the remaining variables
+   beta1 = 1.0 #set default values
+   xiB = xi #set default values
+   xiF = xiFW #set default values
+   tmp = theta[ (nC+1) + indexParamOther ] #obtain params
+   if(useParamOther[1]) {
+     beta1 = tmp[1]
+     if(beta1>1) return(-Inf)
+   } 
+   if(useParamOther[2]) {
+     xiB = tmp[2]
+     if(xiB>maxxi) return(-Inf)
+   }
+   if(useParamOther[3]) {
+     xiF = tmp[3]
+     if(xiF>maxxiFW) return(-Inf)
+   } 
+   betav = rep(beta1,nM) #common param for each locus
+   xiBv = rep(xiB,nM) #common param for each locus
+   xiFv = rep(xiF,nM) 
+   
+   loglik = .C("loglikgammaC",as.numeric(0),c$nC,c$NOK,c$knownGind,as.numeric(mixprop),as.numeric(muv),as.numeric(sigmav),as.numeric(betav),as.numeric(xiBv),as.numeric(xiFv),as.numeric(ATv),as.numeric(pCv),as.numeric(lambdav),as.numeric(fstv),c$nReps,c$nM,c$nA,c$YvecLong,c$FvecLong,c$nTypedLong,c$maTypedLong,c$basepairLong,c$BWvecLong,c$FWvecLong,c$nPS,c$BWPvecLong,c$FWPvecLong,as.integer(maxThreads),as.integer(0),c$anyRel,c$relGind,c$ibdLong,PACKAGE="euroformix")[[1]]
+   if(is.null(xi))  loglik <- loglik + log(model$pXi(xiB)) #weight with prior of xi
+   if(is.null(xiFW))  loglik <- loglik + log(model$pXiFW(xiF)) #weight with prior of xiFW
 
- if(is.null(xi)) {
-   loglikYtheta <- function(theta) {   #call c++- function: length(phi)=nC+1
-    if(any(theta<0)) return(-Inf) 
-    xi1 <- theta[np] #value of xi
-    if(theta[np]>maxxi) return(-Inf) #special case for xi which has a upper boundary
-    if(nodeg) theta <- c(theta[1:(nC+1)],1,xi1)
-    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
-    loglik <- Cval + model$pXi(xi1) #weight with prior of tau and 
-    return(loglik) #weight with prior of tau and stutter.
-   }
- } else {  
-   loglikYtheta <- function(theta2) {   #call c++- function: length(phi)=nC
-    if(nodeg) theta2 <- c(theta2,1)
-    theta <- c(theta2,model$xi) #stutter-parameter added as known
-    if(any(theta<0)) return(-Inf) 
-    Cval  <- .C("loglikgammaC",as.numeric(0),as.numeric(theta),as.integer(np),ret$nC,ret$nK,ret$nL,ret$nS,ret$nA,ret$obsY,ret$obsA,ret$CnA,ret$allASind,ret$nAall,ret$CnAall,ret$Gvec,ret$nG,ret$CnG,ret$CnG2,ret$pG,ret$pA, as.numeric(model$prC), ret$condRef,as.numeric(model$threshT),as.numeric(model$fst),ret$mkvec,ret$nkval,as.numeric(model$lambda),ret$bp,as.integer(0),PACKAGE="euroformix")[[1]]
-    return(Cval)
-   }
+   if(verbose) { #only show progressbar if verbose
+     progcount <<- progcount + 1
+     setTxtProgressBar(progbar,progcount)
+   } 
+   return(loglik) #weight with prior of tau and stutter.
  }
+   
  C <- chol(delta*Sigma0) #scale variance with a factor 2: ensures broad posterior
- X <- t( t(C)%*%matrix(rnorm(np*niter),ncol=niter,nrow=np)) #proposal values
+ X <- matrix(rnorm(np*niter),ncol=np,nrow=niter)%*%C #proposal values
 
- logdmvnorm <- function(X,mean,cholC) { #function taken from mvtnorm-package
+ logdmvnorm <- function(X2,mean,cholC) { #function taken from mvtnorm-package
    p <- nrow(cholC)
-   tmp <- backsolve(cholC,t(X)-mean,p,transpose=TRUE)
+   tmp <- backsolve(cholC,X2-mean,p,transpose=TRUE)
    rss <- colSums(tmp^2)
    logretval <- -sum(log(diag(cholC))) - 0.5*p*log(2*pi) - 0.5*rss
    return(logretval)
  }
+ 
+ #Inititate progressbar if verbose
+ progcount = 1  #counter
+ if( verbose ) progbar <- txtProgressBar(min = 0, max = niter, style = 3) #create progress bar
+ 
  #removed:  Importance sampling using Normal(th0,delta*Sigma)
  if(1) { #MCMC by Gelfand and Dey (1994), using h() = Normal(th0,delta*Sigma)
-   rlist <- list()
-   if(nC>1) rlist[[length(rlist)+1]] <- 1:(nC-1)
-   rlist[[length(rlist)+1]] <- nC:(nC+1+!nodeg)
-   if(is.null(xi))  rlist[[length(rlist)+1]] <- np
-   nB <- length(rlist) #number of blocks
-   M2 <- nB*niter+1
-   postth <- matrix(NA,ncol=np,nrow=M2) #accepted th
-   postlogL <- rep(NA,M2) #accepted th
-   postth[1,] <- th0
-   postlogL[1] <- loglik0 #loglikYtheta(th0) #get start-likelihood   
-   U <- runif(M2) #random numbers
+   postth <- matrix(NA,ncol=np,nrow=niter) #accepted th
+   postlogL <- rep(NA,niter) #accepted th
+   postth[1,] <- th0 + X[1,] #add noise into start point
+   postlogL[1] <- logliktheta(postth[1,]) #get start-likelihood  
+   U <- runif(niter) #random numbers
    m <- 2 #counter for samples
-   m2 <- 1 #counter for proposal
    nacc <- 0  
-   while(m<=M2) {
-    for(r in 1:nB ) { #for each blocks
-     range <- rlist[[r]]
-     postth[m,] <-  postth[m-1,] #proposed th
-     postth[m,range] <- X[m2,range] + postth[m,range]
-     postlogL[m] <- loglikYtheta(postth[m,])
+   while(m<=niter) {
+     postth[m,] <-  X[m,] + postth[m-1,] #proposed theta
+     postlogL[m] <- logliktheta(postth[m,])
      pr <- exp(postlogL[m]- postlogL[m-1]) #acceptance rate
-     if(U[m]>pr) { #if not accepted, i.e. random pr too large
+     if(U[m]>pr) { #if not accepted, i.e. random prob too large (above pr)
       postth[m,] <-  postth[m-1,]
       postlogL[m] <- postlogL[m-1 ]
      } else {
       nacc <- nacc + 1
      }
      m <- m + 1 #update counter
-    } #end for each blocks
-    m2 <- m2 +1 #update proposal counter
    } #end while not done
-  accrat <- nacc/M2 #acceptance ratio
+  accrat <- nacc/(niter-1) #acceptance ratio (dont count first)
 #  logpX <- logdmvnorm(postth,mean=th0,cholC=chol(Sigma0)) #insert with Normal-approx of post-th
-  logpX <- logdmvnorm(postth,mean=th0,cholC=C) #insert with Normal-approx of post-th
+  logpX <- logdmvnorm(t(postth),mean=th0,cholC=C) #insert with Normal-approx of post-th
   #plot(postlogL,ty="l")
   #plot(logpX,ty="l")
   margL <- 1/mean(exp(logpX - postlogL)) #estimated marginal likelihood
  }
+ if( verbose ) cat("\n") #new line
 # nU <- nC-ret$nK #number of unknowns
 # if(nU>1) { #if more than 1 unknown 
 #  margL <- factorial(nU)*margL #get correct ML adjusting for symmetry
 # } #end method
  colnames(postth) <- varnames  #save variable names
-  return(list(margL=margL,posttheta=postth,postlogL=postlogL,logpX=logpX,accrat=accrat,MLE=mlefit$fit$thetahat,Sigma=mlefit$fit$thetaSigma))
+ return(list(margL=margL,posttheta=postth,postlogL=postlogL,logpX=logpX,accrat=accrat,MLE=mlefit$fit$thetahat,Sigma=mlefit$fit$thetaSigma,seed=seed))
 } #end function
 

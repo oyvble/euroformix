@@ -4,19 +4,20 @@
 \alias{logLiki}
 \title{logLiki}
 \usage{
-logLiki(mlefit)
+logLiki(mlefit, verbose = FALSE, maxThreads = 32)
 }
 \arguments{
 \item{mlefit}{Fitted object using contLikMLE}
+
+\item{verbose}{Boolean whether printing deconvolution progress. Default is TRUE.}
+
+\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
 \value{
 ret A vector with log-likelihood-values for each locus for given model
 }
 \description{
-logLiki calculates the likelihood of each marker of the STR DNA mixture given a theta
-}
-\details{
-Function calls procedure in C++ by using the package Armadillo and Boost.
+logLiki returns the likelihood for each markers (based on the MLE results)
 }
 \author{
 Oyvind Bleka

@@ -5,13 +5,14 @@
 \title{contLikMLE}
 \usage{
 contLikMLE(nC, samples, popFreq, refData = NULL, condOrder = NULL,
-  knownRef = NULL, xi = NULL, prC = 0, nDone = 1, threshT = 50,
-  fst = 0, lambda = 0, pXi = function(x) 1, delta = 10,
+  knownRef = NULL, xi = 0, prC = 0, nDone = 2, threshT = 50,
+  fst = 0, lambda = 0, pXi = function(x) 1, delta = 1,
   kit = NULL, verbose = TRUE, maxIter = 100, knownRel = NULL,
-  ibd = c(1, 0, 0))
+  ibd = c(1, 0, 0), xiFW = 0, pXiFW = function(x) 1, seed = NULL,
+  maxThreads = 32)
 }
 \arguments{
-\item{nC}{Number of contributors in model.}
+\item{nC}{Number of contributors in model. Must be a constant.}
 
 \item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
 
@@ -23,23 +24,23 @@ contLikMLE(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 
 \item{knownRef}{Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.}
 
-\item{xi}{A numeric giving stutter-ratio if it is known. Default is NULL, meaning it is optimized/integrated out.}
+\item{xi}{A numeric giving stutter-ratio if it is known. Default is 0, meaning stutter is not used.}
 
-\item{prC}{A numeric for allele drop-in probability. Default is 0.}
+\item{prC}{A numeric for allele drop-in probability. Can be a vector (must contain the marker names). Default is 0.}
 
-\item{nDone}{Maximum number of random evaluations nlm-optimizing routing. Default is 1.}
+\item{nDone}{Number of optimizations required providing equivalent results (same logLik value obtained)}
 
-\item{threshT}{The detection threshold given. Used when considering probability of allele drop-outs.}
+\item{threshT}{The detection threshold given. Used when considering probability of allele drop-outs. Can be a vector (must contain the marker names).}
 
-\item{fst}{The co-ancestry coefficient. Default is 0.}
+\item{fst}{The co-ancestry coefficient. Can be a vector (must contain the marker names). Default is 0.}
 
-\item{lambda}{Parameter in modeled peak height shifted exponential model. Default is 0.}
+\item{lambda}{Parameter in modeled peak height shifted exponential model. Can be a vector (must contain the marker names). Default is 0.}
 
 \item{pXi}{Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.}
 
-\item{delta}{Standard deviation of normal distribution when drawing random startpoints. Default is 10.}
+\item{delta}{Scaling of variation of normal distribution when drawing random startpoints. Default is 1.}
 
-\item{kit}{Used to model degradation. Must be one of the shortnames of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}.}
+\item{kit}{Used to model degradation. Must be one of the shortnames of kit: check getKit()}
 
 \item{verbose}{Boolean whether printing optimization progress. Default is TRUE.}
 
@@ -48,28 +49,37 @@ contLikMLE(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 \item{knownRel}{gives the index of the reference which the 1st unknown is related to.}
 
 \item{ibd}{the identical by decent coefficients of the relationship (specifies the type of relationship)}
+
+\item{xiFW}{A numeric giving FW stutter-ratio if it is known.Default is 0, meaning stutter is not used.}
+
+\item{pXiFW}{Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.}
+
+\item{seed}{The user can set seed if wanted}
+
+\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
 \value{
-ret A list(fit,model,nDone,delta) where fit is Maximixed likelihood elements for given model.
+ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
 }
 \description{
-contLikMLE optimizes the likelihood of the STR DNA mixture given some assumed a bayesian model.
+contLikMLE optimizes the likelihood function of the DNA mixture model
 }
 \details{
-The procedure are doing numerical optimization to approximate the marginal probabilit over noisance parameters. Mixture proportions have flat prior.
-
-The procedure also does a Laplace Approximation of the marginalized likelihood (theta integrated out) and returns the log-marginal likelihood as logmargL in the fit-list.
-
-Function calls procedure in C++ by using the package Armadillo and Boost.
+Function calls the likelihood function implemented in C++ which uses the package Boost and paralellisation using OpenMP
 }
-\references{
-Cowell,R.G. et.al. (2014). Analysis of forensic DNA mixtures with artefacts. Applied Statistics, 64(1),1-32.
+\examples{
+\dontrun{
+kit = "ESX17"
+popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
+ paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
+evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
+ sep=.Platform$file.sep)
+popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
+samples = sample_tableToList(tableReader(evidfn))
+dat = prepareData(samples,popFreq=popFreq) #obtain data to use for analysis
+mlefit = contLikMLE(nC=2,dat$samples,popFreq=dat$popFreq,kit=kit,verbose=TRUE)
+}
 }
 \author{
 Oyvind Bleka
 }
-\keyword{Estimation}
-\keyword{Likelihood}
-\keyword{Maximum}
-\keyword{continuous}
-\keyword{model,}

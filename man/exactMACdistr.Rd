@@ -17,8 +17,6 @@ Calculation of false positive probability of Matching allele counter.
 }
 \details{
 This function will calculate the false positive probability for a given range of allele matches.
-Thanks 1: Thore Egeland: Explicit formulas.
-Thanks 2: Myself to have updated the function
 }
 \author{
 Oyvind Bleka

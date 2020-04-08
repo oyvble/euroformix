@@ -25,19 +25,23 @@
 
 fitgammamodel <- function(y,x=NULL,DEG=TRUE,niter=30,delta=1,plott=FALSE,alpha=0.05,offset=125,scale=100) {
    if(is.null(x)) DEG=FALSE #degradation set to FALSE if x not given
+   
+   #FUNCTION TO BE MINIMIZED
    negloglik <- function(th) {
-    th <- exp(th)
-    if(DEG) val <- -sum(dgamma(y,shape=2/th[2]^2*th[3]^((x-offset)/scale),scale=th[1]*th[2]^2,log=TRUE))
+    th[1:2] <- exp(th[1:2]) #log-transform
+    if(DEG) {
+      th[3] <- 1/(1+exp(-th[3])) #logit-transform (avoid beta>1)
+      val <- -sum(dgamma(y,shape=2/th[2]^2*th[3]^((x-offset)/scale),scale=th[1]*th[2]^2,log=TRUE))
+    }
     if(!DEG) val <- -sum(dgamma(y,shape=2/th[2]^2,scale=th[1]*th[2]^2,log=TRUE))
     if(is.infinite(val)) val <- .Machine$integer.max 
     return(val)
    }
-#   t0 <- log(c(mean(y)/2,0.4,0.8)) #expected thetas to start with
-#   if(!DEG)  t0 <- c( t0[1],log(sd(y)/mean(y)) ) #CV used as start value
+
    t0 <- log(c(mean(y)/2,sd(y)/mean(y),0.8)) #expected thetas to start with
    if(!DEG)  t0 <- t0[1:2] #CV used as start value
    cc <- 1 #
-  suppressWarnings({
+   suppressWarnings({
    bestFoo <- nlm(negloglik, t0 ) #store best foo
    while(cc<niter) { #repeat until accepted fitted
     t1 <- rnorm(length(t0),mean=t0,sd=delta) #generate new
@@ -47,6 +51,9 @@ fitgammamodel <- function(y,x=NULL,DEG=TRUE,niter=30,delta=1,plott=FALSE,alpha=0
    }
   })
   th = exp(bestFoo$est) #get estimated parameters
+  if(DEG && length(th)==3 ) {
+    th[3] <- 1/(1+exp(-th[3])) #logit-transform (avoid beta>1), IMPORTANT TO AVOID CRASH IN contLikMLE
+  }
 
   if(plott) { #show plot
    par(mfrow=c(1,1))

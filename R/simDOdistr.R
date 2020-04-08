@@ -1,7 +1,6 @@
 #' @title simDOdistr
 #' @author Oyvind Bleka
 #' @description MCMC Allele dropout distribution sampler based on total number of alleles in an evidence.
-#' @export
 #' @details simDOdistr samples from the drop-out distribution based on total number of alleles in evidence under a specified prepositions. It returns if no samples was accepted in first iteration
 #' @param totA Total number of allele-observations in evidence.
 #' @param nC Number of contributors to assume in the preposition.
@@ -9,26 +8,28 @@
 #' @param refData List with alleles to condition on. ref[[locname]][[referencename]]=(A1,A2)
 #' @param M is number of samples for each iteration.
 #' @param minS is number of minimum accepted samples.
-#' @param prC Assumed drop-in probability
+#' @param prC Assumed drop-in probability. Can be a vector (must contain the marker names)
 #' @param pDknown A vector of known drop-out probabilities for each contributors. Default is NA which means it is unknown.
 #' @return Vector with accepted samples from the dropout distribution
-
-#Example:
-#popFreq <- list()
-#for(i in 1:3) {
-# popFreq[[i]] <- rgamma(rpois(1,10),1,1)
-# popFreq[[i]] <- popFreq[[i]]/sum(popFreq[[i]])
-# names(popFreq[[i]]) <- 1:length(popFreq[[i]])
-#}
-#names(popFreq) <- paste0("loc",1:length(popFreq))
-#simDOdistr(4,2,popFreq)
+#' @export
+#' @examples
+#' \dontrun{
+#' popFreq <- list()
+#' for(i in 1:3) {
+#'  popFreq[[i]] <- rgamma(rpois(1,10),1,1)
+#'  popFreq[[i]] <- popFreq[[i]]/sum(popFreq[[i]])
+#'  names(popFreq[[i]]) <- 1:length(popFreq[[i]])
+#' }
+#' names(popFreq) <- paste0("loc",1:length(popFreq))
+#' simDOdistr(4,2,popFreq)
+#' }
 
 simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=rep(NA,nC)) {
  #totA - total number of alleles observed
  #nC - number of contributors (in each hypotheses)
  #popFreq - population frequencies for each loci
- 
  #prC - drop-in probability
+  
  primtall = as.integer(c(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 
         41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 
         103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 
@@ -137,10 +138,26 @@ simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=
         7723, 7727, 7741, 7753, 7757, 7759, 7789, 7793, 7817, 
         7823, 7829, 7841, 7853, 7867, 7873, 7877, 7879, 7883, 
         7901, 7907, 7919))
- pos = ceiling(log(1e-16)/log(prC))
+ 
+ #Prepare data:
  refvec <- list()
  locs <- names(popFreq) #loci to consider
  nL <- length(locs)
+ 
+ #Check dropin prob and prepare dropin list
+ if(length(prC)==1) {
+   pCv = rep(prC,nL) #common dropin prob for all markers
+ } else {
+   pCv = setVecRightOrder(prC,  locs) 
+ }
+ prC_list = list() #store drop-in list
+ for(i in 1:nL) {
+   pos = ceiling(log(1e-16)/log(pCv[i])) #maximum number of position
+   prC_vec =  1-pCv[i]/(1-pCv[i])
+   if(pos>0) prC_vec <- c(prC_vec,pCv[i]^c(1:pos)) #dropin probabilities
+   prC_list[[i]] = prC_vec
+ }
+ 
  uH <- rep(NA,nL) #number of unknowns
  for(loc in locs) {
   i <- which(locs==loc)
@@ -156,10 +173,6 @@ simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=
  }
  if(any(uH<0)) { print("There was more references than contributors"); return(NULL) }
 
- #import LR-models elements
- prC_vec =  1-prC/(1-prC)
- if(pos>0) prC_vec <- c(prC_vec,prC^c(1:pos)) #dropin probabilities
-
  #Uknown numbers under hyps
  done<-FALSE
  cPrD_dist <- NULL
@@ -170,6 +183,7 @@ simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=
   tmpcount = rep(0,M)
   for(loc in locs) {
    i <- which(locs==loc)
+   prC_vec = prC_list[[i]] #get list of dropin
    freq <- popFreq[[loc]]
    freqN = names(freq) #updated: not convert to numeric
 
@@ -215,7 +229,7 @@ simDOdistr= function(totA,nC,popFreq,refData=NULL,M=1e3,minS=2000,prC=0,pDknown=
    #check the number of the prime-products to see if the cont-alleles are unique
 
    #samples number of contaminations in each case:
-   ncontam = sample(0:pos,M,prob=prC_vec,replace=TRUE) #sample number of dropin
+   ncontam = sample(0:(length(prC_vec)-1),M,prob=prC_vec,replace=TRUE) #sample number of dropin
    contmax = max(ncontam)
    if(contmax>0) { #if any contanimation
     for(j in 1:contmax) { #for each size of contamination:

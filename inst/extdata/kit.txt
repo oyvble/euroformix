@@ -1,4 +1,149 @@
 Panel	Marker	Allele	Size	Size.Min	Size.Max	Virtual	Color	Repeat	Marker.Min	Marker.Max	Offset	Short.Name	Full.Name	Gender.Marker	Quality.Sensor
+SGM_Plus_v2	D3S1358	11	110	109.5	110.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	12	114	113.5	114.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	13	118	117.5	118.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	14	122	121.5	122.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	15	126	125.5	126.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	15.2	128	127.5	128.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	16	130	129.5	130.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	16.2	132	131.5	132.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	17	134	133.5	134.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	17.2	136	135.5	136.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	18	138	137.5	138.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	18.2	140	139.5	140.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	19	142	141.5	142.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D3S1358	20	146	145.5	146.5	0	blue	4	98	148	66	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	10	153	152.5	153.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	11	157	156.5	157.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	12	161	160.5	161.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	13	165	164.5	165.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	14	169	168.5	169.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	15	173	172.5	173.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	15.2	175	174.5	175.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	16	177	176.5	177.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	17	181	180.5	181.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	18	185	184.5	185.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	18.2	187	186.5	187.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	19	189	188.5	189.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	20	193	192.5	193.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	21	197	196.5	197.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	22	201	200.5	201.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	23	205	204.5	205.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	24	209	208.5	209.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	vWA	25	213	212.5	213.5	0	blue	4	151	213.5	113	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	5	234	233.5	234.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	6	238	237.5	238.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	7	242	241.5	242.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	8	246	245.5	246.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	9	250	249.5	250.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	10	254	253.5	254.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	11	258	257.5	258.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	12	262	261.5	262.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	12.2	264	263.5	264.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	13	266	265.5	266.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	14	270	269.5	270.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	15	274	273.5	274.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D16S539	16	278	277.5	278.5	0	blue	4	229	279	214	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	14	285	284.5	285.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	15	289	288.5	289.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	16	293	292.5	293.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	17	297	296.5	297.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	18	301	300.5	301.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	19	305	304.5	305.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	20	309	308.5	309.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	21	313	312.5	313.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	22	317	316.5	317.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	23	321	320.5	321.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	24	325	324.5	325.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	25	329	328.5	329.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	26	333	332.5	333.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	27	337	336.5	337.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	28	341	340.5	341.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D2S1338	29	345	344.5	345.5	0	blue	4	284	354	229	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	9	106	105.5	106.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	9.2	108	107.5	108.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	10	110	109.5	110.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	10.2	112	111.5	112.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	11	114	113.5	114.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	11.2	116	115.5	116.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	12	118	117.5	118.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	12.2	120	119.5	120.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	13	122	121.5	122.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	13.2	124	123.5	124.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	14	126	125.5	126.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	14.2	128	127.5	128.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	15	130	129.5	130.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	15.2	132	131.5	132.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	16	134	133.5	134.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	16.2	136	135.5	136.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	17	138	137.5	138.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	17.2	140	139.5	140.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	18	142	141.5	142.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	D19S433	18.2	144	143.5	144.5	0	yellow	4	101	148	70	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	3	161	160.5	161.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	4	165	164.5	165.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	5	169	168.5	169.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	5.3	172	171.5	172.4	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	6	173	172.6	173.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	6.3	176	175.5	176.4	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	7	177	176.6	177.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	7.3	180	179.5	180.4	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	8	181	180.6	181.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	8.3	184	183.5	184.4	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	9	185	184.6	185.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	9.3	188	187.5	188.4	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	10	189	188.6	189.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	10.3	192	191.5	192.4	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	11	193	192.6	193.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	12	197	196.5	197.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	13	201	200.5	201.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	TH 01	13.3	204	203.5	204.5	0	yellow	4	159	205	149	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	16	211	210.5	211.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	16.2	213	212.5	213.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	17	215	214.5	215.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	17.2	217	216.5	217.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	18	219	218.5	219.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	18.2	221	220.5	221.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	19	223	222.5	223.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	19.2	225	224.5	225.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	20	227	226.5	227.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	20.2	229	228.5	229.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	21	231	230.5	231.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	21.2	233	232.5	233.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	22	235	234.5	235.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	22.2	237	236.5	237.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	23	239	238.5	239.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	23.2	241	240.5	241.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	24	243	242.5	243.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	24.2	245	244.5	245.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	25	247	246.5	247.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	25.2	249	248.5	249.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	26	251	250.5	251.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	26.2	253	252.5	253.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	27	255	254.5	255.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	27.2	257	256.5	257.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	28	259	258.5	259.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	28.2	261	260.5	261.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	29	263	262.5	263.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	29.2	265	264.5	265.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	30	267	266.5	267.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	30.2	269	268.5	269.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	31	271	270.5	271.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	31.2	273	272.5	273.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	32	275	274.5	275.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	32.2	277	276.5	277.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	33.2	281	280.5	281.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	34.2	285	284.5	285.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	42.2	317	316.5	317.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	43.2	321	320.5	321.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	44.2	325	324.5	325.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	45.2	329	328.5	329.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	46.2	333	332.5	333.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	47.2	337	336.5	337.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	48.2	341	340.5	341.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	49.2	345	344.5	345.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	50.2	349	348.5	349.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
+SGM_Plus_v2	FGA	51.2	353	352.5	353.5	0	yellow	4	206.25	360	147	testkit	AmpFLSTR SGM Plus PCR Amplification Kit 	FALSE	FALSE
 PowerPlex_ESX_16_IDX_v1.0	AMEL	X	81.95	81.45	82.45	0	blue	9	78	92	73	ESX16	PowerPlex ESX 16 System	TRUE	FALSE
 PowerPlex_ESX_16_IDX_v1.0	AMEL	Y	87.77	87.27	88.27	0	blue	9	78	92	73	ESX16	PowerPlex ESX 16 System	TRUE	FALSE
 PowerPlex_ESX_16_IDX_v1.0	D3S1358	8	94.14	93.64	94.64	1	blue	4	92.01	148.25	62	ESX16	PowerPlex ESX 16 System	FALSE	FALSE

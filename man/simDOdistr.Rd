@@ -20,7 +20,7 @@ simDOdistr(totA, nC, popFreq, refData = NULL, M = 1000, minS = 2000,
 
 \item{minS}{is number of minimum accepted samples.}
 
-\item{prC}{Assumed drop-in probability}
+\item{prC}{Assumed drop-in probability. Can be a vector (must contain the marker names)}
 
 \item{pDknown}{A vector of known drop-out probabilities for each contributors. Default is NA which means it is unknown.}
 }
@@ -32,6 +32,18 @@ MCMC Allele dropout distribution sampler based on total number of alleles in an 
 }
 \details{
 simDOdistr samples from the drop-out distribution based on total number of alleles in evidence under a specified prepositions. It returns if no samples was accepted in first iteration
+}
+\examples{
+\dontrun{
+popFreq <- list()
+for(i in 1:3) {
+ popFreq[[i]] <- rgamma(rpois(1,10),1,1)
+ popFreq[[i]] <- popFreq[[i]]/sum(popFreq[[i]])
+ names(popFreq[[i]]) <- 1:length(popFreq[[i]])
+}
+names(popFreq) <- paste0("loc",1:length(popFreq))
+simDOdistr(4,2,popFreq)
+}
 }
 \author{
 Oyvind Bleka

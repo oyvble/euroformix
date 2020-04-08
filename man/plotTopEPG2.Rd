@@ -4,8 +4,8 @@
 \alias{plotTopEPG2}
 \title{plotTopEPG2}
 \usage{
-plotTopEPG2(MLEobj, DCobj = NULL, kit = NULL, AT = NULL, ST = NULL,
-  dyeYmax = TRUE, plotRepsOnly = TRUE, options = NULL)
+plotTopEPG2(MLEobj, DCobj = NULL, kit = NULL, dyeYmax = TRUE,
+  plotRepsOnly = TRUE, options = NULL)
 }
 \arguments{
 \item{MLEobj}{An object returned from contLikMLE}
@@ -14,9 +14,11 @@ plotTopEPG2(MLEobj, DCobj = NULL, kit = NULL, AT = NULL, ST = NULL,
 
 \item{kit}{Short name of kit: See supported kits with getKit(). Argument ignored if degradation model used.}
 
-\item{AT}{A detection threshold can be shown in a dashed line in the plot (constant). Possibly a AT[[dye]] list.}
+\item{dyeYmax}{A boolean of whether the Y-axis scale should be dye specific}
 
-\item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[dye]] list.}
+\item{plotRepsOnly}{A boolean of whether only replicates are plotted}
+
+\item{options}{Layout options can be provided: w0 (layout width),marg0 (margin), txtsize0 (text size), locsize0 (locus name size), minY (minimum Y-axis height), ymaxscale (Scaling maximum Y-axis height)}
 }
 \value{
 sub A plotly widget

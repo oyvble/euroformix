@@ -4,8 +4,8 @@
 #' @details Plots intensities with corresponding allele variant for one sample. Does not yet handle replicates. Can handle RU grouping with separator grpsymbol.
 #' @param mixData List of mixData[[ss]][[loc]] =list(adata,hdata), with samplenames ss, loci names loc, allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
 #' @param refData List of refData[[rr]][[loc]] or refData[[loc]][[rr]] to label references (flexible). Visualizer will show dropout alleles. 
-#' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a AT[[loc]] list.
-#' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[loc]] list.
+#' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
+#' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param grpsymbol A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.
 #' @param locYmax A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
 #' @param options A list of possible plot configurations. See comments below
@@ -13,8 +13,7 @@
 #' @export
 
 plotMPS2 = function(mixData,refData=NULL,AT=NULL,ST=NULL,grpsymbol="_",locYmax=TRUE,options=NULL) {
- require(plotly) #required package
- if(is.null(options$h0)) { h0 = 300 } else { h0 = options$h0 } # 5500/nrows #standard height for each dye (depends on number of rows? No)
+  if(is.null(options$h0)) { h0 = 300 } else { h0 = options$h0 } # 5500/nrows #standard height for each dye (depends on number of rows? No)
  if(is.null(options$w0)) { w0 = 1800 } else { w0 = options$w0 } # standard witdh when printing plot
  if(is.null(options$marg0)) { marg0 = 0.015 } else { marg0 = options$marg0 } #Margin between subplots
  if(is.null(options$txtsize0)) { txtsize0 = 12 } else { txtsize0 = options$txtsize0 } #text size for alleles
@@ -135,14 +134,14 @@ for(ss in sn) {
 #loc  = locs[13]
    AT1 <- AT #temporary on analytical threshold
    ST1 <- ST #temporary on stochastic threshold
-   if(!is.null(AT) && is.list(AT) ) AT1 = AT[[dye]] #ignores dye if not found
-   if(!is.null(ST) && is.list(ST) ) ST1 = ST[[dye]] #ignores dye if not found
-
+   if(!is.null(AT) && length(AT)>1 ) AT1 = AT[ toupper(names(AT))==toupper(loc) ]  #extract dye specific AT
+   if(!is.null(ST) && length(ST)>1 ) ST1 = ST[ toupper(names(ST))==toupper(loc) ]  #extract dye specific ST
+   
    dfs = df[df$Sample==ss & df$Marker%in%loc,] #extract subset 
    dfs$Allele = as.character(dfs$Allele)
    dfs$Allele1 = as.character(dfs$Allele1)
    dfs$Allele2 = as.character(dfs$Allele2)
-   if(locYmax)  ymax1 = ymaxscale*max(minY,AT1,ST1,dfs$Height)  #get max 
+   if(locYmax)  ymax1 = ymaxscale*max( na.omit(c(minY,AT1,ST1,dfs$Height)) )  #get max 
 
    nA = length(dfs$Allele)
    av1 = unique(dfs$Allele1) #get unique alleles

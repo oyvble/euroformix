@@ -4,7 +4,7 @@
 #' @details Plots the expected peak heights of the top genotypes. The peak heights for corresponding alleles (one sample) are superimposed.
 #' @param MLEobj An object returned from contLikMLE
 #' @param DCobj An object returned from devonvolve: Must be run with same object as MLEobj
-#' @param kitname Name of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
+#' @param kitname Name of kit:  Obtained from getKit()
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @export
 plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
@@ -21,13 +21,13 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
 	# sampleName - title on the EPG.
 	# refList - a list of reference-index
 	# refnames - a vector with reference names
-      #samescale - boolean whether same scale should be plotted for all dyers
+  #samescale - boolean whether same scale should be plotted for all dyers
 
-      drawpeaks <- length(sn)==1 #draw peaks only if one replicate, otherwise draw points
+  drawpeaks <- length(sn)==1 #draw peaks only if one replicate, otherwise draw points
 
  	# CONSTANTS:
 	defaultRepeatUnit <- 4 # Default repeat unit in base pairs:
-      defaultLocusName <- "Locus " # Default locus name (will be suffixed with a number):
+  defaultLocusName <- "Locus " # Default locus name (will be suffixed with a number):
 	defaultMarkerSpacing <- 100 # Default marker spacing in base pairs:
 
 	# GRAPH CONSTANTS:
@@ -48,16 +48,16 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
 		kitFound <- FALSE
  	} else { # Kit found. Save information in vectors.
 		kitFound <- TRUE
-            unittab <- getKit(typingKit, what="offset")
-            rangetab <- getKit(typingKit, what="range") 
+    unittab <- getKit(typingKit, what="offset")
+    rangetab <- getKit(typingKit, what="range") 
 		locusVectorKit <- rangetab[,1] # Marker/locus names.
 		dyeVectorKit <- rangetab[,2] 	# Dye for each marker/locus    
 		offsetVectorKit <- unittab[,2] #Base pair start offset for each marker.
 		repeatUnitVectorKit <- unittab[,3] #Size in base pair of repeating unit for each marker.
 
-            #Range of markers:
-            locusMinVectorKit <- rangetab[,3]
-            locusMaxVectorKit <- rangetab[,4]
+    #Range of markers:
+    locusMinVectorKit <- rangetab[,3]
+    locusMaxVectorKit <- rangetab[,4]
 	}
 
 	# Check dye vector.
@@ -86,34 +86,34 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
 
 	# Convert dye vector to numeric vector.
 	colors <- unique(dyeVector)  
-      nColors <-  length(colors) 
+  nColors <-  length(colors) 
 
 	# Create lists:
 	bpListByColorList <- list()
 	bpListByColorListRep <- list()
 	phListByColorRep <- list()
 	allelesByColorList <- list()	
-      markerByColorList <- list()
-      markersByColorList <- list()
-      refByColorList <- list() 
-      isLab <- length(refnames)>0 #boolean have labels
-      bpmarkerByColorList <- list() #used for giving bp for a given marker
+  markerByColorList <- list()
+  markersByColorList <- list()
+  refByColorList <- list() 
+  isLab <- length(refnames)>0 #boolean have labels
+  bpmarkerByColorList <- list() #used for giving bp for a given marker
 
 	# SORT DATA ACCORDING TO COLOR CHANNEL and
 	# CONVERT ALLELE NAMES TO FRAGMENT LENGTH IN BASE PAIRS
 
 	# Loop over all color channels.
 	for (color in 1:nColors){
-            markersByColorList[[color]] <- numeric() #used to find what marker allele belongs to
-            basePairTmpLst <- list()
+    markersByColorList[[color]] <- numeric() #used to find what marker allele belongs to
+    basePairTmpLst <- list()
 		# Boolean vector indicating selected markers (same color).
  		selectedMarkers <- dyeVector == colors[color]
 
-            if (kitFound) {
-             markerByColorList[[color]] <- locusVectorKit[selectedMarkers] #EDIT by OB: marker names
+    if (kitFound) {
+      markerByColorList[[color]] <- locusVectorKit[selectedMarkers] #EDIT by OB: marker names
 		} else {
-             markerByColorList[[color]] <- locus #EDIT by OB: marker names
-            }
+     markerByColorList[[color]] <- locus #EDIT by OB: marker names
+    }
 		allelesByColor <- alleleList[selectedMarkers] # Extract all alleles in the same color channel.
 		heightsByColor <- heightList[selectedMarkers] # Extract all peak heights in the same color channel.		
 		offsetByColor <- offsetVector[selectedMarkers]# Extract all marker offsets in the same color channel.
@@ -189,9 +189,9 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
 	xMin <- min(sapply( bpListByColorList,function(x) min(na.omit(x))))
 	xMax <- max(sapply( bpListByColorList,function(x) max(na.omit(x))))
 	yMaxCol <- sapply( phListByColorRep,function(x) max(sapply(x,function(y) max(na.omit(y)))) )  #get maximum of y per col
-     yMaxCol[is.infinite(yMaxCol)] = 1e-6 
+  yMaxCol[is.infinite(yMaxCol)] = 1e-6 
 
-     #Find maxY for each colors:
+  #Find maxY for each colors:
 	for (color in 1:nColors){
         bpVec <- bpListByColorList[[color]]
         if(length(bpVec)==0) next #skip if none
@@ -207,7 +207,7 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
              }
         }
         if(EYmax>yMaxCol[color]) yMaxCol[color] = EYmax 
-      } #end for each color
+  } #end for each color
      
 	#Loop over all color channels.
 	for (color in 1:nColors){
@@ -217,27 +217,27 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
 		bpVecRep <- bpListByColorListRep[[color]]
 		hVec <- phListByColorRep[[color]]
 		aVec <- allelesByColorList[[color]]
-          if(isLab) rVec <- refByColorList[[color]] #references for each alleles
+    if(isLab) rVec <- refByColorList[[color]] #references for each alleles
 
-		# Create blank plot with axes.
-          yMax <- 1
+	# Create blank plot with axes.
+    yMax <- 1
 		noData <- FALSE
 		if(length(yMaxCol)>0) {
-              yMax <- yMaxCol[color]
-              if(samescale) yMax <- max(yMaxCol)
-            } else {
-              noData <- TRUE
-            }
+      yMax <- yMaxCol[color]
+      if(samescale) yMax <- max(yMaxCol)
+    } else {
+      noData <- TRUE
+    }
 
-	      plot(c(xMin, xMax), c(0, yMax), type="n", ylim = c(0, yMax * yMarginTop), ann = FALSE,axes=FALSE)
-            axis(side = 2)
-            bpgrid = 25
-            nl <- ceiling(xMax/bpgrid) #number of ticks (for each 25 bp)
-            xs = seq(0,bpgrid*nl,bpgrid)
-            axis(side = 1,at=xs,labels=rep("",length(xs)))
-            if(isLab && color==1) legend("topright",legend=paste0("Label ",1:length(refnames)," = ",refnames),bty="n")
-            abline(h=0)
-            if(threshT>0) abline(h=threshT,col="gray",lwd=0.5) #plot threshold
+    plot(c(xMin, xMax), c(0, yMax), type="n", ylim = c(0, yMax * yMarginTop), ann = FALSE,axes=FALSE)
+    axis(side = 2)
+    bpgrid = 25
+    nl <- ceiling(xMax/bpgrid) #number of ticks (for each 25 bp)
+    xs = seq(0,bpgrid*nl,bpgrid)
+    axis(side = 1,at=xs,labels=rep("",length(xs)))
+    if(isLab && color==1) legend("topright",legend=paste0("Label ",1:length(refnames)," = ",refnames),bty="n")
+    abline(h=0)
+    if(threshT>0) abline(h=threshT,col="gray",lwd=0.5) #plot threshold
 		if (noData) text(xMax / 1.4, yMax / 2, labels="No data", cex = 1.5) # Write text if no data.
 		if (color == 1) 	title(main = sampleName, col.main = "red", font.main = 4) # Create a title.
 		title(ylab = ylabel) # Label the y axes.
@@ -245,55 +245,55 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
 		# Label the x axis: pos values of 1, 2, 3 and 4 indicate positions below, left, above and right of the coordinate.
 		mtext(paste(xlabel), side = 1, line = 0, adj = 0, cex = alleleNameTxtSize)
 
-            #Label the contributor colors:
-            if(color==nColors) legend("topright",legend=paste0("Contr.",1:nC," = ",signif(mx,2)),bty="n",pch=15,col=Ccols[1:nC])
+    #Label the contributor colors:
+    if(color==nColors) legend("topright",legend=paste0("Contr.",1:nC," = ",signif(mx,2)),bty="n",pch=15,col=Ccols[1:nC])
 
-	    # Write allele names under the alleles.
-	    # The additional par(xpd=TRUE) makes it possible to write text outside of the plot region.
-	    if(length(bpVec)==0) next #skip if no info
-         text(bpVec, 0, labels = aVec, cex = alleleNameTxtSize, pos = 1, xpd = TRUE) 
-         if(isLab) text(bpVec,-yMax/20,labels=rVec,cex = alleleNameTxtSize,pos=1, xpd = TRUE)
+    # Write allele names under the alleles.
+    # The additional par(xpd=TRUE) makes it possible to write text outside of the plot region.
+    if(length(bpVec)==0) next #skip if no info
+     text(bpVec, 0, labels = aVec, cex = alleleNameTxtSize, pos = 1, xpd = TRUE) 
+     if(isLab) text(bpVec,-yMax/20,labels=rVec,cex = alleleNameTxtSize,pos=1, xpd = TRUE)
 
-         colcode <- rep("red",length(markerByColorList[[color]])) #colorcode as black 
-         prob <- pG[match(toupper(markerByColorList[[color]]),colnames(topG))] #get posterior probabilities
-         colcode[prob>0.90] <- "orange"
-         colcode[prob>0.95] <- "forestgreen" #codes
-         text(bpmarkerByColorList[[color]],  yMax * yMarginTop ,markerByColorList[[color]],cex=1,font=2,xpd = TRUE,col=colcode)
+     colcode <- rep("red",length(markerByColorList[[color]])) #colorcode as black 
+     prob <- pG[match(toupper(markerByColorList[[color]]),colnames(topG))] #get posterior probabilities
+     colcode[prob>0.90] <- "orange"
+     colcode[prob>0.95] <- "forestgreen" #codes
+     text(bpmarkerByColorList[[color]],  yMax * yMarginTop ,markerByColorList[[color]],cex=1,font=2,xpd = TRUE,col=colcode)
 
-         #CREATE PLOT HERE:
-	   for (peak in 1:length(bpVec)) { # Loop over all peaks.
-              allel <- aVec[peak]  #considered allele
-	         xCords <- c(bpVec[peak] - peakHalfWidth, bpVec[peak], bpVec[peak] + peakHalfWidth) #Get X-coord of single peak heights
+     #CREATE PLOT HERE:
+     for (peak in 1:length(bpVec)) { # Loop over all peaks.
+      allel <- aVec[peak]  #considered allele
+       xCords <- c(bpVec[peak] - peakHalfWidth, bpVec[peak], bpVec[peak] + peakHalfWidth) #Get X-coord of single peak heights
 
-               #get contributors for corresponding peak:
-               loc <- markersByColorList[[color]][peak] #get loci
-               if(toupper(loc)%in%locus) { #only if considered in model
-                G = topG[,colnames(topG)==toupper(loc)]
-                contr <- sapply(strsplit(G,"/"),function(x) sum(x%in%allel)) #get contribution
-                EY <- c(0,cumsum(contr*mx*mu*beta^((bpVec[peak]-125)/100))) #expected peak heights
-                for(j in 1:nC) { #for each contributor:
-                 rect( xCords[1],EY[j], xCords[3],EY[j+1],col=adjustcolor(Ccols[j],alpha.f=0.8) ) 
-                }
-               }
-               #Plot peak heights transparant on top
-               colY <- adjustcolor("black",alpha.f=0.4)
-               if (drawpeaks) { # Create corners of peak triangle.
-			 yCords <- c(0, hVec[[1]][peak], 0)
-	  		 polygon(xCords, yCords, col = colY) # Plot peaks as filled polygons.
-	         } else {# If scatterplot is to be drawn. 
-                   delta <- peakHalfWidth/length(sn)*4 #width of bars
-                   for(sind in 1:length(sn)) {
-                     if(is.na(bpVec[peak])) next
-			   ind <- which(round(bpVecRep[[sn[sind]]])==round(bpVec[peak]))
-                     x1 <- bpVec[peak]+delta*((sind-1)-length(sn)/2)
-                     x2 <- bpVec[peak]+delta*(sind-length(sn)/2)
-		  	   if(length(ind)>0) {
-                       ph <- hVec[[sn[sind]]][ind]
-                       rect(x1,0,x2,ph,border=colY,col=colY,lwd=0.1)
-                     }
-                  }
-               }
-	    } #end for each peak
+       #get contributors for corresponding peak:
+       loc <- markersByColorList[[color]][peak] #get loci
+       if(toupper(loc)%in%locus) { #only if considered in model
+        G = topG[,colnames(topG)==toupper(loc)]
+        contr <- sapply(strsplit(G,"/"),function(x) sum(x%in%allel)) #get contribution
+        EY <- c(0,cumsum(contr*mx*mu*beta^((bpVec[peak]-125)/100))) #expected peak heights
+        for(j in 1:nC) { #for each contributor:
+         rect( xCords[1],EY[j], xCords[3],EY[j+1],col=adjustcolor(Ccols[j],alpha.f=0.8) ) 
+        }
+       }
+       #Plot peak heights transparant on top
+       colY <- adjustcolor("black",alpha.f=0.4)
+       if (drawpeaks) { # Create corners of peak triangle.
+        yCords <- c(0, hVec[[1]][peak], 0)
+         polygon(xCords, yCords, col = colY) # Plot peaks as filled polygons.
+        } else {# If scatterplot is to be drawn. 
+           delta <- peakHalfWidth/length(sn)*4 #width of bars
+           for(sind in 1:length(sn)) {
+             if(is.na(bpVec[peak])) next
+              ind <- which(round(bpVecRep[[sn[sind]]])==round(bpVec[peak]))
+             x1 <- bpVec[peak]+delta*((sind-1)-length(sn)/2)
+             x2 <- bpVec[peak]+delta*(sind-length(sn)/2)
+             if(length(ind)>0) {
+               ph <- hVec[[sn[sind]]][ind]
+               rect(x1,0,x2,ph,border=colY,col=colY,lwd=0.1)
+             }
+          }
+       }
+    } #end for each peak
 	}#end for each color
  dev.new()
  op <- par(no.readonly = TRUE)
@@ -394,7 +394,7 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
    } else {
     kitlocs <- locs
    }
-#typingKit=kitname;alleleList=alist;heightList=hlist; locus=intersect(kitlocs,locs); sampleName=sname;refList=clist; refnames=rnCond
+#typingKit=kitname;alleleList=alist;heightList=hlist; locus=intersect(kitlocs,locs); sampleName=sname;refList=clist; refnames=rnCond;samescale = FALSE
    generateEPG(typingKit=kitname,alleleList=alist,heightList=hlist, locus=intersect(kitlocs,locs), sampleName=sname, refList=clist, refnames=rnCond)
 }
 

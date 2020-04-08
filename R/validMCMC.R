@@ -6,6 +6,7 @@
 #' @param trace Boolean for whether showing trace of samples.
 #' @param acf Boolean for whether showing autocorrelation function of samples.
 #' @export
+
 validMCMC <- function(mcmcfit,trace=TRUE,acf=TRUE) {
  txt <- colnames(mcmcfit$posttheta)
  #Ubound <- mcmcfit$Ubound #upper boundaries of parameters

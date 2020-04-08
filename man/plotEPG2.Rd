@@ -10,19 +10,19 @@ plotEPG2(mixData, kit, refData = NULL, AT = NULL, ST = NULL,
 \arguments{
 \item{mixData}{List of mixData[[ss]][[loc]] =list(adata,hdata), with samplenames ss, loci names loc, allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric)}
 
+\item{kit}{Short name of kit: See supported kits with getKit()}
+
 \item{refData}{List of refData[[rr]][[loc]] or refData[[loc]][[rr]] to label references (flexible). Visualizer will show dropout alleles.}
 
-\item{AT}{A detection threshold can be shown in a dashed line in the plot (constant). Possibly a AT[[dye]] list.}
+\item{AT}{A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names}
 
-\item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a ST[[dye]] list.}
+\item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names}
 
 \item{dyeYmax}{A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)}
 
 \item{plotRepsOnly}{A boolean of whether only replicate-plot is shown in case of multiple samples (TRUE is default)}
 
 \item{options}{A list of possible plot configurations. See comments below}
-
-\item{kitname}{Short name of kit: See supported kits with getKit()}
 }
 \value{
 sub A plotly widget

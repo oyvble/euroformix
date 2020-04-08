@@ -4,8 +4,9 @@
 \alias{Qassignate}
 \title{Qassignate}
 \usage{
-Qassignate(samples, popFreq, refData = NULL, doQ = TRUE, incR = TRUE,
-  incS = FALSE, minF = NULL, normalize = FALSE)
+Qassignate(samples, popFreq, refData = NULL, doQ = TRUE,
+  incR = FALSE, incS = FALSE, minF = NULL, normalize = FALSE,
+  verbose = FALSE)
 }
 \arguments{
 \item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
@@ -18,11 +19,13 @@ Qassignate(samples, popFreq, refData = NULL, doQ = TRUE, incR = TRUE,
 
 \item{incR}{A boolean whether to include reference-alleles in the Q-assignation}
 
-\item{incS}{A boolean whether to include potential stutters in the Q-assignation}
+\item{incS}{A boolean whether to include potential BW stutters in the Q-assignation}
 
 \item{minF}{The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.}
 
-\item{normalize}{A boolean of whether normalization should be applied or not. Default is TRUE.}
+\item{normalize}{A boolean of whether normalization should be applied or not. Default is FALSE.}
+
+\item{verbose}{A boolean of whether printing out information}
 }
 \value{
 ret A list(popFreq,refData,samples) with Q-designated alleles.
