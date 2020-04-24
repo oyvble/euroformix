@@ -39,7 +39,7 @@ efm = function(envirfile=NULL) {
  #create environment #
  #####################
   pgkPath <- path.package("euroformix", quiet = FALSE) # Get package path.
- .sep <- .Platform$file.sep # Platform dependent path separator. 
+  .sep <- .Platform$file.sep # Platform dependent path separator. 
   deffreq <- paste(pgkPath ,"tutorialdata","FreqDatabases",sep=.sep) #default path to freq-files
 
   #the file used to store system settings (opt-settings)
@@ -58,7 +58,7 @@ efm = function(envirfile=NULL) {
   if(!file.exists(optMarkerSetupFile)) {  #use default values if not existing
     optMarkerSetup = NULL #object is empty if not specified 
   } else {
-    optF <- scan(file=optMarkerSetupFile,what=character(),quiet=TRUE) #read saved data
+    optF <- readLines(optMarkerSetupFile) #read saved data
     nLocs = as.integer(optF[1]) #first element is number of markers
     mat = matrix(optF[-1] ,nrow=nLocs) #obtain matrix with locus information
     
@@ -330,11 +330,12 @@ efm = function(envirfile=NULL) {
  f_markerSettings = function(h,...) { 
    optL = get("optMarkerSetup",envir=mmTK)  #may contain stored marker based info
    opt0 <- get("optSetup",envir=mmTK) #contains the default settings (common marker settings)
-   locs <- toupper(names(get("popFreq",envir=mmTK))) #obtain marker names (same as in popFreq). Force to capital letters
-   if(is.null(locs)) {
+   popFreq = get("popFreq",envir=mmTK)
+   if(is.null(popFreq)) {
      gWidgets::gmessage(message="Please select population frequencies to get marker specific settings!\n\nSelecting kit will also give you dye (color) information. ",title="Missing data",icon="error")
      return() 
    }
+   locs <- toupper(names(popFreq)) #obtain marker names (same as in popFreq). Force to capital letters
    kitname <- get("selPopKitName",envir=mmTK)[1]  #get name of selected kit
    dyes = NULL #default is no colors (dyes)
    if(!is.null(kitname)) {
@@ -892,9 +893,9 @@ efm = function(envirfile=NULL) {
   tabGENa[2,2] <- gWidgets::gedit(thlist$sigma,container=tabGENa,width=10)
   tabGENa[3,1] <- gWidgets::glabel("Degrad.slope",container=tabGENa)
   tabGENa[3,2] <- gWidgets::gedit(thlist$beta,container=tabGENa,width=10)
-  tabGENa[4,1] <- gWidgets::glabel("Backward stutter-prop.",container=tabGENa)
+  tabGENa[4,1] <- gWidgets::glabel("BW stutter-prop.",container=tabGENa)
   tabGENa[4,2] <- gWidgets::gedit(thlist$xi,container=tabGENa,width=10)
-  tabGENa[5,1] <- gWidgets::glabel("Forward stutter-prop.",container=tabGENa)
+  tabGENa[5,1] <- gWidgets::glabel("FW stutter-prop.",container=tabGENa)
   tabGENa[5,2] <- gWidgets::gedit(thlist$xiFW,container=tabGENa,width=10)
   
   for(k in 1:nC) { #for each contributors

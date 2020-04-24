@@ -1,3 +1,8 @@
+EuroForMix v3.0.1 (Release date: 2020-04-24)
+=============================================
+Bug fix:
+- Markers containing spaces caused problem when loading Marker settings after saving (reading from the configMarkerSetup file failed).
+
 
 EuroForMix v3.0.0 (Release date: 2020-04-01)
 =============================================
@@ -9,7 +14,6 @@ Summary of version 3 updates:
 - Validation plots created (almost) instantly
 - Seed settings: The MCMC and conservative LR values are now reproducible. Also optional seed can be given for the MLE method (reproducible start values, useful for time comparisons).
 - Upper boundary of Likelihood Ratio provided in GUI (1/'Random match probability').
-
 
 Details of the update:
  - GUI changes (efm):
