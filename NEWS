@@ -1,7 +1,13 @@
+EuroForMix v3.0.2 (Release date: 2020-05-06)
+=============================================
+Issue fix:
+- The MCMC simulations failed if first random startpoint gave a likelihood of zero. Thanks to Eugenio Alladio and Maria Martin Agudo for reporting this issue.
+
+
 EuroForMix v3.0.1 (Release date: 2020-04-24)
 =============================================
 Bug fix:
-- Markers containing spaces caused problem when loading Marker settings after saving (reading from the configMarkerSetup file failed).
+- Markers containing space caused problem when loading Marker settings after saving (reading from the configMarkerSetup file failed).
 
 
 EuroForMix v3.0.0 (Release date: 2020-04-01)

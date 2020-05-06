@@ -50,10 +50,15 @@ contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,s
  indexParamOther = rep(NA,3)
  if(any(useParamOther)) indexParamOther[useParamOther] = 1:sum(useParamOther) #init indices
  
+ #The likelihood function taking theta-parameters (non-transformed params)
  logliktheta <- function(theta) {  
    if(any(theta<0)) return(-Inf) #Never consider negative params
    mixprop = as.numeric() #Length zero for 1 contributor
-   if(nC>1) mixprop = theta[1:(nC-1)] #extract parms
+   if(nC>1) {
+     mixprop = theta[1:(nC-1)] #extract parms
+     if(any(mixprop>1)) return(-Inf) #Never consider mix prop above 1
+   }
+   
    muv = rep(theta[nC],nM)   #common param for each locus
    sigmav = rep(theta[nC+1],nM)  #common param for each locus
    
@@ -78,6 +83,7 @@ contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,s
    xiBv = rep(xiB,nM) #common param for each locus
    xiFv = rep(xiF,nM) 
    
+   #notice mixture proportions are unrestricted
    loglik = .C("loglikgammaC",as.numeric(0),c$nC,c$NOK,c$knownGind,as.numeric(mixprop),as.numeric(muv),as.numeric(sigmav),as.numeric(betav),as.numeric(xiBv),as.numeric(xiFv),as.numeric(ATv),as.numeric(pCv),as.numeric(lambdav),as.numeric(fstv),c$nReps,c$nM,c$nA,c$YvecLong,c$FvecLong,c$nTypedLong,c$maTypedLong,c$basepairLong,c$BWvecLong,c$FWvecLong,c$nPS,c$BWPvecLong,c$FWPvecLong,as.integer(maxThreads),as.integer(0),c$anyRel,c$relGind,c$ibdLong,PACKAGE="euroformix")[[1]]
    if(is.null(xi))  loglik <- loglik + log(model$pXi(xiB)) #weight with prior of xi
    if(is.null(xiFW))  loglik <- loglik + log(model$pXiFW(xiF)) #weight with prior of xiFW
@@ -104,18 +110,17 @@ contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,s
  progcount = 1  #counter
  if( verbose ) progbar <- txtProgressBar(min = 0, max = niter, style = 3) #create progress bar
  
- #removed:  Importance sampling using Normal(th0,delta*Sigma)
- if(1) { #MCMC by Gelfand and Dey (1994), using h() = Normal(th0,delta*Sigma)
+ #Performing MCMC Metropolis Hastings by Gelfand and Dey (1994), using h() = Normal(th0,delta*Sigma)
    postth <- matrix(NA,ncol=np,nrow=niter) #accepted th
    postlogL <- rep(NA,niter) #accepted th
-   postth[1,] <- th0 + X[1,] #add noise into start point
-   postlogL[1] <- logliktheta(postth[1,]) #get start-likelihood  
+   postth[1,] <- th0 #init with proper value X[1,] #add noise into start point
+   postlogL[1] <- loglik0 #init with proper value logliktheta(postth[1,]) #get start-likelihood  
    U <- runif(niter) #random numbers
    m <- 2 #counter for samples
    nacc <- 0  
    while(m<=niter) {
      postth[m,] <-  X[m,] + postth[m-1,] #proposed theta
-     postlogL[m] <- logliktheta(postth[m,])
+     postlogL[m] <- logliktheta(theta=postth[m,])
      pr <- exp(postlogL[m]- postlogL[m-1]) #acceptance rate
      if(U[m]>pr) { #if not accepted, i.e. random prob too large (above pr)
       postth[m,] <-  postth[m-1,]
@@ -131,7 +136,7 @@ contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,s
   #plot(postlogL,ty="l")
   #plot(logpX,ty="l")
   margL <- 1/mean(exp(logpX - postlogL)) #estimated marginal likelihood
- }
+
  if( verbose ) cat("\n") #new line
 # nU <- nC-ret$nK #number of unknowns
 # if(nU>1) { #if more than 1 unknown 
