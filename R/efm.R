@@ -157,6 +157,7 @@ efm = function(envirfile=NULL) {
    if( is.null( mmTK$optSetup$pXiFW )) {
      mmTK$optSetup$pXiFW="dbeta(x,1,1)" #set default prior distribution of beta
      assign("optSetup",mmTK$optSetup,envir=mmTK)   #store again
+     
    }
    if( is.null( mmTK$optMarkerSetup )) {
      assign("optMarkerSetup",NULL,envir=mmTK) #default is common marker settings
@@ -320,7 +321,8 @@ efm = function(envirfile=NULL) {
     }
 
    assign("optSetup",opt,envir=mmTK)  #assign user-value to opt-list
-   write(unlist(opt),file=optSetupFile)    #save to file in installation folder
+   opt2 =   c(opt$easyMode,opt$maxloc,opt$thresh0,opt$fst0,opt$pC0,opt$lam0,opt$pXi,opt$pXiFW) #ensure correct order
+   write(opt2,file=optSetupFile)    #save to file in installation folder (must be correct order)
    gWidgets::dispose(setwin)
   } )
   gWidgets::visible(setwin) <- TRUE

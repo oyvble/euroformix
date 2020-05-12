@@ -1,3 +1,13 @@
+EuroForMix v3.0.3 (Release date: 2020-05-06)
+=============================================
+
+Important bug fix in the fitgammamodel function (bug introduced in v3.0.0):
+- The returned degradation parameter value was not correct (always overestimated). This influences the degradation slope plot in the EFM GUI. Also, the fix may cause faster convergence of MLE. 
+
+Other fixed issue: 
+- GUI crashed when loading settings after saving settings with old projects (created with a version before v3.0.0). Thanks to Peter Gill for pointing out this issue. 
+
+
 EuroForMix v3.0.2 (Release date: 2020-05-06)
 =============================================
 Issue fix:

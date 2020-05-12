@@ -5,7 +5,8 @@
 \title{fitgammamodel}
 \usage{
 fitgammamodel(y, x = NULL, DEG = TRUE, niter = 30, delta = 1,
-  plott = FALSE, alpha = 0.05, offset = 125, scale = 100)
+  plott = FALSE, alpha = 0.05, offset = 125, scale = 100,
+  th0 = NULL)
 }
 \arguments{
 \item{y}{a vector of sum peak heights per loci}
@@ -25,6 +26,8 @@ fitgammamodel(y, x = NULL, DEG = TRUE, niter = 30, delta = 1,
 \item{offset}{a number giving shift of bp in degradation model.}
 
 \item{scale}{a number giving scaling of shifted bp in degradation model.}
+
+\item{th0}{Provided start values to be used in optimizer}
 }
 \value{
 Estimated parameters (mean,coefVar,slopePara)
