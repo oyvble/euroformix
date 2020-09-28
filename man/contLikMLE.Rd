@@ -9,7 +9,7 @@ contLikMLE(nC, samples, popFreq, refData = NULL, condOrder = NULL,
   fst = 0, lambda = 0, pXi = function(x) 1, delta = 1,
   kit = NULL, verbose = TRUE, maxIter = 100, knownRel = NULL,
   ibd = c(1, 0, 0), xiFW = 0, pXiFW = function(x) 1, seed = NULL,
-  maxThreads = 32)
+  maxThreads = 32, steptol = 0.001)
 }
 \arguments{
 \item{nC}{Number of contributors in model. Must be a constant.}
@@ -57,6 +57,8 @@ contLikMLE(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 \item{seed}{The user can set seed if wanted}
 
 \item{maxThreads}{Maximum number of threads to be executed by the parallelization}
+
+\item{steptol}{Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).}
 }
 \value{
 ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.

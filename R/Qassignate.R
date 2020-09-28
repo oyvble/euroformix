@@ -62,7 +62,7 @@ Qassignate <- function(samples,popFreq,refData=NULL,doQ=TRUE,incR=FALSE,incS=FAL
 
   if(doQ) {#if Q-assignate, i.e. setting non-observed alleles of references as Qallele ("99")
    tmp <- popFreq[[loc]][names(popFreq[[loc]])%in%evid] #find observed alleles
-   if( length(tmp) < length(popFreq[[loc]])) {  #this requirement has been removed! Potential leading to wrong results!
+   if( length(tmp) < length(popFreq[[loc]])) {  
     tmp <- c(tmp,1-sum(tmp))
     names(tmp)[length(tmp)] <- Qallele
    }

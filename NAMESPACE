@@ -11,7 +11,7 @@
   importFrom("utils", "head", "memory.limit", "object.size",
              "packageVersion", "read.delim", "read.table",
              "setTxtProgressBar", "tail", "txtProgressBar",
-             "write.table")
+             "write.table")			 
 import(plotly)
 useDynLib(euroformix)
 exportPattern("^[[:alpha:]]+")

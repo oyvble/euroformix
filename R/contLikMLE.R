@@ -27,6 +27,7 @@
 #' @param pXiFW Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.
 #' @param seed The user can set seed if wanted
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
+#' @param steptol Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).
 #' @return ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
 #' @export
 #' @examples
@@ -42,7 +43,7 @@
 #' mlefit = contLikMLE(nC=2,dat$samples,popFreq=dat$popFreq,kit=kit,verbose=TRUE)
 #' }
 
-contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=0,prC=0,nDone=2,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=1,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,seed=NULL,maxThreads=32){
+contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=0,prC=0,nDone=2,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=1,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,seed=NULL,maxThreads=32,steptol=1e-3){
   if(!is.null(seed)) set.seed(seed) #set seed if provided
     
   c <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit,knownRel,ibd,fst,incS=is.null(xi) || xi>0,incFS=is.null(xiFW) || xiFW>0)
@@ -247,7 +248,7 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
         if(verbose && showProgressBar) progbar <- txtProgressBar(min = 0, max = maxIterProgress, style = 3) #create progress bar
         
         tryCatch( {
-          foo <- nlm(f=negloglikYphi, p=p0,hessian=TRUE,iterlim=maxIter,steptol=1e-3, progressbar=showProgressBar)#,print.level=2)
+          foo <- nlm(f=negloglikYphi, p=p0,hessian=TRUE,iterlim=maxIter,steptol=steptol, progressbar=showProgressBar)#,print.level=2)
           Sigma <- solve(foo$hessian)
           
           if(all(diag(Sigma)>=0) && foo$iterations>2) { #} && foo$code%in%c(1,2)) { #REQUIREMENT FOR BEING ACCEPTED
@@ -345,7 +346,7 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
     for(i in nC:(nC+1)) J[i,i] <- exp(phi[i])
     
     if(  length(otherInd)>0   ) { #if remaining params: 
-      tmp = exp(-maxPhi[otherInd])
+      tmp = exp(-phi[otherInd])
       J[cbind(otherInd,otherInd)] = tmp*(1+tmp)^(-2) #insert values (vectorized)
     }
     
@@ -419,7 +420,7 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
   fit <- list(phihat=maxPhi,thetahat=thetahat,thetahat2=thetahat2,phiSigma=maxSigma,thetaSigma=Sigma,thetaSigma2=Sigma2,loglik=maxL,thetaSE=thetaSE,logmargL=logmargL)
   #store model:
   model <- list(nC=nC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,xi=xi,prC=pCv,threshT=ATv,fst=fstv,lambda=lambdav,pXi=pXi,kit=kit,knownRel=knownRel,ibd=ibd,pXiFW=pXiFW,xiFW=xiFW)
-  ret <- list(fit=fit,model=model,nDone=nDone,delta=delta,seed=seed,prepareC=c) #store seed
+  ret <- list(fit=fit,model=model,nDone=nDone,delta=delta,steptol=steptol,seed=seed,prepareC=c) #store seed
   return(ret)
 } #end function
 

@@ -66,6 +66,12 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000,verbose=TRUE){ #alpha=0.95;
   ind1 = startIndMarker1 + 1:c$nA[m] #get index of 1 repitition
   ind2 = startIndMarker2 + 1:(c$nA[m]*c$nRep[m]) #get index of 1 repitition
   indPS = startIndPS +  1:c$nPS[m] #get index of potential stutters
+  
+  #Update indices for next marker (must be done early):
+  startIndMarker1 = startIndMarker1 + c$nA[m] #get start position of marker m+1 (1 rep)
+  startIndMarker2 = startIndMarker2 + c$nA[m]*c$nRep[m]; #get start position of marker m+1 (nRep), used only for Peaks only
+  startIndPS = startIndPS + c$nPS[m]; #add number of potential stutters
+  
   if(c$nPS[m]==0) indPS = numeric()
   indKnownGind = (nC*(m-1)+1):(nC*m) #get index where the genotype indices are
   knownGind = c$knownGind[indKnownGind] #extract the vector with genotype indices (-1 means unknown)
@@ -106,11 +112,6 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000,verbose=TRUE){ #alpha=0.95;
     pg = pGlist$Gprob[ rbind(genoUind) ]  #CALCULATING JOINT PROB GENOTYPE (may include relatedness probs)
     dvec[gind] <- dvec[gind] + log(pg) #insert log joint prob
   }
-  
-  #Update indices for next marker:
-  startIndMarker1 = startIndMarker1 + c$nA[m] #get start position of marker m+1 (1 rep)
-  startIndMarker2 = startIndMarker2 + c$nA[m]*c$nRep[m]; #get start position of marker m+1 (nRep), used only for Peaks only
-  startIndPS = startIndPS + c$nPS[m]; #add number of potential stutters
   
   combGind2 <- numeric() #including the genotype of all contributors:
   for(k in 1:nC) { #for each contributors

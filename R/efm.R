@@ -7,7 +7,7 @@
 
 efm = function(envirfile=NULL) {
  LUSsymbol = "_" #Added in version 1.11.0 defined as constant. Used for showing MPS based STRs in RU_LUS format (LUS must be numeric)
- MPSsymbol = ":" #Added in version 2.2.0 defined as constant. Used for showing MPS based SNPs/STRs in RU_something format (both can be strings)
+ MPSsymbol = ":" #Added in version 2.2.0 defined as constant. Used for showing MPS based SNPs/STRs in RU:something format (both can be strings)
 
  #size of main window
  mwH <- 800
@@ -45,7 +45,7 @@ efm = function(envirfile=NULL) {
   #the file used to store system settings (opt-settings)
   optSetupFile <- paste(pgkPath,"configSetup",sep=.sep)  
   if(!file.exists(optSetupFile)) {  #use default values if not existing
-    optSetup = list(easyMode=FALSE,maxloc=30,thresh0=50,fst0=0,pC0=0,lam0=0.01,pXi="dbeta(x,1,1)",pXiFW="dbeta(x,1,1)")
+    optSetup = list(easyMode=FALSE,maxloc=30,thresh0=50,fst0=0,pC0=0.05,lam0=0.01,pXi="dbeta(x,1,1)",pXiFW="dbeta(x,1,1)")
     #maxloc: maximum number of loci to visualize in GUI
     #pXi: prior density function of stutter proportion parameter
     #thresh0: default value of detection threshold value
@@ -80,7 +80,7 @@ efm = function(envirfile=NULL) {
   assign("optMarkerSetup",optMarkerSetup,envir=mmTK) #default is common marker settings
   
   assign("optFreq",list(freqsize=0,wildsize=5,minF=NULL,normalize=1),envir=mmTK) #option when new frequencies are found (size of imported database,minFreq), and missmatch options
-  assign("optMLE",list(nDone=2,delta=1,dec=4,obsLR=NULL,maxIter=100,maxThreads=32,seed=NULL),envir=mmTK) #options when optimizing,validation (nDone,delta)
+  assign("optMLE",list(nDone=3,delta=1,dec=4,obsLR=NULL,maxIter=100,maxThreads=32,seed=NULL,steptol=1e-3),envir=mmTK) #options when optimizing,validation (nDone,delta)
   assign("optMCMC",list(delta=2,niter=2000,seed=1),envir=mmTK) #options when running MCMC-simulations (delta, niter,seed=1)
   assign("optINT",list(reltol=0.1,maxeval=10000,maxmu=20000,maxsigma=0.9,maxxi=0.5,maxxiFW=0.25,scaleINT=700),envir=mmTK) #options when integrating (reltol and boundaries)
   assign("optDC",list(alphaprob=0.99,maxlist=20),envir=mmTK) #options when doing deconvolution (alphaprob, maxlist)
@@ -132,7 +132,6 @@ efm = function(envirfile=NULL) {
      mmTK$optMLE$maxThreads  <- 32 #set default value
      assign("optMLE",mmTK$optMLE,envir=mmTK)   #store again
   }
-   
   #MAKING VERSION BACKWARD COMPATIBLE FROM v1.10.0
   if( is.null( mmTK$popList)) {
    assign("popList",NULL,envir=mmTK) #Added in v1.10.0, 
@@ -171,7 +170,14 @@ efm = function(envirfile=NULL) {
    if( is.null( res$LRupper )) res$LRupper = NA
    if( is.null( res$adjLRmle )) res$adjLRmle = NA
    assign("resEVID",res,envir=mmTK) #assign evidence weighting results (i.e. calculated LR with MLE estimates)
+
+   #MAKING VERSION BACKWARD COMPATIBLE FROM v3.0.4
+   if( is.null( mmTK$optMLE$steptol )) {
+     mmTK$optMLE$steptol  <- 1e-3 #set default value
+     assign("optMLE",mmTK$optMLE,envir=mmTK)   #store again
+   }
    
+      
  }
 
  ####################################
@@ -705,8 +711,8 @@ efm = function(envirfile=NULL) {
     })
   ),
   Optimization=list(
-   'Set number of required optimizations'=list(handler=function(h,...) {  
-      setValueUser(what1="optMLE",what2="nDone",txt="Set number of required optimizations:") 
+   'Set number of optimizations'=list(handler=function(h,...) {  
+      setValueUser(what1="optMLE",what2="nDone",txt="Set required number of (identical) optimizations:") 
     }),
    'Set variance of randomizer'=list(handler=function(h,...) {  
       setValueUser(what1="optMLE",what2="delta",txt="Set variance of start point randomizer:") 
@@ -719,6 +725,9 @@ efm = function(envirfile=NULL) {
     }),
    'Set seed of randomizer'=list(handler=function(h,...) { 
       setValueUser(what1="optMLE",what2="seed",txt="Set seed of randomizer:") 
+   }),
+   'Set accuracy of optimization'=list(handler=function(h,...) { 
+     setValueUser(what1="optMLE",what2="steptol",txt="Set accuracy of optimization (steptol, see ?nlm):") 
    })
   ),
   MCMC=list(
@@ -1123,6 +1132,30 @@ efm = function(envirfile=NULL) {
   }
  }
 
+ #Helpfunction to export frequency data (only frequency file currently implemented)
+ f_exportfreq = function(h,...) {
+   popFreq <- get("popFreq",envir=mmTK) #get frequencies
+   if(is.null(popFreq)) {
+     gWidgets::gmessage(message="Please import and select population frequencies!",icon="info")
+     return
+   } else {
+     nL <- length(popFreq)
+     unAchr <- unique(unlist(lapply( popFreq,names) )) #get character alleles
+     ord <- order(as.numeric(unAchr))  #all alleles must be able to convert to numeric
+     unAchr <- unAchr[ord]  #make increasing order
+
+     outtab = matrix("",ncol=nL,nrow=length(unAchr)) #table to save to file
+     for(i in 1:nL) { #go through all markers
+       freqs <- popFreq[[i]] #get frequencies
+       outtab[ match(names(freqs),unAchr) ,i ] = freqs #insert frequencies
+     } 
+     outtab = cbind(unAchr,outtab)
+     colnames(outtab) = c("Allele",names(popFreq)) #insert marker names
+     saveTable(outtab,"csv") #save table (with csv)
+   }
+ }
+   
+ 
  #prints evidence, references, EPG, databases and population frequencies
  f_viewdata = function(h,...) {
   #types: freq,mix,ref,db
@@ -1136,7 +1169,6 @@ efm = function(envirfile=NULL) {
    popFreq <- get("popFreq",envir=mmTK) #get frequencies
    if(is.null(popFreq)) {
     gWidgets::gmessage(message="Please import and select population frequencies!",icon="info")
-    return
    } else {
     locs <- names(popFreq)
     nL <- length(locs)
@@ -1261,7 +1293,11 @@ efm = function(envirfile=NULL) {
          for(msel in mixSel) { #for each replicate
           av  <- evidDsel[[msel]][[loc]]$adata #get alleles
           if(is.null(av)) next
-          av  <- sapply(strsplit(av,LUSsymbol),function(x) x[1]) #in case of LUS. Extract only first allele. OK for general
+          if(all(grepl(LUSsymbol,av))) { #in case of LUS. Extract only first allele. OK for general
+            av  <- sapply(strsplit(av,LUSsymbol),function(x) x[1]) 
+          } else if(all(grepl(MPSsymbol,av))) {  #in case of MPS-SEQ. Extract only first allele. OK for general
+            av  <- sapply(strsplit(av,MPSsymbol),function(x) x[1])
+          }
           dat <- subK$Size[subK$Allele%in%av] #sizedata for alleles
           if(length(dat)==0) next
           regdata <- rbind(regdata, c(sum(evidDsel[[msel]][[loc]]$hdata),mean(dat),dye,loc,msel)) #use average for each locus
@@ -1583,6 +1619,9 @@ efm = function(envirfile=NULL) {
      }
     })
 
+ tabimportA[2,3] <-  gWidgets::gbutton(text="Export frequencies",container=tabimportA,handler=f_exportfreq)  #view popFreq-data
+ helptext(tabimportA[2,3],"Exports a frequency file (in EuroForMix/LRmixStudio format) for selected population.")
+ 
  tabimportA[3,3] <-  gWidgets::gbutton(text="View frequencies",container=tabimportA,handler=f_viewdata,action="freq")  #view popFreq-data
  helptext(tabimportA[3,3],"Shows the selected population frequencies from the drop-down menu. \n\nIf evidence(s) is selected, the probability for a random profile to have more than k number of allele matches to the sample is given in a plot.")
 
@@ -2194,7 +2233,7 @@ efm = function(envirfile=NULL) {
           if(!evalBool) return(NULL) #return if not evaluating    
           
           #FIND OPTIMAL MODEL (use settings under Hd):
-          searchList <- contLikSearch(NOC,modelDegrad,modelBWstutt,modelFWstutt,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hd,knownRefPOI,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,alpha=0.01,pXi=par$pXi,delta=opt$delta,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads)
+          searchList <- contLikSearch(NOC,modelDegrad,modelBWstutt,modelFWstutt,samples=set$samples,popFreq=set$popFreqQ,refData=set$refDataQ,condOrder=mod$condOrder_hd,knownRefPOI=knownRefPOI,prC=par$prC,nDone=opt$nDone,threshT=par$threshT,fst=par$fst,lambda=par$lambda,alpha=0.01,pXi=par$pXi,delta=opt$delta,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads)
           AIC = searchList$outtable[,2] #obtain crietion
           optimInd = which.max(AIC)[1] #get index of optimal model. Use simpler model if "Tie"
           
@@ -2469,9 +2508,9 @@ efm = function(envirfile=NULL) {
           if(ITYPE=="MLE") { #calculate with MLE
             logLi_hdeval <- logLi_hd[locevalind] #take out relevant values
 #            nC=mod$nC_hp+1;popFreq=popFreqQ[loceval];refData=refData2;condOrder=condOrder_hp;knownRef=mod$knownref_hp;xi=par$xi;prC=par$prC;nDOne=mleopt$nDone;threshT=par$threshT;fst=par$fst;lambda=par$lambda;delta=mleopt$delta;pXi=par$pXi;kit=par$kit;verbose=FALSE;maxIter=mleopt$maxIter;xiFW=par$xiFW;pXiFW=par$pXiFW;maxThreads=get("optMLE",envir=mmTK)$maxThreads;seed=get("optMLE",envir=mmTK)$seed;knownRel=NULL;ibd=NULL
-            mlefit_hp <- contLikMLE(mod$nC_hp+1,samples,popFreqQ[loceval],refData2,condOrder_hp,mod$knownref_hp,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed)
+            mlefit_hp <- contLikMLE(mod$nC_hp+1,samples,popFreqQ[loceval],refData2,condOrder_hp,mod$knownref_hp,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)
             if(any(par$fst>0)) { #must calculate Hd once again (assume Rj is known)
-             mlefit_hdj <- contLikMLE(mod$nC_hd,samples,popFreqQ[loceval],refData2,condOrder_hd,nR,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter,knownRel=mod$knownRel,ibd=mod$ibd ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed)
+             mlefit_hdj <- contLikMLE(mod$nC_hd,samples,popFreqQ[loceval],refData2,condOrder_hd,nR,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter,knownRel=mod$knownRel,ibd=mod$ibd ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)
              LRD[rind] <- exp(mlefit_hp$fit$loglik - mlefit_hdj$fit$loglik) #insert calculated LR adjusted by fst-correction
             } else {
              LRD[rind] <- exp(mlefit_hp$fit$loglik - sum(logLi_hdeval)) #insert calculated LR:
@@ -2585,8 +2624,9 @@ efm = function(envirfile=NULL) {
    txt <-  paste0(txt,printSET(set$mlefit_hd$model)) #Print Data and model options under Hd
    
    txt <- paste0(txt,"\n\n-------Optimalisation setting-------")
-   txt <- paste0(txt,"\nNumber of required optimalisations: ",set$mlefit_hd$nDone) #Added v3.0.0: set number of required optims 
-   txt <- paste0(txt,"\nSeed for optimalizations: ", ifelse(is.null(set$mlefit_hd$seed),"NONE",set$mlefit_hd$seed)) #Added v3.0.0: 
+   txt <- paste0(txt,"\nRequired number of (identical) optimizations: ",set$mlefit_hd$nDone) #Added v3.0.0: Number of identical optimization
+   txt <- paste0(txt,"\nAccuracy of optimisations (steptol): ",set$mlefit_hd$steptol) #Added v3.1.0: Steptol to use in nlm
+   txt <- paste0(txt,"\nSeed for optimisations: ", ifelse(is.null(set$mlefit_hd$seed),"NONE",set$mlefit_hd$seed)) #Added v3.0.0: 
    
    
    if(!is.null(set$mlefit_hp))  txt <- paste0(txt,printMOD(model=set$mlefit_hp$model,hyp="Hp")) #Print hypothesis Hp:
@@ -2769,9 +2809,9 @@ efm = function(envirfile=NULL) {
         for(loc in locs)  refData[[loc]][[tipind]] <-  Gsim[[loc]][m,] #insert genotype of the non-contributor
         
         if(type=="MLE") { #calculate based on MLE
-          logLhp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,refData,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed)$fit$loglik 
+          logLhp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,refData,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)$fit$loglik 
           logLhd <- set$mlefit_hd$fit$loglik 
-          if(any(par$fst>0)) logLhd  <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,refData,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed)$fit$loglik  #re-calculate only necessary once if fst>0 
+          if(any(par$fst>0)) logLhd  <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,refData,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)$fit$loglik  #re-calculate only necessary once if fst>0 
           RMLR[m] <- (logLhp - logLhd)/log(10)
         } else { #calculate based on INT
          bhp <- getboundary(mod$nC_hp,par$kit,par$xi,par$xiFW) #get boundaries under hp
@@ -2815,7 +2855,11 @@ efm = function(envirfile=NULL) {
     dat = list(refData=set$refDataQ,popFreq=set$popFreqQ) #refData has already correct format for calcRMPfst: [[loc]][[ref]] f
     hdcond = which(fithd$model$condOrder>0) #get conditionals under Hd
     POIind = setdiff(which(fithp$model$condOrder>0) , hdcond) #get position of POI
-    rmp = calcRMPfst(dat,POIind=POIind,condInd=hdcond ,fst=set$param$fst ) #consider RMP under Hd
+	if( length(POIind)==1 ) { #if one POI (under Hp) index found 	
+		rmp = calcRMPfst(dat,POIind=POIind,condInd=hdcond ,fst=set$param$fst ) #consider RMP under Hd
+	} else {
+		rmp = NA #set if missing
+	}
     #log10LRupper = -sum(log10(rmp)) #get maximum attainable LR (log10 scale)
     LRupper = 1/prod(rmp)
     resEVID <- list(LRmle=LRmle,LRlap=LRlap,LRi=LRi,LRupper=LRupper,adjLRmle=adjLRmle) 
@@ -2883,7 +2927,7 @@ efm = function(envirfile=NULL) {
       #nUhp <- mod$nC_hp-sum(mod$condOrder_hp>0) #number of unknowns
       print("Calculating under Hp...")
 #nC=mod$nC_hp;set$samples;popFreq=set$popFreqQ;refData=set$refDataQ;condOrder=mod$condOrder_hp;knownRef=mod$knownref_hp;xi=par$xi;prC=par$prC;nDone=opt$nDone;threshT=par$threshT;fst=par$fst;lambda=par$lambda;delta=opt$delta;pXi=par$pXi;kit=par$kit;maxIter=opt$maxIter ;xiFW=par$xiFW;pXiFW=par$pXiFW; maxThreads=get("optMLE",envir=mmTK)$maxThreads;seed=get("optMLE",envir=mmTK)$seed
-       time <- system.time({     mlefit_hp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed)     })[3]      
+       time <- system.time({     mlefit_hp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)     })[3]      
       print(paste0("Optimizing under Hp took ",format(time,digits=5),"s"))
       if(!is.null(set$mlefit_hp) && set$mlefit_hp$fit$loglik>mlefit_hp$fit$loglik )  mlefit_hp <- set$mlefit_hp #the old model was better
      } else {
@@ -2893,7 +2937,7 @@ efm = function(envirfile=NULL) {
      #fit under hd: (does it for all methods)
      nUhp <- mod$nC_hp-sum(mod$condOrder_hp>0) #number of unknowns	 
      print("Calculating under Hd...")
-     time <- system.time({    mlefit_hd <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed)    })[3]
+     time <- system.time({    mlefit_hd <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,set$refDataQ,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)    })[3]
      print(paste0("Optimizing under Hd took ",format(time,digits=5),"s"))
      if(!is.null(set$mlefit_hd) && set$mlefit_hd$fit$loglik>mlefit_hd$fit$loglik )  mlefit_hd <- set$mlefit_hd #the old model was better
 

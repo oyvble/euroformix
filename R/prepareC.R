@@ -33,9 +33,10 @@
 
 
 prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,kit=NULL,knownRel=NULL,ibd=NULL,fst=0,incS=FALSE,incFS=FALSE){
- Qallele="99" #Name of allele given if missing in evidence. Defualt is 99. This is important when considering the degradation model since 99 is closest to maximum allelein a locus. 
+ Qallele="99" #Name of allele given if missing in evidence (drop-out allele). Defualt is 99. This is important when considering the degradation model since 99 is closest to maximum allelein a locus. 
  LUSsymbol="_" #a character symbol used to separate repeatunit and LUS.
-
+ MPSsymbol = ":" #Added in version 3.1.0. Used for extracting CE for MPS strings. Example is "10:[ATCG]10".
+ 
  #CHECK INPUT OF Relatedness elements:
  if(!is.null(knownRel) && length(knownRel)>1 ) stop("Not implemented: Multiple related not possible!")
  if(!is.null(ibd) && length(ibd)!=3 ) stop("Not implemented: Multiple ibs elements not possible! Ibs must be a vector")
@@ -61,7 +62,15 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  
  #Get list of genotypes for each markers (MUST BE SAME ORDER AS THOSE CREATED IN C++ code!!)
  Gset <- list() 
- for(loc in locs) Gset[[loc]] <- calcGjoint(freq=popFreq[[loc]])$G #get genotypes
+ for(loc in locs) {
+    tryCatch({
+       Gset[[loc]] <- calcGjoint(freq=popFreq[[loc]])$G #get genotypes
+      }, 
+      error=function(e) {
+         print(paste0("At locus ",loc,":"))
+         stop(e) #Finally printing error at corresponding marker
+      })
+ }
 
 
  #Fix references as known contributors: Assign genotypes of known references to knownGind-matrix
@@ -152,7 +161,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  
  #TRAVERSE FOR EACH MARKER:
  #PREPARE FREQUENCY AND PH INFO
- for(m in 1:nM) { #m=7
+ for(m in 1:nM) { #m=8
    loc = locs[m] #for selected loc (already upper)
    freq = popFreq[[loc]] #get allele freqs
    avL[[loc]] = names(freq) #get orignal allele outcome (including Qallele) 
@@ -171,8 +180,15 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
    }
 
    #Fix PH vector:      
-   nA[m] <- length(freq) #number of allees to travers thgotu 
+   nA[m] <- length(freq) #number of allees to travers through
    locDat = lapply(samples,function(x) x[which(toupper(names(x))==loc)][[1]]) #obtain replicate info
+   
+   #Ensure that user has run prepareData function beforehand
+   allObsAlleles = unique(unlist(sapply(locDat,function(x) x$adata))) #obtain unique alleles observed (across all replicates)
+   if( any(!av%in%allObsAlleles) ) {
+      stop(paste0("In marker ",loc,": There are alleles in the frequencies data are not found in the observed data. This is not allowed. Please use the prepareData function beforehand to obtain correct data structure! Program stops."))
+   }
+   
    yv = matrix(0,ncol=nA[m],nrow=nS) #create PH-matrix
    for(r in 1:nS) { #for each replicates (following handle unordered loci under each sample)
      yv[r, match(locDat[[r]]$adata,av)] = locDat[[r]]$hdata #insert PHs
@@ -182,7 +198,11 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
    if(!is.null(kit)) { #Extracting basepairs
      sub = kitinfo[toupper(kitinfo$Marker)==loc,,drop=FALSE] 
      av0 = av #copy alleles
-     if(isLUS) av0 <- as.numeric( sapply(strsplit(av0 ,LUSsymbol),function(x) x[1] ) ) #extracting first allele 
+     if(isLUS) {
+        av0 <- as.numeric( sapply(strsplit(av0 ,LUSsymbol),function(x) x[1] ) ) #extracting first allele  
+     } else if( all(grepl(MPSsymbol,av0)) ) {
+        av0 <- as.numeric( sapply(strsplit(av0 ,MPSsymbol),function(x) x[1] ) ) #extracting first allele  
+     }
      
      bp = sub$Size[match(as.character(av0),sub$Allele)] #corresponding bp of alleles
      if(any(is.na(bp))) { #if allele not found

@@ -27,13 +27,14 @@
 #' @param pXiFW Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.
 #' @param seed The user can set seed if wanted
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
+#' @param steptol Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).
 #' @return ret A list(fit,model,nDone,delta,prepareC) where fit is Maximixed likelihood elements for given model.
 #' @export
 
-contLikMLEpara = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=0,prC=0,nDone=2,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=1,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,seed=NULL,maxThreads=32){
+contLikMLEpara = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=0,prC=0,nDone=2,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=1,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,seed=NULL,maxThreads=32,steptol=1e-3){
 
  #call function contLikMLE with same arguments
- mle = euroformix::contLikMLE(nC=nC,samples=samples,popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,xi=xi,prC=prC,nDone=nDone,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,delta=delta,kit=kit,verbose=verbose,maxIter=maxIter,knownRel=knownRel,ibd=ibd,xiFW=xiFW,pXiFW=pXiFW,seed=seed,maxThreads=maxThreads)
+ mle = euroformix::contLikMLE(nC=nC,samples=samples,popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,xi=xi,prC=prC,nDone=nDone,threshT=threshT,fst=fst,lambda=lambda,pXi=pXi,delta=delta,kit=kit,verbose=verbose,maxIter=maxIter,knownRel=knownRel,ibd=ibd,xiFW=xiFW,pXiFW=pXiFW,seed=seed,maxThreads=maxThreads,steptol=steptol)
  return(mle)
 
 } #end function

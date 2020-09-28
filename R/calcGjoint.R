@@ -27,7 +27,10 @@ calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=
  if(length(nU)!=1) stop("Wrong input length for number of unknowns (nU)")
  if(nU==0) stop("You must specify at least one unknown to use this function!")
  if(!is.numeric(freq))  stop("freq argument must be numeric!") 
- if(!all.equal(sum(freq),1))  stop("freq argument must sum to one!") 
+ 
+ sumsToOne = all.equal(1,sum(freq)) #checking if freqs sums to one (this must always be the case for EFM)
+ if(is.character(sumsToOne)) stop("freq argument must sum to one!")
+ 
  #Function calculates genotypes for all possib
  nn = length(freq) #number of alleles
  nG <- nn*(1+nn)/2 #number of allele outcome

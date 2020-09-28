@@ -1,3 +1,34 @@
+
+EuroForMix v3.1.0 (Release date: 2020-09-08)
+=============================================
+Important updates:
+- In GUI: It is now possible to export a frequency file from the 'Import data' panel (based on "Selected population").
+- In GUI and contLikMLE function: The user can now change the steptol parameter used in the optimization. This makes it possible to increase accuracy of the results (steptol=0.001 is default from v3, whereas it was 1e-6 in earlier versions).
+- MLE Optimizer strategy: Default number of optimizations set to 3 (instead of 2). This will make the MLE more robust. The user can change this at any time.
+- Default drop-in probability is now "0.05" instead of "0".
+- A new R-function called "qualLikMLE" has been included to the package, enabling more flexibility for inferring the qualitative model: Different drop-out probability for each contributor, in combination with fixed values, is possible. NB: This is not yet implemented in the GUI.
+- Enabling degradation model for MPS-STR sequences with "RU:sequence" format, when kit is selected (only ForenSeq included): Example is "10:[ATCG]10", where "10" is extracted for fragment length lookup.
+- Adding an error message if data is not properly structured before running contLikMLE: The function prepareC now throws the error "Please use the prepareData function to structure the data correctly." if last element.
+
+Bug fixes:
+- In function deconvolution: The startMarker indices was not correctly updated when no unknowns was given. This earlier caused crash.
+- In function contLikMLE-L349: "maxPhi" replaced with "phi" (only syntax change).
+- In function contLikSearch-L86: knownRel replaced with NULL. This bug caused the Optimal model search to fail when conditioning on known references under Hp/Hd and having relatedness under Hd. Thanks to Kent Harman for disovering this.
+
+Added tests:
+- test_logLik2contr1RepSNP -> Numerical testing with 1 and 2 unknowns for 1 replicate (ensures that data with SNP frequency data becomes correct).
+- test_logLik2contr1RepNoStutter -> Numerical testing with 2 unknowns for 1 replicate (ensures that C++ function calcLogLikGammaMarkerUnknown is tested).
+- test_QualLogLik2contr2Rep -> Numerical testing for drop-out probability inference with qualitative model, with different variants.
+- test_logLikcontr2RepSNP renamed as test_logLik2contr2RepSNP.
+
+Minor updates:
+- Added error message in the prepareC function (L185-L189) if there are alleles in the frequency outcome which was not observed (except "99" allele): "In marker ....: There are alleles in the frequencies data are not found in the observed data. This is not allowed. Please use the prepareData function beforehand! Program stops.". Thanks to Guro Dorum for providing an example with this.
+- The "Optimal quantitative LR (automatic model search)" module can only be run if hypothesis Hp and Hd only differ if a POI under Hp is replaced with an unknown under Hd.
+- Better error print out when allele frequencies does not sum to one (prepareC:L65-L70 and calcGjoint:L31-L32).
+- Added error message in function getData if any marker names between the data types are inconsistent.
+- Small text changes in report and GUI regarding optimization settings.
+
+
 EuroForMix v3.0.3 (Release date: 2020-05-06)
 =============================================
 

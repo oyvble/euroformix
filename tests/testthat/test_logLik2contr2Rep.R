@@ -330,6 +330,5 @@ test_that("check maximum likelihood Hd (sibling):", {
   
   #Calculate deconvolution (DC):
   DC = deconvolve(mle,verbose=FALSE)
-  expect_equal(as.numeric(DC$table2[,5]),c(0.9757, 0.9547, 0.9670, 1.0000, 0.9995, 0.9783, 0.5534))
-  
+  expect_approx(1e-3,as.numeric(DC$table2[,5]),c(0.9757, 0.9547, 0.9670, 1.0000, 0.9995, 0.9783, 0.5534))  
 })

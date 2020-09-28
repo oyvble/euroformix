@@ -83,7 +83,7 @@ contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWst
     
     if(verbose) print(paste0("Evaluating model: NOC=",modoutcome[row,1]," DEG=",modoutcome[row,2]," BW=",modoutcome[row,3]," FW=",modoutcome[row,4]))
     if(verbose) print("Evaluating Hp:")
-    hpfit <- hpfitList[[row]] <- contLikMLE(NOC,samples,popFreq,refData,condhp,NULL,       xi,prC,nDone,threshT,fst,lambda,pXi,delta,kit0,verbose,maxIter,knownRel,ibd,xiFW,pXiFW,seed,maxThreads)
+    hpfit <- hpfitList[[row]] <- contLikMLE(NOC,samples,popFreq,refData,condhp,NULL,       xi,prC,nDone,threshT,fst,lambda,pXi,delta,kit0,verbose,maxIter,    NULL,ibd,xiFW,pXiFW,seed,maxThreads)
     if(verbose) print("Evaluating Hd:")
     hdfit <- hdfitList[[row]] <- contLikMLE(NOC,samples,popFreq,refData,condhd,knownRefPOI,xi,prC,nDone,threshT,fst,lambda,pXi,delta,kit0,verbose,maxIter,knownRel,ibd,xiFW,pXiFW,seed,maxThreads)
 
