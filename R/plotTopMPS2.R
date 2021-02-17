@@ -40,7 +40,7 @@ plotTopMPS2 = function(MLEobj,DCobj=NULL,grpsymbol="_",locYmax=TRUE,options=NULL
  topG <- sapply(DCobj$rankGi,function(x) x[1,-ncol(x),drop=F])
  if(is.null(nrow(topG))) topG <- t(topG) #consider as matrix
  pG <- as.numeric(sapply(DCobj$rankGi,function(x) x[1,ncol(x)])) #probabilities
- names(pG) = toupper(colnames(topG)) #assign loci names
+ names(pG) = toupper(names(DCobj$rankGi)) #assign loci names
 
  #estimates:
  AT = MLEobj$model$threshT #extract detection threholds from object
@@ -281,7 +281,10 @@ for(ss in sn) {
  p = plotly::layout(p,xaxis = list(showline=FALSE, showticklabels = FALSE,title = ""),yaxis=list(range=c(0,ymax1), showline=FALSE,showticklabels = FALSE,title = ""))#,colorway =dye2) 
  plist[[nL+1]] = p
 
- sub = plotly::subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)%>%plotly::layout(title=ss,barmode = grptype)%>%plotly::hide_legend()%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0))
+ sub = plotly::subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)
+ sub = plotly::layout(sub, title=ss,barmode = grptype)
+ sub = plotly::hide_legend(sub)
+ sub = plotly::config(sub, scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0))
 
  print(sub)
  } #end for each samples

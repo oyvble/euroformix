@@ -7,7 +7,7 @@
 #' @param kit Short name of kit: See supported kits with getKit(). Argument ignored if degradation model used.
 #' @param dyeYmax A boolean of whether the Y-axis scale should be dye specific
 #' @param plotRepsOnly A boolean of whether only replicates are plotted 
-#' @param options Layout options can be provided: w0 (layout width),marg0 (margin), txtsize0 (text size), locsize0 (locus name size), minY (minimum Y-axis height), ymaxscale (Scaling maximum Y-axis height)
+#' @param options Layout options can be provided: w0 (layout width),marg0 (margin), txtsize0 (text size), locsize0 (locus name size), minY (minimum Y-axis height), ymaxscale (Scaling maximum Y-axis height), transdeg (transparanct of bars 0=max, 1=min)
 #' @return sub A plotly widget
 #' @export
 
@@ -21,7 +21,7 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRU
  topG <- sapply(DCobj$rankGi,function(x) x[1,-ncol(x),drop=F])
  if(is.null(nrow(topG))) topG <- t(topG) #consider as matrix
  pG <- as.numeric(sapply(DCobj$rankGi,function(x) x[1,ncol(x)])) #probabilities
- names(pG) = toupper(colnames(topG)) #assign loci names
+ names(pG) = toupper(names(DCobj$rankGi)) #assign loci names
 
  #estimates:
  AT = MLEobj$model$threshT #extract detection threholds from object
@@ -65,7 +65,8 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRU
  if(is.null(options$locsize0)) { locsize0 = 20 } else { locsize0 = options$locsize0 } 
  if(is.null(options$minY)) { minY = 100 } else { minY = options$minY }  #default minimum Y-axis length
  if(is.null(options$ymaxscale)) { ymaxscale = 1.05 } else { ymaxscale = options$ymaxscale }  #default minimum Y-axis length
-
+ if(is.null(options$transdeg)) { transdeg = 0.5 } else { transdeg = options$transdeg }  #transparancy of bars/peaks
+ 
  #Create list with dye,marker,bp (for observed data)
  bprng = range(kitinfo$Size) #get range (same range for all plots)
 # bprng[1] = bprng[1]/2 #widen out on left?
@@ -158,11 +159,11 @@ getTcol <- function(color, deg = .5) { #helpfunction to get transparant colors
   return( rgb(rgb.val[1], rgb.val[2], rgb.val[3],maxColorValue = 255, alpha = (1-deg)*255))
 }
 
-col0 = getTcol("black",0.3) #color of all peak heights (will be transparant)
+col0 = getTcol("black",0.5) #color of all peak heights (will be transparant)
+col1 = Ccols #getTcol(Ccols,0.3) #color of contributors
 
 #SEPARATE PLOTS
 if(nS==1 || !plotRepsOnly) { #plot separate plot only in this case
-transdeg = .4 #transparancy degree (could be put in options)
 
 for(ss in sn) { #create a seperate EPG plot for each samples
 # ss =sn[1]
@@ -215,7 +216,7 @@ for(ss in sn) { #create a seperate EPG plot for each samples
    Ev2 = c(0,Ev[[i]])
    for(j in 1:length(Ev[[i]])) { #for each contributor 
     if(Ev2[j+1]==Ev2[j]) next #skip if equal
-    shapeList[[cc]] = list(type = "rect",fillcolor = Ccols[j], line = list(color = Ccols[j],width=0.1), opacity = transdeg,x0 =dfs$bp[i]-1/3, x1 = dfs$bp[i]+1/3,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
+    shapeList[[cc]] = list(type = "rect",fillcolor = col1[j], line = list(color = col1[j],width=0.1), opacity = transdeg,x0 =dfs$bp[i]-1/3, x1 = dfs$bp[i]+1/3,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
     cc = cc + 1
    }
   }
@@ -223,17 +224,17 @@ for(ss in sn) { #create a seperate EPG plot for each samples
   plist[[dye]] = p
  }
  sub = plotly::subplot(plist, nrows = nrows, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)
- sub = plotly::layout(sub ,title=ss,barmode = 'group',xaxis = list(title = ""))%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
+ sub = plotly::layout(sub ,title=ss,barmode = 'group',xaxis = list(title = ""))
+ sub = plotly::config(sub, scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
  print(sub) 
 
  if(nS==1) return(sub) #return function if no replicates
 }
 
 } #end if
-repcols = rep("gray",nS) #c("black","red","blue","forestgreen","orange","purple") [1:nS]
+repcols = rep("gray",nS)
 
 #REPS IN SAME PLOT
- transdeg = .7
  plist = list() #create plot object for each color
  for(dye in dyes) {
 #   dye=dyes[1]
@@ -284,7 +285,7 @@ repcols = rep("gray",nS) #c("black","red","blue","forestgreen","orange","purple"
    Ev2 = c(0,Ev[[i]])
    for(j in 1:length(Ev[[i]])) { #for each contributor 
     if(Ev2[j+1]==Ev2[j]) next #skip if equal
-    shapeList[[cc]] = list(type = "rect",fillcolor = Ccols[j], line = list(color = Ccols[j],width=0.1), opacity = transdeg,x0 =dfs$bp[i]-1/2, x1 = dfs$bp[i]+1/2,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
+    shapeList[[cc]] = list(type = "rect",fillcolor = col1[j], line = list(color = col1[j],width=0.1), opacity = transdeg,x0 =dfs$bp[i]-1/2, x1 = dfs$bp[i]+1/2,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
     cc = cc + 1
    }
   }
@@ -292,7 +293,8 @@ repcols = rep("gray",nS) #c("black","red","blue","forestgreen","orange","purple"
   plist[[dye]] = p
  }
  sub = plotly::subplot(plist, nrows = nrows, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE) 
- sub = plotly::layout(sub ,title=paste0(sn,collapse="/"),barmode = 'group')%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0))
+ sub = plotly::layout(sub ,title=paste0(sn,collapse="/"),barmode = 'group')
+ sub = plotly::config(sub, scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0))
  print(sub)
 
  return(sub)

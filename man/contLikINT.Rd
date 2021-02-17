@@ -75,9 +75,5 @@ Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Com
 \author{
 Oyvind Bleka
 }
-\keyword{Bayesian}
 \keyword{Likelihood}
 \keyword{Marginalized}
-\keyword{continuous,}
-\keyword{estimation}
-\keyword{models,}

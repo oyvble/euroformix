@@ -31,7 +31,7 @@
 #' @return ret A list(margL,deviation,nEvals,scale) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
 #' @export 
 #' @references Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.
-#' @keywords continuous, Bayesian models, Marginalized Likelihood estimation
+#' @keywords Marginalized Likelihood
 
 
 contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,maxThreads=32,verbose=TRUE){
@@ -170,6 +170,15 @@ contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL
    comb2 <- rep(1,nC-1) - (upper[1:(nC-1)]-lower[1:(nC-1)])
    comb <- round(1/prod(comb2[comb2>0]))
  }
+ 
+# NOC1  2  3  4  5  6
+# 1  1  1  1  1  1  1
+# 2 NA  2  1  1  1  1
+# 3 NA NA  6  2  2  2
+# 4 NA NA NA 12  3  3
+# 5 NA NA NA NA 20  4
+# 6 NA NA NA NA NA 25
+
  if(verbose) {
    print(paste0("lower=",paste0(prettyNum(lower),collapse="/")))
    print(paste0("upper=",paste0(prettyNum(upper),collapse="/")))

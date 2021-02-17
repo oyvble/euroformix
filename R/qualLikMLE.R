@@ -123,7 +123,7 @@ qualLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
     for(loc in locs) {
       fst0 = fstv[loc] #obtain marker specific setting (if set)
       pC0 = pCv[loc] #obtain marker specific setting (if set)
-      condRefs = unlist(Reflist[[loc]][condOrder]) #known contr
+      condRefs = unlist(Reflist[[loc]][which(condOrder>0)]) #known contr
       knownNonCond = unlist(Reflist[[loc]][knownRef]) #known non-contr
       likval[which(loc==locs)] <- forensim::likEvid( Evidlist[[loc]],T=condRefs,V=knownNonCond,x=nUnknown,theta=fst0, prDHet=pDeachContr, prDHom=pDeachContr^2, prC=pC0, freq=popFreqQ[[loc]])
     }

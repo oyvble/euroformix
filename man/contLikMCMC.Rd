@@ -25,7 +25,7 @@ contLikMCMC(mlefit, niter = 10000, delta = 2, maxxi = 1,
 \item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
 \value{
-ret A list (margL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
+ret A list (logmargL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
 }
 \description{
 contLikMCMC simulates from the posterior distribution for a bayesian STR DNA mixture model.
@@ -35,7 +35,7 @@ The procedure are doing MCMC to approximate the marginal probability over noisan
 
 The Metropolis Hastings routine uses a Multivariate Normal distribution with mean 0 and covariance as delta multiplied with the inverse negative hessian with MLE inserted as transistion kernel.
 Function calls procedure in c++ by using the package Armadillo and Boost.
-Marginalized likelihood is estimated using Metropolis Hastings with the "Gelfand and Dey" method.
+Marginalized likelihood (Bayesian) is estimated using Metropolis Hastings with the "GD-method, Gelfand and Dey (1994).
 }
 \author{
 Oyvind Bleka

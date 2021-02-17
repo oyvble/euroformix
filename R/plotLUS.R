@@ -139,7 +139,7 @@ plotLUS <- function(mixData,sn="",refData=NULL,threshT=0,LUSsymbol="_") {
   }
  } #end for each markers
  plot(0,0,ty="n",axes=FALSE,xlab="",ylab="")
- if(!is.null(refData)) legend("topleft",legend=paste0("'",1:length(contr),"\'=",contr),col=1,bty="n",cex=1)
+ if(!is.null(refData) && length(contr)>0) legend("topleft",legend=paste0("'",1:length(contr),"\'=",contr),col=1,bty="n",cex=1)
  mtext(sn,3,outer=TRUE,line=-1.5)
 } #end function
 

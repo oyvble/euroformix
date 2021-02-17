@@ -156,7 +156,8 @@ for(ss in sn) { #create a seperate EPG plot for each samples
   plist[[dye]] = p
  }
  sub = plotly::subplot(plist, nrows = nrows, shareX = TRUE, shareY = FALSE,margin=marg0,titleY= TRUE)
- sub = plotly::layout(sub ,title=ss,barmode = 'group',xaxis = list(title = ""))%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
+ sub = plotly::layout(sub ,title=ss,barmode = 'group',xaxis = list(title = ""))
+ sub = plotly::config(sub,scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
  print(sub) 
 
  if(nS==1) return(sub) #return function if no replicates
@@ -198,7 +199,8 @@ repcols = c("black","red","blue","forestgreen","orange","purple") [1:nS]
   plist[[dye]] = p
  }
  sub = plotly::subplot(plist, nrows = nrows, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE) 
- sub = plotly::layout(sub ,title=paste0(sn,collapse="/"),barmode = 'group')%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
+ sub = plotly::layout(sub ,title=paste0(sn,collapse="/"),barmode = 'group')
+ sub = plotly::config(sub, scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0)) 
  print(sub)
 
  return(sub)

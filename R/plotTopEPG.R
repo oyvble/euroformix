@@ -8,7 +8,8 @@
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @export
 plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
-
+  threshT = threshT[1] #use only first element of threshT argument
+  
  generateEPG<-function(typingKit, alleleList, heightList, locus, sampleName, refList=NULL, refnames=NULL,  samescale = FALSE){
 
 	# This function generates an electropherogram (EPG) like plot from lists of allele names and peak heights.
@@ -238,12 +239,12 @@ plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
     if(isLab && color==1) legend("topright",legend=paste0("Label ",1:length(refnames)," = ",refnames),bty="n")
     abline(h=0)
     if(threshT>0) abline(h=threshT,col="gray",lwd=0.5) #plot threshold
-		if (noData) text(xMax / 1.4, yMax / 2, labels="No data", cex = 1.5) # Write text if no data.
-		if (color == 1) 	title(main = sampleName, col.main = "red", font.main = 4) # Create a title.
-		title(ylab = ylabel) # Label the y axes.
+	if (noData) text(xMax / 1.4, yMax / 2, labels="No data", cex = 1.5) # Write text if no data.
+	if (color == 1) 	title(main = sampleName, col.main = "red", font.main = 4) # Create a title.
+	title(ylab = ylabel) # Label the y axes.
 
-		# Label the x axis: pos values of 1, 2, 3 and 4 indicate positions below, left, above and right of the coordinate.
-		mtext(paste(xlabel), side = 1, line = 0, adj = 0, cex = alleleNameTxtSize)
+	# Label the x axis: pos values of 1, 2, 3 and 4 indicate positions below, left, above and right of the coordinate.
+	mtext(paste(xlabel), side = 1, line = 0, adj = 0, cex = alleleNameTxtSize)
 
     #Label the contributor colors:
     if(color==nColors) legend("topright",legend=paste0("Contr.",1:nC," = ",signif(mx,2)),bty="n",pch=15,col=Ccols[1:nC])

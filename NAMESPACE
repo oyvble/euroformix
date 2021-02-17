@@ -3,7 +3,7 @@
              "gray.colors", "rgb")
   importFrom("graphics", "abline", "axis", "barplot", "hist",
              "legend", "lines", "mtext", "par", "plot", "points",
-             "polygon", "rect", "segments", "text", "title")
+             "polygon", "rect", "segments", "text", "title", "layout")
   importFrom("stats", "aggregate", "density", "dexp", "dgamma", "dnorm",
              "ecdf", "lm", "na.omit", "nlm", "pbeta", "pgamma",
              "ppoints", "qbeta", "qgamma", "quantile", "rexp", "rgamma",
@@ -12,6 +12,5 @@
              "packageVersion", "read.delim", "read.table",
              "setTxtProgressBar", "tail", "txtProgressBar",
              "write.table")			 
-import(plotly)
 useDynLib(euroformix)
 exportPattern("^[[:alpha:]]+")

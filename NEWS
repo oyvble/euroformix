@@ -1,4 +1,37 @@
 
+EuroForMix v3.2.0 (Release date: 2021-02-17)
+=============================================
+
+Important updates:
+- GUI R-package changed to gWidgets2 instead of gWidgets (gWidgets was removed from CRAN). Remember to install gWidgets2 and gWidgets2tcltk if not already done.
+ -> Helptext may be available by hovering the mouse over button or text.
+ -> The user can now hover the mix-proportion parameter estimates to highlight the name of the corresponding contributor.
+ -> The list of sample profiles are now stored in a table (can list a large number).
+- Importing population frequency data from selected folder will only use a folder from the euroformix installation path (~euroformix/FreqDatabases)
+- The number of failed PH-validation points are now included to the exported report (this is calculated when exported).
+- The MCMC simulations are automatically calibrated by iteratively running 100 samples under Hp (fastest). 
+- Function contLikMCMC now return logMargL instead of margL to avoid underflow (log-scale).
+- Modified MCMC results in report: 
+ -> The report now also contains the estimated marginalized LR (Bayesian based on MCMC)
+ -> The variation of the randomizer parameter is now also mentioned (needed for full reproducibility).
+- The order of contributors under Hp is now same for both automatic model search and sole LR calculations (earlier the POI was always put last).
+- The calculation of the upper boundary LR has now been modified when there are at least 2 unknown contributors under Hd and fst>0: The random match probability (RMP) is scaled (with value greater or equal than 1) with a formula depending only on selected fst value. Notice: The LR of a POI fitting a clear major unknown components could exceed 1/RMP(POI) when fst>0 when assuming at least 2 unknowns under Hd.
+- It is no longer required to install external R-packages in order to load euroformix. This would be useful for those who only wants to use CaseSolver.
+
+Minor updates:
+- Changed name in "File->Setup" removing "Default" word.
+- Transparant level on barcolors in plotTopEPG2 has been increased (better visualization).
+- When importing data from text files: A previous printout to R console is no longer performed.
+- The degradation model is no longer a choice for automatic model selection (due to new GUI implementation).
+- A message is shown when trying to select "View evidence/reference/database" without any selection.
+- In genDataset function: Frequencies are rescaled to sum to 1 instead of throwing the "not a simplex" error.
+- There are no longer any restrictions of number of markers to visualize in "Marker settings".
+
+Bug fixes:
+- Marker settings are reset when saving "global settings" (File->Setup). Avoids earlier crash when using only global settings after Marker settings are saved.
+- Fixed problem in plotTopMPS2/plotTopEPS2 which caused marker names to not be shown when assuming 1 contributor.
+- Handle that references may have zero alleles in a marker (fixed bug in "View References" and made inactive in "Data selection")
+
 EuroForMix v3.1.0 (Release date: 2020-09-08)
 =============================================
 Important updates:

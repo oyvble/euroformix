@@ -160,7 +160,8 @@ for(ss in sn) {
    xpos0 = 0:(nA1-1)
    atxtL = nchar(av1) #get allele length
 
-   p = plotly::plot_ly(dfs,height=h1,showlegend = TRUE,colors=repcols[1:nR] )%>%plotly::layout(xaxis = list(showticklabels = FALSE,title = ""),yaxis=list(range=c(0,ymax1), showline = TRUE,title = ""))
+   p = plotly::plot_ly(dfs,height=h1,showlegend = TRUE,colors=repcols[1:nR] )
+   p = plotly::layout(p, xaxis = list(showticklabels = FALSE,title = ""),yaxis=list(range=c(0,ymax1), showline = TRUE,title = ""))
    if(!is.null(AT))   p = plotly::layout(p,shapes = list(hline(AT, xr=c(-0.5,nA1-0.5) ) ))
    if(!is.null(ST))   p = plotly::layout(p,shapes = list(hline(ST, xr=c(-0.5,nA1-0.5) ) ))
    p = plotly::add_trace(p,type = "bar", x = xpos1,y=~Height,name=repcol,hoverinfo="y+text",hoverlabel=list(font=list(size=12),namelength=1000),text =~Allele,color=as.factor(repcol))
@@ -180,17 +181,19 @@ for(ss in sn) {
       if(dfs$Height[rr]==0)  p = plotly::add_trace(p,type = "scatter",mode="markers", x = x1,y=0,name=repcol[rr],hoverinfo="y+text",hoverlabel=list(font=list(size=12),namelength=1000),text=dfs$Allele[rr],color=as.factor(repcol[rr]))  #add a point to missing alleles (to get hovering)
      } #end for each refuse
    } #end if references
-   plist[[loc]] <- p
+   plist[[loc]] <- plotly::hide_legend(p)
  } #end for each loc
 
  if(nrefs>0) {  #In last plot we will show the contributors 
   p = plotly::plot_ly(x = xpos,y=rep(0,length(xpos)),height=h1,showlegend = FALSE,mode="scatter",type="scatter")
   p = plotly::add_annotations(p, x=0,y=c(ymax1-ymax1/5*(1:nrefs)),text= paste0("Label ",1:nrefs,": ",refn),showarrow=FALSE,font = list(colors = "black",family = 'sans serif',size = 15),xshift=0,xanchor = 'left')  #ADD ALLELE NAMES
   p = plotly::layout(p,xaxis = list(showline=FALSE, showticklabels = FALSE,title = ""),yaxis=list(range=c(0,ymax1), showline=FALSE,showticklabels = FALSE,title = ""))#,colorway =dye2) 
-  plist[[nL+1]] = p
+  plist[[nL+1]] = plotly::hide_legend(p) 
  }
  #sub = subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)%>%hide_legend()
- sub = plotly::subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)%>%plotly::layout(title=ss,barmode = grptype)%>%plotly::hide_legend()%>%plotly::config(scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0))
+ sub = plotly::subplot(plist, nrows = nrows0, shareX = FALSE, shareY = FALSE,margin=marg0,titleY= TRUE)
+ sub = plotly::layout(sub, title=ss,barmode = grptype)
+ sub = plotly::config(sub, scrollZoom=TRUE, displaylogo=FALSE,modeBarButtonsToRemove=c("lasso2d","select2d","hoverClosestCartesian","hoverCompareCartesian","toggleSpikelines"),toImageButtonOptions=list(width=w0))
  print(sub)
  } #end for each samples
  return(sub) #return last created

@@ -43,7 +43,8 @@ contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWst
   #fix conditional vectors:  
   condhp <- condhd <- condOrder  #copy conditional indices
   condhp[knownRefPOI] = max(condhd) + 1 #add POI contributor
-  
+  condhp[condhp>0] = 1:sum(condhp>0) #the indices will be sorted again (re-organized to follow same order as doing sole calculations)
+
   #Spanning model outcome (based on model settings):
   modList = list()
   modList[[1]] = NOC #minNOC:nC #range of number of contributors

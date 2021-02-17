@@ -44,7 +44,12 @@ genDataset = function(nC,popFreq,mu=1000,sigma=0.1,sorted=FALSE,threshT=50,refDa
   isNotSimplex = function(x) { #helpfunction of consider being simplex
  	 return( round(sum(x),6)!=1 || any(x < 0 | x > 1) )
   }
-  if( any( sapply(popFreq,isNotSimplex) ) ) stop("Some of the frequency elements  was not a simplex")
+  
+  for(loc in locs) {
+    freq = popFreq[[loc]]
+    if(isNotSimplex(freq)) print( paste0(loc," was not a valid simplex") )
+	popFreq[[loc]] = freq/sum(freq) #rescaling
+  }
   
   #Preparet mixture proportions (mx)
   if(is.null(mx)) {

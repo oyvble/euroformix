@@ -6,7 +6,7 @@
 #' 
 #' The Metropolis Hastings routine uses a Multivariate Normal distribution with mean 0 and covariance as delta multiplied with the inverse negative hessian with MLE inserted as transistion kernel.
 #' Function calls procedure in c++ by using the package Armadillo and Boost.
-#' Marginalized likelihood is estimated using Metropolis Hastings with the "Gelfand and Dey" method.
+#' Marginalized likelihood (Bayesian) is estimated using Metropolis Hastings with the "GD-method, Gelfand and Dey (1994).
 #'
 #' @param mlefit Fitted object using contLikMLE
 #' @param niter Number of samples in the MCMC-sampling.
@@ -16,7 +16,7 @@
 #' @param verbose Boolean whether printing simulation progress. Default is TRUE
 #' @param seed The user can set seed if wanted
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
-#' @return ret A list (margL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
+#' @return ret A list (logmargL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
 #' @export 
 
 contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,seed=NULL,maxThreads=32) {
@@ -135,7 +135,11 @@ contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,s
   logpX <- logdmvnorm(t(postth),mean=th0,cholC=C) #insert with Normal-approx of post-th
   #plot(postlogL,ty="l")
   #plot(logpX,ty="l")
-  margL <- 1/mean(exp(logpX - postlogL)) #estimated marginal likelihood
+  
+  logVals = logpX - postlogL #this is logged values intended to be "exped"
+  offset = max(logVals) #find max value
+  #margL <- 1/mean(exp(logVals - offset)) #estimated marginal likelihood
+  logMargL <- log(length(logVals)) - offset - log(sum(exp(logVals-offset))) #estimated marginal likelihood (logged)
 
  if( verbose ) cat("\n") #new line
 # nU <- nC-ret$nK #number of unknowns
@@ -143,6 +147,6 @@ contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,s
 #  margL <- factorial(nU)*margL #get correct ML adjusting for symmetry
 # } #end method
  colnames(postth) <- varnames  #save variable names
- return(list(margL=margL,posttheta=postth,postlogL=postlogL,logpX=logpX,accrat=accrat,MLE=mlefit$fit$thetahat,Sigma=mlefit$fit$thetaSigma,seed=seed))
+ return(list(logmargL=logMargL,posttheta=postth,postlogL=postlogL,logpX=logpX,accrat=accrat,MLE=mlefit$fit$thetahat,Sigma=mlefit$fit$thetaSigma,seed=seed))
 } #end function
 
