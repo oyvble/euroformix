@@ -23,7 +23,7 @@
 #' @examples
 #' \dontrun{ 
 #' kit = "SGMPlus"
-#' popfile = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
+#' popfile = paste(path.package("euroformix"),"FreqDatabases",
 #'  paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
 #' popFreq = freqImport(popfile)[[1]] #obtain list with population frequencies
 #' gen = genDataset(2,popFreq,beta=.7,kit=kit,stutt=.1,stuttFW=.05)
@@ -47,7 +47,7 @@ genDataset = function(nC,popFreq,mu=1000,sigma=0.1,sorted=FALSE,threshT=50,refDa
   
   for(loc in locs) {
     freq = popFreq[[loc]]
-    if(isNotSimplex(freq)) print( paste0(loc," was not a valid simplex") )
+    if(isNotSimplex(freq)) warning( paste0(loc," was not a valid simplex") )
 	popFreq[[loc]] = freq/sum(freq) #rescaling
   }
   

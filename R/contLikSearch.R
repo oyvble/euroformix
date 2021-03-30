@@ -28,9 +28,10 @@
 #' @param seed The user can set seed if wanted
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
 #' @param alpha The significance level used for the envelope test (validMLEmodel). Default is 0.01
+#' @param steptol Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).
 #' @return ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
 #' @export
-contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE, samples=NULL,popFreq=NULL,refData=NULL,condOrder=NULL,knownRefPOI=NULL, prC=0,nDone=2,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=1,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0),pXiFW=function(x)1,seed=NULL,maxThreads=32, alpha=0.01){
+contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE, samples=NULL,popFreq=NULL,refData=NULL,condOrder=NULL,knownRefPOI=NULL, prC=0,nDone=2,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=1,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0),pXiFW=function(x)1,seed=NULL,maxThreads=32, alpha=0.01, steptol=1e-3){
 
   minNOC = 1 #minimum number of contributors to evaluate
   if(!is.null(condOrder)) minNOC = sum(condOrder>0) + 1 #minium NOC must exceed number of conditionals 
@@ -84,9 +85,9 @@ contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWst
     
     if(verbose) print(paste0("Evaluating model: NOC=",modoutcome[row,1]," DEG=",modoutcome[row,2]," BW=",modoutcome[row,3]," FW=",modoutcome[row,4]))
     if(verbose) print("Evaluating Hp:")
-    hpfit <- hpfitList[[row]] <- contLikMLE(NOC,samples,popFreq,refData,condhp,NULL,       xi,prC,nDone,threshT,fst,lambda,pXi,delta,kit0,verbose,maxIter,    NULL,ibd,xiFW,pXiFW,seed,maxThreads)
+    hpfit <- hpfitList[[row]] <- contLikMLE(NOC,samples,popFreq,refData,condhp,NULL,       xi,prC,nDone,threshT,fst,lambda,pXi,delta,kit0,verbose,maxIter,    NULL,ibd,xiFW,pXiFW,seed,maxThreads,steptol)
     if(verbose) print("Evaluating Hd:")
-    hdfit <- hdfitList[[row]] <- contLikMLE(NOC,samples,popFreq,refData,condhd,knownRefPOI,xi,prC,nDone,threshT,fst,lambda,pXi,delta,kit0,verbose,maxIter,knownRel,ibd,xiFW,pXiFW,seed,maxThreads)
+    hdfit <- hdfitList[[row]] <- contLikMLE(NOC,samples,popFreq,refData,condhd,knownRefPOI,xi,prC,nDone,threshT,fst,lambda,pXi,delta,kit0,verbose,maxIter,knownRel,ibd,xiFW,pXiFW,seed,maxThreads,steptol)
 
     hpSignif <- hdSignif <- NA #default is no values
     if(!is.infinite(hpfit$fit$loglik)) {

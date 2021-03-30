@@ -161,7 +161,8 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  
  #TRAVERSE FOR EACH MARKER:
  #PREPARE FREQUENCY AND PH INFO
- for(m in 1:nM) { #m=8
+ for(m in 1:nM) { #m=5
+   # if(m==5) stop()
    loc = locs[m] #for selected loc (already upper)
    freq = popFreq[[loc]] #get allele freqs
    avL[[loc]] = names(freq) #get orignal allele outcome (including Qallele) 
@@ -181,6 +182,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
 
    #Fix PH vector:      
    nA[m] <- length(freq) #number of allees to travers through
+   #print(nA)
    locDat = lapply(samples,function(x) x[which(toupper(names(x))==loc)][[1]]) #obtain replicate info
    
    #Ensure that user has run prepareData function beforehand
@@ -197,7 +199,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
    
    if(!is.null(kit)) { #Extracting basepairs
      sub = kitinfo[toupper(kitinfo$Marker)==loc,,drop=FALSE] 
-     av0 = av #copy alleles
+     av0 = av #copy alleles (does not include Q-allele)
      if(isLUS) {
         av0 <- as.numeric( sapply(strsplit(av0 ,LUSsymbol),function(x) x[1] ) ) #extracting first allele  
      } else if( all(grepl(MPSsymbol,av0)) ) {
@@ -241,8 +243,16 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
      BWind <- FWind <- rep(-1,nA[m]) #add emtpy array
      BWPind <- FWPind <- numeric() #empty vector
    }
-   BWvecLong = c(BWvecLong, BWind, -1) #last index is dummy variable (Dropout doesn't stutter)
-   FWvecLong = c(FWvecLong, FWind, -1) #last index is dummy variable (Dropout doesn't stutter)
+   
+   #Up to v3.2.0. There was an issue here when dropout not considered.
+   BWvecLong = c(BWvecLong, BWind)#, -1) #last index is dummy variable (Dropout doesn't stutter)
+   FWvecLong = c(FWvecLong, FWind)#, -1) #last index is dummy variable (Dropout doesn't stutter)
+   
+   if(Qallele%in%names(freq)) { #only considered for Q-allele
+      BWvecLong = c(BWvecLong,-1)  #last index is dummy variable (Dropout doesn't stutter)
+      FWvecLong = c(FWvecLong,-1)  #last index is dummy variable (Dropout doesn't stutter)
+   }
+   
    BWPvecLong = c(BWPvecLong, BWPind) #add stuttered index of potential stutters
    FWPvecLong = c(FWPvecLong, FWPind) #add stuttered index of potential stutters
  } #end for each rows
@@ -250,7 +260,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  if(is.null(kit)) {
    basepairLong = rep(0,sum(nA)) #no base pair information (all zero)
  } else {
-   length(basepairLong)==sum(nA)
+   #length(basepairLong)==sum(nA)
    basepairLong = (basepairLong-125)/100 #rescale before
  }
  

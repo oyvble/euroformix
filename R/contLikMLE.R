@@ -31,17 +31,22 @@
 #' @return ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
 #' @export
 #' @examples
+#' @examples
 #' \dontrun{
 #' kit = "ESX17"
-#' popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
-#'  paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
-#' evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
-#'  sep=.Platform$file.sep)
+#' sep0 = .Platform$file.sep
+#' AT0 = 50
+#' popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=sep0)
+#' evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=sep0)
+#' reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=sep0)
 #' popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
 #' samples = sample_tableToList(tableReader(evidfn))
-#' dat = prepareData(samples,popFreq=popFreq) #obtain data to use for analysis
-#' mlefit = contLikMLE(nC=2,dat$samples,popFreq=dat$popFreq,kit=kit,verbose=TRUE)
+#' refData = sample_tableToList(tableReader(reffn))
+#' dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) #obtain data to use for analysis
+#' plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
+#' mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
 #' }
+
 
 contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,xi=0,prC=0,nDone=2,threshT=50,fst=0,lambda=0,pXi=function(x)1,delta=1,kit=NULL,verbose=TRUE,maxIter=100,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,seed=NULL,maxThreads=32,steptol=1e-3){
   if(!is.null(seed)) set.seed(seed) #set seed if provided

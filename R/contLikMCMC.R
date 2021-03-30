@@ -18,6 +18,23 @@
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
 #' @return ret A list (logmargL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
 #' @export 
+#' @examples
+#' \dontrun{
+#' kit = "ESX17"
+#' sep0 = .Platform$file.sep
+#' AT0 = 50
+#' popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=sep0)
+#' evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=sep0)
+#' reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=sep0)
+#' popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
+#' samples = sample_tableToList(tableReader(evidfn))
+#' refData = sample_tableToList(tableReader(reffn))
+#' dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) #obtain data to use for analysis
+#' plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
+#' mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
+#' mcmcfit = contLikMCMC(mlefit,niter=5000,delta=1,seed=1) #mcmcfit$acc
+#' }
+
 
 contLikMCMC = function(mlefit,niter=1e4,delta=2,maxxi=1,maxxiFW=1,verbose=TRUE,seed=NULL,maxThreads=32) {
  if(!is.null(seed)) set.seed(seed) #set seed if provided

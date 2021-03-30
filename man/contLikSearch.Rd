@@ -10,7 +10,7 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
   nDone = 2, threshT = 50, fst = 0, lambda = 0, pXi = function(x)
   1, delta = 1, kit = NULL, verbose = TRUE, maxIter = 100,
   knownRel = NULL, ibd = c(1, 0, 0), pXiFW = function(x) 1,
-  seed = NULL, maxThreads = 32, alpha = 0.01)
+  seed = NULL, maxThreads = 32, alpha = 0.01, steptol = 0.001)
 }
 \arguments{
 \item{NOC}{#The vector of number of contributors to search}
@@ -62,6 +62,8 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
 \item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 
 \item{alpha}{The significance level used for the envelope test (validMLEmodel). Default is 0.01}
+
+\item{steptol}{Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).}
 }
 \value{
 ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.

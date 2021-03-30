@@ -48,7 +48,7 @@ The R-package forensim is used to calculate the likelihood value for given data 
 \examples{
 \dontrun{
 kit = "ESX17"
-popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
+popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
 evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=.Platform$file.sep)
 popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
 samples = sample_tableToList(tableReader(evidfn))

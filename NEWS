@@ -1,4 +1,34 @@
 
+EuroForMix v3.3.0 (Release date: 2021-03-30)
+=============================================
+
+Important updates:
+- The mix-proportion parameter of the last contributor (C_K) is now shown in the MCMC-results (function validMCMC updated).
+- Wrong calculations were obtained when the alleles in the evidence profile covers the ones defined in the frequency data, for at least one of the markers, and at the same time a stutter-model is considered (BW or/and FW).  
+ -> This bug was introduced in v3.0.0 and remains until v3.2.0. See "Important Update" section on the website and "bug fixes" below for more details. Thanks to Kevin Cheng, John Buckleton and Jo-Anne Bright for providing the example leading to this discovery.
+ 
+Minor updates:
+- The Optimal model search now also uses the seed from Optimization setting. efm:L2303.
+- Function genDataset (L50) now throws a warning instead of printing when the frequencies is "not a valid simplex".
+- In the example code for some of the external functions: now uses the right path to the population frequency file in the installation folder.
+- The insertion of rare alleles are now printed to the console.
+- The function contLikSearch now also contains "steptol" as argument (obtaining identical results as ordinary optimization). Thanks to Damir Tesanovic for noticing this.
+
+Bug fixes:
+ - A bug was found when not having Q-allele (evidence alleles fully overlaps with frequency alleles) and considering stutter model:
+   -> prepareC:L244-L245; The dummy index "-1" should not be included. 
+   -> Adding 2 blocks to src/calcloglik:(L350-357 and L777-784); Last allele is also traversed if not a Q-allele. 	
+ - If the reference had a dropout allele not defined in population frequency table and the observed evidence fully overlapped with the frequency table, the program earlier crashed.
+   -> The program now force the insertion of a Q-allele with minimum frequency to the frequency table (Qassignate:L77-82).
+   -> Care must be taken if this happens only under Hp (then there will be allele frequency missmatch under Hp and Hd).
+ - Not using encoding when working with gfile caused crash for non-UTF8 characters (resolved by applying a mygfile helpfunction)
+ - Setting empty Seed after putting number in "Set seed of randomizer" is now possible.
+
+Added tests:
+ - test_logLik1contr_noQ: Example where population frequency table is same outcome as evidence profile for one marker.
+ - test_logLik4contr1Rep_noQ: Same as above but a larger example considering a 4-person mixture (frequency of D16 has same outcome as evidence profile).
+ - test_logLik4contr1Rep_noQref: Same example as above but we force the reference to have a drop-out allele for the D16 marker (causing inclusion of Q-allele).
+
 EuroForMix v3.2.0 (Release date: 2021-02-17)
 =============================================
 
@@ -31,6 +61,14 @@ Bug fixes:
 - Marker settings are reset when saving "global settings" (File->Setup). Avoids earlier crash when using only global settings after Marker settings are saved.
 - Fixed problem in plotTopMPS2/plotTopEPS2 which caused marker names to not be shown when assuming 1 contributor.
 - Handle that references may have zero alleles in a marker (fixed bug in "View References" and made inactive in "Data selection")
+
+
+
+EuroForMix v3.1.1 (Release date: 2020-09-08)
+=============================================
+Bug fix:
+ - Problem loading projects and seting working directory when path involves non UTF8-characters.
+
 
 EuroForMix v3.1.0 (Release date: 2020-09-08)
 =============================================

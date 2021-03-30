@@ -6,7 +6,7 @@
 \usage{
 Qassignate(samples, popFreq, refData = NULL, doQ = TRUE,
   incR = FALSE, incS = FALSE, minF = NULL, normalize = FALSE,
-  verbose = FALSE)
+  verbose = TRUE)
 }
 \arguments{
 \item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}

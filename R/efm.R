@@ -233,7 +233,7 @@ efm = function(envirfile=NULL) {
 
  #save result table to file:
  saveTable = function(tab,sep="txt") {
-  tabfile  = gWidgets2::gfile(text="Save table",type="save") #csv is correct format!
+  tabfile  = mygfile(text="Save table",type="save") #csv is correct format!
   if(length(tabfile)==0) return()
    if(length(unlist(strsplit(tabfile,"\\.")))==1) tabfile = paste0(tabfile,".",sep)
    if(sep=="txt" | sep=="tab") write.table(tab,file=tabfile,quote=FALSE,sep="\t",row.names=FALSE) 
@@ -259,6 +259,13 @@ efm = function(envirfile=NULL) {
 #############GUI HELPFUNCTIONS#####################################
 ###################################################################
 
+ #TAKEN FROM CASESOLVER: This function is written since the encoding in  gWidgets2::gfile is fixed to UTF-8 which doesn't handle special letters
+ mygfile <- function(text,type,filter=list(),initf=NULL) { #Possible bug: text ignored when type="selectdir"
+   file <- gWidgets2::gfile(text=text,type=type,filter=filter,initial.filename=initf)
+   Encoding(file) <- options()$encoding #Set to local encoder: Handle special cases.
+   return(file)
+ }
+ 
  #Helpfunction to get focus 
  getFocus = function() {
    gWidgets2::visible(mainwin) <- TRUE
@@ -267,21 +274,21 @@ efm = function(envirfile=NULL) {
  
  #Menu bar file-lists:
  f_setwd = function(h,...) {
-  dirfile = gWidgets2::gfile(text="Select folder",type="selectdir")
+  dirfile = mygfile(text="Select folder",type="selectdir")
   if(length(dirfile)==0) return()
   setwd(dirfile)
   assign("workdir",dirfile,envir=mmTK) #assign working directory
  }
   
  f_openproj = function(h,...) {
-  projfile = gWidgets2::gfile(text="Open project",type="open", filter=list("Project"=list(patterns=list("*.Rdata")) , "All files"=list(patterns=list("*"))))
+  projfile = mygfile(text="Open project",type="open", filter=list("Project"=list(patterns=list("*.Rdata")) , "All files"=list(patterns=list("*"))))
   if(length(projfile)==0) return()
   gWidgets2::dispose(mainwin)
   efm(projfile) #send environment into program
  }
  
  f_saveproj = function(h,...) {
-  projfile = gWidgets2::gfile(text="Save project",type="save")
+  projfile = mygfile(text="Save project",type="save")
   if(length(projfile)==0) return()
   
    if(length(unlist(strsplit(projfile,"\\.")))==1) projfile = paste0(projfile,".Rdata") #add extension if missing
@@ -490,7 +497,7 @@ efm = function(envirfile=NULL) {
  }
 
  #helpfunction to get value in from user and store
- setValueUser <- function(what1,what2,txt) {
+ setValueUser <- function(what1,what2,txt,allowNULL=FALSE) {
    listopt <- get(what1,envir=mmTK) #get object what 1.
    val <- listopt[[what2]]
    if(is.null(val)) val ="" #gwidgets2 does not handle NULL, must use empty string
@@ -499,10 +506,15 @@ efm = function(envirfile=NULL) {
    grid[1,1] <- gWidgets2::glabel(txt, container=grid)
    grid[1,2] <- gWidgets2::gedit(text=val,container=grid,width=15)
    grid[2,1] <- gWidgets2::gbutton("OK", container=grid,handler = function(h, ...) { 
-    tmp <- as.numeric(gWidgets2::svalue(grid[1,2])) #insert new value
-    if(is.na(tmp)) {
-     NAerror(what2)
-     return()
+    GUIval = gWidgets2::svalue(grid[1,2]) #obtain GUI value
+    if(allowNULL && GUIval=="") { #if accepting empty string
+      tmp = NULL #Insert NULL
+    } else {
+      tmp <- as.numeric(GUIval) #insert new value
+      if(is.na(tmp)) {
+       NAerror(what2)
+       return()
+      }
     }
     listopt[[what2]] <- tmp
     assign(what1,listopt,envir=mmTK) #assign user-value to opt-list
@@ -668,7 +680,7 @@ efm = function(envirfile=NULL) {
 
  #Helpfunction to load data in a file with values and fit drop-in model
  f_fitdropin = function(h,...) { 
-   impfile = gWidgets2::gfile(text="Find drop-in data",type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
+   impfile = mygfile(text="Find drop-in data",type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
    if(length(impfile)==0) return()
    data = tableReader(impfile,header=FALSE) #load profile
    x = as.numeric(unlist(data)) #convert to a numerical vector
@@ -744,7 +756,7 @@ efm = function(envirfile=NULL) {
       setValueUser(what1="optMLE",what2="maxThreads",txt="Set max number of threads to be used in parallelisation:") 
     }),
     gWidgets2::gaction('Set seed of randomizer',handler=function(h,...) { 
-      setValueUser(what1="optMLE",what2="seed",txt="Set seed of randomizer:") 
+      setValueUser(what1="optMLE",what2="seed",txt="Set seed of randomizer:",allowNULL=TRUE) 
    }),
    gWidgets2::gaction('Set accuracy of optimization',handler=function(h,...) { 
      setValueUser(what1="optMLE",what2="steptol",txt="Set accuracy of optimization (steptol, see ?nlm):") 
@@ -758,7 +770,7 @@ efm = function(envirfile=NULL) {
       setValueUser(what1="optMCMC",what2="delta",txt="Set variation of randomizer:") 
     }),
     gWidgets2::gaction('Set seed of randomizer',handler=function(h,...) {
-      setValueUser(what1="optMCMC",what2="seed",txt="Set seed of randomizer:") 
+      setValueUser(what1="optMCMC",what2="seed",txt="Set seed of randomizer:",allowNULL=TRUE) 
     })
   ),
   Integration=list(
@@ -850,7 +862,7 @@ efm = function(envirfile=NULL) {
   
   #load/save helpfunctions for generated data
   f_openprof = function(h,...) {
-    proffile = gWidgets2::gfile(text="Open profile",type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
+    proffile = mygfile(text="Open profile",type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
     if(length(proffile)==0) return() 
      Data = tableReader(proffile) #load profile
      printTable(Data)
@@ -1026,8 +1038,8 @@ efm = function(envirfile=NULL) {
  #b) load/save profiles/database: Supports any filetype
  f_importprof = function(h,...) {
   type=h$action #get type of profile
-#  proffile = gWidgets2::gfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab"))))
-  proffile = gWidgets2::gfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
+#  proffile = mygfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab"))))
+  proffile = mygfile(text=paste("Open ",type,"-file",sep=""),type="open",filter=list("text"=list(patterns=list("*.txt","*.csv","*.tab")),"all"=list(patterns=list("*"))))
   if(length(proffile)==0) return() 
   
    Data = tableReader(proffile) #load profile
@@ -1595,7 +1607,7 @@ efm = function(envirfile=NULL) {
  #Choose box and import button
  tabimportA[1,1] = gWidgets2::gbutton(text="Import from file",container=tabimportA,handler=
   function(h,...) {
-   f = gWidgets2::gfile(text="Select file",type="open",filter = list(`All files` = list(patterns = c("*"))))
+   f = mygfile(text="Select file",type="open",filter = list(`All files` = list(patterns = c("*"))))
    if(length(f)==0) return()
     setPopsToList(freqImport(f,url=FALSE,xml=FALSE))
     f_selectedPop(h)    
@@ -2286,7 +2298,7 @@ efm = function(envirfile=NULL) {
           if(!evalBool) return(NULL) #return if not evaluating    
           
           #FIND OPTIMAL MODEL (use settings under Hd):
-          searchList <- contLikSearch(NOC,modelDegrad,modelBWstutt,modelFWstutt,samples=set$samples,popFreq=set$popFreqQ,refData=set$refDataQ,condOrder=mod$condOrder_hd,knownRefPOI=knownRefPOI,prC=par$prC,nDone=opt$nDone,threshT=par$threshT,fst=par$fst,lambda=par$lambda,alpha=0.01,pXi=par$pXi,delta=opt$delta,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads)
+          searchList <- contLikSearch(NOC,modelDegrad,modelBWstutt,modelFWstutt,samples=set$samples,popFreq=set$popFreqQ,refData=set$refDataQ,condOrder=mod$condOrder_hd,knownRefPOI=knownRefPOI,prC=par$prC,nDone=opt$nDone,threshT=par$threshT,fst=par$fst,lambda=par$lambda,alpha=0.01,pXi=par$pXi,delta=opt$delta,kit=par$kit,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,pXiFW=par$pXiFW, maxThreads=opt$maxThreads, seed=opt$seed, steptol=opt$steptol)
           AIC = searchList$outtable[,2] #obtain crietion
           optimInd = which.max(AIC)[1] #get index of optimal model. Use simpler model if "Tie"
           
@@ -2363,7 +2375,7 @@ efm = function(envirfile=NULL) {
      if(ITYPE=="MLE") {
         mleobj <- set$mlefit_hd #get object under hd
         mleopt <- get("optMLE",envir=mmTK)
-        logLi_hd <- logLiki(mleobj, maxThreads=get("optMLE",envir=mmTK)$maxThreads) #get log-probabilities for each locus (under Hd)
+        logLi_hd <- logLiki(mleobj, maxThreads=mleopt$maxThreads) #get log-probabilities for each locus (under Hd)
      }
      if(ITYPE=="INT") { #Calculate with INT
        optint <- get("optINT",envir=mmTK)
@@ -2566,9 +2578,9 @@ efm = function(envirfile=NULL) {
           if(ITYPE=="MLE") { #calculate with MLE
             logLi_hdeval <- logLi_hd[locevalind] #take out relevant values
 #            nC=mod$nC_hp+1;popFreq=popFreqQ[loceval];refData=refData2;condOrder=condOrder_hp;knownRef=mod$knownref_hp;xi=par$xi;prC=par$prC;nDOne=mleopt$nDone;threshT=par$threshT;fst=par$fst;lambda=par$lambda;delta=mleopt$delta;pXi=par$pXi;kit=par$kit;verbose=FALSE;maxIter=mleopt$maxIter;xiFW=par$xiFW;pXiFW=par$pXiFW;maxThreads=get("optMLE",envir=mmTK)$maxThreads;seed=get("optMLE",envir=mmTK)$seed;knownRel=NULL;ibd=NULL
-            mlefit_hp <- contLikMLE(mod$nC_hp+1,samples,popFreqQ[loceval],refData2,condOrder_hp,mod$knownref_hp,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)
+            mlefit_hp <- contLikMLE(mod$nC_hp+1,samples,popFreqQ[loceval],refData2,condOrder_hp,mod$knownref_hp,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=mleopt$maxThreads,seed=mleopt$seed,steptol=mleopt$steptol)
             if(any(par$fst>0)) { #must calculate Hd once again (assume Rj is known)
-             mlefit_hdj <- contLikMLE(mod$nC_hd,samples,popFreqQ[loceval],refData2,condOrder_hd,nR,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter,knownRel=mod$knownRel,ibd=mod$ibd ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)
+             mlefit_hdj <- contLikMLE(mod$nC_hd,samples,popFreqQ[loceval],refData2,condOrder_hd,nR,par$xi,par$prC,mleopt$nDone,par$threshT,par$fst,par$lambda,delta=mleopt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=mleopt$maxIter,knownRel=mod$knownRel,ibd=mod$ibd ,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=mleopt$maxThreads,seed=mleopt$seed,steptol=mleopt$steptol)
              LRD[rind] <- exp(mlefit_hp$fit$loglik - mlefit_hdj$fit$loglik) #insert calculated LR adjusted by fst-correction
             } else {
              LRD[rind] <- exp(mlefit_hp$fit$loglik - sum(logLi_hdeval)) #insert calculated LR:
@@ -2733,7 +2745,7 @@ efm = function(envirfile=NULL) {
     nFailedHd = sum(validHd$Significant)
     txtValid = paste0("Under H",c("p","d"),": ",c(nFailedHp,nFailedHd))
                       
-    txt <- paste0(txt,"\n-------Model validation------\nNumber of fails (signif level=",alpha,"):\n",txtValid[1],"\n",txtValid[2],"\n")
+    txt <- paste0(txt,"\n-------Model validation------\nNumber of fails (signif level=",alpha,"):\n",txtValid[1],"\n",txtValid[2])
    }
    #store consLR - estimate
    if(!is.null(set$consLR)) {
@@ -2742,7 +2754,7 @@ efm = function(envirfile=NULL) {
     txt3 <- paste0("Number of MCMC samples: ",set$consLR$nSamples)
     txt4 <- paste0("Variation of randomizer: ",set$consLR$delta) #selected delta
     txt5 <- paste0("Seed of randomizer: ",set$consLR$seed) 
-    txt <- paste0(txt,"\n---RESULTS BASED ON MCMC SAMPLING---\n",txt1,"\n",txt2,"\n",txt3,"\n",txt4,"\n",txt5)
+    txt <- paste0(txt,"\n\n---RESULTS BASED ON MCMC SAMPLING---\n",txt1,"\n",txt2,"\n",txt3,"\n",txt4,"\n",txt5)
    }
    
    #Print model searcher
@@ -2750,10 +2762,10 @@ efm = function(envirfile=NULL) {
    if(!is.null(res)) {
      txt1 <- paste0( colnames(res) ,collapse=colps) #obtain colnames
      for(i in 1:nrow(res)) txt1 <- paste0(txt1,"\n",paste0( res[i,] ,collapse=colps) )
-     txt <-  paste0(txt,"\n\nTable of model comparisons:\n",txt1,"\n") #add information 
+     txt <-  paste0(txt,"\n\n-----Table of model comparisons-----\n",txt1) #add information 
    }
  
-   #Print allele freqs last: ADDED in v2.0.1
+   #Print allele freqs last: ADDED in v2.0.1 (notice that only Hd is printed)
    txt <-  paste0(txt,printFREQ(set$mlefit_hd$model)) 
    txt <-  paste0(txt,"\nRare allele frequency (minFreq):",getminFreq())  #added in v3.0.0
    txt <-  paste0(txt,"\nNormalized after impute: ", ifelse(get("optFreq",envir=mmTK)$normalize==1,"Yes","No") )  #added in v3.0.0 
@@ -2918,15 +2930,15 @@ efm = function(envirfile=NULL) {
         for(loc in locs)  refData[[loc]][[tipind]] <-  Gsim[[loc]][m,] #insert genotype of the non-contributor
         
         if(type=="MLE") { #calculate based on MLE
-          logLhp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,refData,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)$fit$loglik 
+          logLhp <- contLikMLE(mod$nC_hp,set$samples,set$popFreqQ,refData,mod$condOrder_hp,mod$knownref_hp,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=opt$maxThreads,seed=opt$seed,steptol=opt$steptol)$fit$loglik 
           logLhd <- set$mlefit_hd$fit$loglik 
-          if(any(par$fst>0)) logLhd  <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,refData,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads,seed=get("optMLE",envir=mmTK)$seed,steptol=get("optMLE",envir=mmTK)$steptol)$fit$loglik  #re-calculate only necessary once if fst>0 
+          if(any(par$fst>0)) logLhd  <- contLikMLE(mod$nC_hd,set$samples,set$popFreqQ,refData,mod$condOrder_hd,mod$knownref_hd,par$xi,par$prC,opt$nDone,par$threshT,par$fst,par$lambda,delta=opt$delta,pXi=par$pXi,kit=par$kit,verbose=FALSE,maxIter=opt$maxIter,knownRel=set$model$knownRel,ibd=set$model$ibd,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=opt$maxThreads,seed=opt$seed,steptol=opt$steptol)$fit$loglik  #re-calculate only necessary once if fst>0 
           RMLR[m] <- (logLhp - logLhd)/log(10)
         } else { #calculate based on INT
          bhp <- getboundary(mod$nC_hp,par$kit,par$xi,par$xiFW) #get boundaries under hp
          bhd <- getboundary(mod$nC_hd,par$kit,par$xi,par$xiFW) #get boundaries under hd
-         Lhp <- contLikINT(mod$nC_hp, set$samples, set$popFreqQ, bhp$lower, bhp$upper, refData, mod$condOrder_hp, mod$knownref_hp, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,opt$scaleINT,maxEval=opt$maxeval,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads)$margL 
-         if(any(par$fst>0) || length(Lhd)==0 ) Lhd <- contLikINT(mod$nC_hd, set$samples, set$popFreqQ, bhd$lower, bhd$upper, refData, mod$condOrder_hd, mod$knownref_hd, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,opt$scaleINT,maxEval=opt$maxeval,knownRel=mod$knownRel,ibd=mod$ibd,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=get("optMLE",envir=mmTK)$maxThreads)$margL
+         Lhp <- contLikINT(mod$nC_hp, set$samples, set$popFreqQ, bhp$lower, bhp$upper, refData, mod$condOrder_hp, mod$knownref_hp, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,opt$scaleINT,maxEval=opt$maxeval,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=opt$maxThreads)$margL 
+         if(any(par$fst>0) || length(Lhd)==0 ) Lhd <- contLikINT(mod$nC_hd, set$samples, set$popFreqQ, bhd$lower, bhd$upper, refData, mod$condOrder_hd, mod$knownref_hd, par$xi, par$prC, opt$reltol, par$threshT, par$fst, par$lambda, par$pXi,par$kit,opt$scaleINT,maxEval=opt$maxeval,knownRel=mod$knownRel,ibd=mod$ibd,xiFW=par$xiFW,pXiFW=par$pXiFW, maxThreads=opt$maxThreads)$margL
          RMLR[m] <- log10(Lhp) - log10(Lhd)
        }
        if(m%%(ntippet/10)==0) {
@@ -2942,10 +2954,10 @@ efm = function(envirfile=NULL) {
   storeLRvalues = function(set) { 
     fithp = set$mlefit_hp
     fithd = set$mlefit_hd
-    
+    opt = get("optMLE",envir=mmTK)
     logLRmle <- fithp$fit$loglik - fithd$fit$loglik
     LRlap <- exp(fithp$fit$logmargL - fithd$fit$logmargL)#/log(10) #calculate laplace approximated LRs
-    LRi <- exp(logLiki(mlefit=fithp, maxThreads=get("optMLE",envir=mmTK)$maxThreads)-logLiki(mlefit=fithd, maxThreads=get("optMLE",envir=mmTK)$maxThreads))
+    LRi <- exp(logLiki(mlefit=fithp, maxThreads=opt$maxThreads)-logLiki(mlefit=fithd, maxThreads=opt$maxThreads))
     LRmle <- exp(logLRmle)
     
     #Calculated Adjusted LR based on number of unknowns with unequal Mx:

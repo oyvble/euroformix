@@ -249,7 +249,7 @@ class EFMmarker {
 		vector<double> shapev0(nAlleles, 0.0); //degrad scaling of shape
 		vector<double> dropin0(nAlleles*nRep, 0.0); //drop-in contribution per peak height
 		vector<double> constY0(nAlleles*nRep, 0.0); //const1 times Yvec	
-		for (a = 0; a < nAlleles; a++) { //traverse each observed alleles (indices), having PH>0
+		for (a = 0; a < nAlleles; a++) { //traverse each observed alleles (indices), also those PH=0
 			shapev0[a] = exp( log(shape) + bpvec[a]*log(*beta) ); //scaling with degradation model (assumed already scaled)
 			for(r = 0; r < nRep; r++) { //traverse each replicates (observed alleles indicated by PH)
 				cind = a*nRep + r; //get index of PH (Y_rep,allele is vectorised as : Y11,Y21,Y31,Y12,Y22,Y32,... 
@@ -334,9 +334,9 @@ class EFMmarker {
 			
 			//Stutter model calculations (for given allele)
 			if( (*xiB0>smalltol) || (*xiF0>smalltol) ) { //only run if stutterparam is positive
-				for (a = 0; a < (nAlleles-1); a++) { //traverse each alleles (Q-allele=last index not considered!) 
+				for (a = 0; a < (nAlleles-1); a++) { //traverse each alleles. Potential non-Qallele is traversed below
 					shape1 = 0.0; //copy original contribution
-					
+										
 					//CONSIDERING STUTTERS: Always running (with param equal zero)
 					if(FWvec[a] != -1) { //if a-1 stutter of a exists (found in FWstutter info)
 						shape1 = (*xiF0)*shapev[FWvec[a]]; //proportion obtained from allele a-1
@@ -346,6 +346,15 @@ class EFMmarker {
 					}
 					shapev2[a] = (1- *xiB0 - *xiF0)*shapev[a] + shape1; //updated shape parameter (summing fraction lost and attained), proportion xiB/xiF always lost (possible to unseen potential stutters see later)
 				} 
+				
+				//HANDLING SPECIAL SCENARIO WHEN LAST ALLELE IS NOT Q-allele
+				a = (nAlleles-1); //set allele index as last allele
+				if(FWvec[a] != -1 || BWvec[a] != -1) {  //IF THERE WAS STUTTER INDEX DEFINED
+					shape1 = 0.0; //copy original contribution									
+					if(FWvec[a] != -1) { shape1 = (*xiF0)*shapev[FWvec[a]]; } //proportion obtained from allele a-1
+					if(BWvec[a] != -1) { shape1 += (*xiB0)*shapev[BWvec[a]]; } //proportion obtained from allele a+1
+					shapev2[a] = (1- *xiB0 - *xiF0)*shapev[a] + shape1; //updated shape parameter (summing fraction lost and attained), proportion xiB/xiF always lost (possible to unseen potential stutters see later)				
+				} //end special scenario
 			}
 			
 			//Summing up contribution of each alleles:
@@ -593,7 +602,7 @@ class EFMmarker {
 			bool anyDropin = false;
 			double logevidProb = 0.0; //evidence probability (weight)
 			double shape1; //modified shape param (caused by stutters)
-			for (a = 0; a < (nAlleles-1); a++) { //traverse each observed alleles (indices), having PH>0 (no one are dropouts)
+			for (a = 0; a < (nAlleles-1); a++) { //traverse each observed alleles (indices), having PH>0 (no one are dropouts). LAST INDEX IS A Q-allele (PH=0)
 				
 				//Stutter model calculations (for given allele)
 				shape1 = 0.0; //copy original contribution
@@ -752,7 +761,7 @@ class EFMmarker {
 					
 					//Stutter model calculations (for given allele)
 					if( (*xiB0>smalltol) || (*xiF0>smalltol) ) { //only run if stutterparam is positive
-						for (a = 0; a < (nAlleles-1); a++) { //traverse each alleles (Q-allele=last index not considered!) 
+						for (a = 0; a < (nAlleles-1); a++) { //traverse each alleles. Potential non-Qallele is traversed below
 							shape1 = 0.0; //copy original contribution
 							
 							//CONSIDERING STUTTERS: Always running (with param equal zero)
@@ -764,6 +773,15 @@ class EFMmarker {
 							}
 							shapev2[a] = (1- *xiB0 - *xiF0)*shapev[a] + shape1; //updated shape parameter (summing fraction lost and attained), proportion xiB/xiF always lost (possible to unseen potential stutters see later)
 						} 
+						
+						//HANDLING SPECIAL SCENARIO WHEN LAST ALLELE IS NOT Q-allele
+						a = (nAlleles-1); //set allele index as last allele
+						if(FWvec[a] != -1 || BWvec[a] != -1) {  //IF THERE WAS STUTTER INDEX DEFINED
+							shape1 = 0.0; //copy original contribution									
+							if(FWvec[a] != -1) { shape1 = (*xiF0)*shapev[FWvec[a]]; } //proportion obtained from allele a-1
+							if(BWvec[a] != -1) { shape1 += (*xiB0)*shapev[BWvec[a]]; } //proportion obtained from allele a+1
+							shapev2[a] = (1- *xiB0 - *xiF0)*shapev[a] + shape1; //updated shape parameter (summing fraction lost and attained), proportion xiB/xiF always lost (possible to unseen potential stutters see later)				
+						} //end special scenario
 					}
 					
 					//Summing up contribution of each alleles:

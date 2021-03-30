@@ -14,7 +14,7 @@
 #' @return ret A list(popFreq,refData,samples) with Q-designated alleles. 
 #' @export
 
-Qassignate <- function(samples,popFreq,refData=NULL,doQ=TRUE,incR=FALSE,incS=FALSE,minF=NULL,normalize=FALSE,verbose=FALSE) {
+Qassignate <- function(samples,popFreq,refData=NULL,doQ=TRUE,incR=FALSE,incS=FALSE,minF=NULL,normalize=FALSE,verbose=TRUE) {
  Qallele="99" #Name of allele given if missing in evidence. Default is 99. This is important when considering the degradation model since 99 is closest to maximum allelein a locus. 
  LUSsymbol="_" #a character symbol used to separate repeatunit and LUS.
  locs <- names(popFreq)
@@ -25,7 +25,7 @@ Qassignate <- function(samples,popFreq,refData=NULL,doQ=TRUE,incR=FALSE,incS=FAL
   #if new alleles in evidence or references: insert minFreq and normalize
   if(!is.null(refData) && incR) evid  <- unique(c(evid,unlist(refData[[loc]]))) #update evid to also include ref-alleles
 
-   #Add n-1 stutters to the evid vector. BLOCK keeped to be compatible with previous EFM versions
+   #Add n-1 stutters to the evid vector. BLOCK keeped to be compatible with previous EFM versions (before v3)
    if(length(evid)>0 && incS) { #added: Must have observed allele to consider stutter
     isLUS <- grepl(LUSsymbol,evid) #detect whether LUS variant is used
     evidS <- numeric()
@@ -45,6 +45,7 @@ Qassignate <- function(samples,popFreq,refData=NULL,doQ=TRUE,incR=FALSE,incS=FAL
   }
 
   newa <- evid[!evid%in%names(popFreq[[loc]])]   #get alleles not in popFreq-table
+  
   if(length(newa)>0) {
    tmp <- names(popFreq[[loc]])
    popFreq[[loc]] <- c(popFreq[[loc]],rep(as.numeric(minF),length(newa)))
@@ -53,24 +54,30 @@ Qassignate <- function(samples,popFreq,refData=NULL,doQ=TRUE,incR=FALSE,incS=FAL
 
    if(as.logical(normalize)) { #Update in v2.0: Normalization is now an option
     popFreq[[loc]] <- popFreq[[loc]]/sum(popFreq[[loc]]) #normalize
-    if(verbose) {
-      print(paste0("New frequencies for locus ",loc))
-      print(popFreq[[loc]]) 
-    }
    }
   }
 
   if(doQ) {#if Q-assignate, i.e. setting non-observed alleles of references as Qallele ("99")
    tmp <- popFreq[[loc]][names(popFreq[[loc]])%in%evid] #find observed alleles
+   
+   #Assign a Q-allele only if frequency table is greater than those obtained in evidence
    if( length(tmp) < length(popFreq[[loc]])) {  
     tmp <- c(tmp,1-sum(tmp))
     names(tmp)[length(tmp)] <- Qallele
    }
    popFreq[[loc]] <- tmp
    if(!incR && !is.null(refData)) { #insert 99 as default allele of missing refs
-    newP <- names(popFreq[[loc]])  #new population table
-    if(!all(unlist(refData[[loc]])%in%newP)) { #there was some missing alleles
-     for(k in 1:length(refData[[loc]])) refData[[loc]][[k]][!refData[[loc]][[k]]%in%newP] <- Qallele #insert missing     
+    newP <- names(popFreq[[loc]])  #new population table (alleles)
+    if(!all(unlist(refData[[loc]])%in%newP)) { #there was some missing ref-alleles in population table
+      
+      #V3.3.0: Introduce Q-allele to population table if not already defined (using rare freq assigning)
+      if(!Qallele%in%newP) { #only if Q-allele not defined
+        popFreq[[loc]] = setNames( c(popFreq[[loc]],as.numeric(minF)), c(names(popFreq[[loc]]),Qallele)  )
+        if(verbose) print(paste0("Locus ",loc,": Q-allele was inserted with frequency ",minF))
+        if(as.logical(normalize)) popFreq[[loc]] <- popFreq[[loc]]/sum(popFreq[[loc]]) #normalize
+      }
+      
+      for(k in 1:length(refData[[loc]])) refData[[loc]][[k]][!refData[[loc]][[k]]%in%newP] <- Qallele #insert missing     
     }
    }
   }

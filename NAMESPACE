@@ -7,7 +7,7 @@
   importFrom("stats", "aggregate", "density", "dexp", "dgamma", "dnorm",
              "ecdf", "lm", "na.omit", "nlm", "pbeta", "pgamma",
              "ppoints", "qbeta", "qgamma", "quantile", "rexp", "rgamma",
-             "rnorm", "runif", "sd", "spline")
+             "rnorm", "runif", "sd", "spline","setNames")
   importFrom("utils", "head", "memory.limit", "object.size",
              "packageVersion", "read.delim", "read.table",
              "setTxtProgressBar", "tail", "txtProgressBar",

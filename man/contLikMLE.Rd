@@ -72,14 +72,17 @@ Function calls the likelihood function implemented in C++ which uses the package
 \examples{
 \dontrun{
 kit = "ESX17"
-popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
- paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
-evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
- sep=.Platform$file.sep)
+sep0 = .Platform$file.sep
+AT0 = 50
+popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=sep0)
+evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=sep0)
+reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=sep0)
 popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
 samples = sample_tableToList(tableReader(evidfn))
-dat = prepareData(samples,popFreq=popFreq) #obtain data to use for analysis
-mlefit = contLikMLE(nC=2,dat$samples,popFreq=dat$popFreq,kit=kit,verbose=TRUE)
+refData = sample_tableToList(tableReader(reffn))
+dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) #obtain data to use for analysis
+plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
+mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
 }
 }
 \author{

@@ -31,7 +31,7 @@
 #' @examples
 #' \dontrun{
 #' kit = "ESX17"
-#' popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
+#' popfn = paste(path.package("euroformix"),"FreqDatabases",
 #'  paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
 #' evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
 #'  sep=.Platform$file.sep)

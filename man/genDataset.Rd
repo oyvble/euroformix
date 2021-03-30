@@ -52,7 +52,7 @@ genData conditions on alleles given by refData. Empty references are generated w
 \examples{
 \dontrun{ 
 kit = "SGMPlus"
-popfile = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
+popfile = paste(path.package("euroformix"),"FreqDatabases",
  paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
 popFreq = freqImport(popfile)[[1]] #obtain list with population frequencies
 gen = genDataset(2,popFreq,beta=.7,kit=kit,stutt=.1,stuttFW=.05)
