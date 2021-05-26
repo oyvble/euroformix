@@ -1,2 +1,3 @@
-PKG_LIBS = -lgomp
-PKG_CXXFLAGS = -Wall -std=c++11 -fopenmp -Ofast
+PKG_LIBS = ${SHLIB_OPENMP_CFLAGS} -lgomp
+PKG_CXXFLAGS = -Wall -std=c++11 -fopenmp -Ofast 
+ 

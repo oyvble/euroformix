@@ -1,4 +1,18 @@
 
+EuroForMix v3.3.1 (Release date: 2021-05-26)
+=============================================
+
+Important update:
+- The URL to the STRidER connection can be customized in toolbar (Frequencies->Set URL for STRidER import).
+ -> The default URL path has been changed (earlier path did not work). Thanks to Marcin Wozniak for making aware of this issue.
+
+Minor update:
+- The Lik value in report (Create report) now avoids underflow. A helpfunction "getSmallNumber" was created.
+- Suppressing gWidgets2 warnings in the efm function (suppressWarnings wrapped around the GUI code). 
+
+Bug fixes:
+- In efm function (L1209,L1396): gWidgets2::gmessage gave error because of wrong arguments (messages are put first).
+
 EuroForMix v3.3.0 (Release date: 2021-03-30)
 =============================================
 

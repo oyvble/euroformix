@@ -29,9 +29,9 @@ efm = function(envirfile=NULL) {
 
  #Spacing between widgets
  spc <- 10
-
- #Strider link
- striderlink = "https://strider.online/frequencies/download"
+ 
+ #Strider link (can be customized in toolbar)
+ striderlink = "https://strider.online/frequencies_xml/download" #"https://strider.online/frequencies/download"
 
  #Marker specific setting names (objects)
  objnameMarkerSettings = c("threshv","pCv","lamv","fstv") #get object names for marker settings (optMarkerSetup)
@@ -88,6 +88,7 @@ efm = function(envirfile=NULL) {
   assign("optDC",list(alphaprob=0.99,maxlist=20),envir=mmTK) #options when doing deconvolution (alphaprob, maxlist)
   assign("optDB",list(maxDB=10000,QUALpC=0.05,ntippets=1e2),envir=mmTK)  #options when doing database search (maxDB)
   assign("optLRMIX",list(range=0.6,nticks=31,nsample=2000,alpha=0.05),envir=mmTK) #options when doing LRmix
+  assign("STRidER",list(url=striderlink),envir=mmTK) #path for importing STRidER data
   
   #initializing environment variables
   assign("workdir",NULL,envir=mmTK) #assign working directory to mmTK-environment
@@ -116,6 +117,7 @@ efm = function(envirfile=NULL) {
   
  } else { #restore from file
   load(envirfile) #loading environment
+   
   #MAKING VERSION BACKWARD COMPATIBLE FROM v0.6.0
   if( is.null( mmTK$optSetup )) assign("optSetup",optSetup,envir=mmTK)  
    
@@ -175,7 +177,11 @@ efm = function(envirfile=NULL) {
      assign("optMLE",mmTK$optMLE,envir=mmTK)   #store again
    }
    
-      
+   #MAKING VERSION BACKWARD COMPATIBLE FROM v3.2.0
+   if( is.null( mmTK$STRidER )) {
+     mmTK$STRidER$url  <- striderlink #set default value
+     assign("STRidER",mmTK$STRidER,envir=mmTK)   #store again
+   }
  }
 
  ####################################
@@ -184,6 +190,14 @@ efm = function(envirfile=NULL) {
  prim = c(2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113, 127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263, 269,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,389,397,401,409,419,421, 431,433,439,443,449,457,461,463,467,479,487,491,499,503,509,521,523,541,547,557,563,569,571,577,587,593, 599,601,607,613,617,619,631,641,643,647,653,659,661,673,677,683,691,701,709,719,727,733,739,743,751,757, 761,769,773,787,797,809,811,821,823,827,829,839,853,857,859,863,877,881,883,887,907,911,919,929,937,941, 947,953,967,971,977,983,991,997,1009,1013,1019,1021,1031,1033,1039,1049,1051,1061,1063,1069,1087,1091,1093, 1097,1103,1109,1117,1123,1129,1151,1153,1163,1171,1181,1187,1193,1201,1213,1217,1223,1229,1231,1237,1249, 1259,1277,1279,1283,1289,1291,1297,1301,1303,1307,1319,1321,1327,1361,1367,1373,1381,1399,1409,1423,1427, 1429,1433,1439,1447,1451,1453,1459,1471,1481,1483,1487,1489,1493,1499,1511,1523,1531,1543,1549) 
  #max length of alleles for reference-database storage is 244
 
+  #helpfunction to get small number from log-value
+  getSmallNumber = function(logval,sig0=2,scientific="e") {
+    log10base = logval/log(10) #convert to 10 base
+    power = floor(log10base) #get power number
+    remainder = log10base - power
+    return( paste0( round(10^remainder,sig0),scientific,power)) #representation of very small numbers (avoid underflow)
+  }
+  
  NAtoSign <- function(x) {
   x[is.na(x)] <- "-" #NB: New version of gtable does not accept NA values
   return(x)
@@ -504,7 +518,7 @@ efm = function(envirfile=NULL) {
    sw <- gWidgets2::gwindow(title="User input",visible=FALSE, width=300,height=50)
    grid <- gWidgets2::glayout(spacing=0,container=sw )
    grid[1,1] <- gWidgets2::glabel(txt, container=grid)
-   grid[1,2] <- gWidgets2::gedit(text=val,container=grid,width=15)
+   grid[1,2] <- gWidgets2::gedit(text=val,container=grid,width=30)
    grid[2,1] <- gWidgets2::gbutton("OK", container=grid,handler = function(h, ...) { 
     GUIval = gWidgets2::svalue(grid[1,2]) #obtain GUI value
     if(allowNULL && GUIval=="") { #if accepting empty string
@@ -712,6 +726,7 @@ efm = function(envirfile=NULL) {
 ##################################### 
 ###########GUI WINDOW STARTS#########
 ##################################### 
+suppressWarnings({
  
  ##########
  #Menu bar#
@@ -738,8 +753,11 @@ efm = function(envirfile=NULL) {
 #   'Select stutter model',handler=function(h,...) {  
 #      setValueUser(what1="optFreq",what2="stutterMod",txt="Select prefered stutter model \n(1=Before v2,2=From v2, <v1.12 used 1)") 
 #    }),
-     gWidgets2::gaction('Set number of wildcards in false positives match',handler=function(h,...) {  
+    gWidgets2::gaction('Set number of wildcards in false positives match',handler=function(h,...) {  
       setValueUser(what1="optFreq",what2="wildsize",txt="Set number of missmatches (wildcards) in false positive match:") 
+    }),
+    gWidgets2::gaction('Set URL for STRidER import',handler=function(h,...) {  
+      setValueUser(what1="STRidER",what2="url",txt="Set URL path:") 
     })
   ),
   Optimization=list(
@@ -840,7 +858,7 @@ efm = function(envirfile=NULL) {
  if(!is.null(wd)) setwd(wd)
  
  #Main window:
- mainwin <- gWidgets2::gwindow(softname, visible=FALSE, width=mwW,height=mwH)
+ mainwin <- gWidgets2::gwindow(format(softname), visible=FALSE, width=mwW,height=mwH)
  gWidgets2::gmenu(mblst,container=mainwin)
  nb = gWidgets2::gnotebook(container=mainwin)
  tabGEN = gWidgets2::glayout(spacing=spc,container=nb,label="Generate data") #tab1: Generates data(with peak heights) for a given model (plot EPG in addition)
@@ -1206,7 +1224,7 @@ efm = function(envirfile=NULL) {
      giveWarning = function(loci,what) {
        loctext <- ifelse(length(loci)>1,"Loci: ","Locus: ")
        txt2 <- paste0(txt,"\n\n",loctext, paste0(loci,collapse="/"),"\n",what,".\n\nPlease check the allele frequency file!")
-       gWidgets2::gmessage(title="Incorrect allele frequencies observed!",message=txt2,icon="warning")
+       gWidgets2::gmessage(txt2,title="Incorrect allele frequencies observed!",icon="warning")
      }
      if(length(check1)>0)  giveWarning(check1,what="did not have any allele frequencies")
      if(length(check2)>0)  giveWarning(check2,what="had atleast one negative allele frequency")
@@ -1392,8 +1410,8 @@ efm = function(envirfile=NULL) {
        }  #end for each mixsel
      }
       if(length(regdata)==0) {
-        gWidgets2::gmessage(title="Incompatible data found",message="The data and kit selected did not match!",icon="warning")
-        return() #INCOMPATIBLE DATA WITH KI FOUND
+        gWidgets2::gmessage("The data and kit selected did not match!",title="Incompatible data found",icon="warning")
+        return() #INCOMPATIBLE DATA WITH KIT FOUND
       }
       regdata[regdata[,3]=="yellow",3] <- "orange"
       dyes[dyes=="yellow"] <- "orange"
@@ -1625,7 +1643,8 @@ efm = function(envirfile=NULL) {
  
  tabimportA[1,3] = gWidgets2::gbutton(text="Import from STRidER",container=tabimportA,handler=
   function(h,...) {
-   setPopsToList(freqImport(striderlink,url=TRUE,xml=TRUE))
+   striderlink1 = get("STRidER",envir=mmTK)$url #obtain strider link URL
+   setPopsToList(freqImport(striderlink1,url=TRUE,xml=TRUE))
    f_selectedPop(h)
   }
  )
@@ -2649,10 +2668,11 @@ efm = function(envirfile=NULL) {
     for(i in 1:nrow(mle)) txt1 <- paste0(txt1,"\n",paste0( c(rownames(mle)[i],format(mle[i,],digits=sig)),collapse=colps) )
 
     txt2 <- paste0("\n\nlogLik=",round(mlefit$loglik,2))
-    txt2 <- paste0(txt2, "\nLik=",format(exp(mlefit$loglik),digits=sig))
+    txt2 <- paste0(txt2, "\nLik=",getSmallNumber(mlefit$loglik,sig))#format(exp(mlefit$loglik),digits=sig))
     txt <- paste0(txt0,txt1,txt2)
     return(txt)
    }
+   
    printSET <- function(model) { #print settings used
     txt <- paste0("\nEvidence(s)=",paste0(names(model$samples),collapse="/"))
     txt <- paste0(txt,"\nMarkers=",paste0(names(model$popFreq),collapse="/"))
@@ -3060,11 +3080,7 @@ efm = function(envirfile=NULL) {
       tabmleX2[2,1] =  gWidgets2::glabel(text="adj.loglik=",container=tabmleX2) #show adj.loglik=-AIC/2, where AIC= -2*logLik + 2*nparam -AIC/2
       tabmleX2[2,2] =  gWidgets2::glabel(text=round((mlefit$fit$loglik - length(mlefit$fit$thetahat)),sig0),container=tabmleX2)
       tabmleX2[3,1] =  gWidgets2::glabel(text="Lik=",container=tabmleX2)
-      log10base = mlefit$fit$loglik/log(10) #convert to 10 base
-      power = floor(log10base) #get power number
-      remainder = log10base - power
-      smallnum = paste0( round(10^remainder,sig0),"e",power) #representation of very small numbers (avoid underflow)
-      tabmleX2[3,2] =  gWidgets2::glabel(text=smallnum,container=tabmleX2)
+      tabmleX2[3,2] =  gWidgets2::glabel(text=getSmallNumber(mlefit$fit$loglik,sig0),container=tabmleX2)
     }#end function
 
     if(type=="START") { #loads already calculated results if program starts
@@ -3683,4 +3699,5 @@ efm = function(envirfile=NULL) {
  for(nbvisit in 6:2) gWidgets2::svalue(nb) <- nbvisit #visit tables 
  getFocus()
 
+ })
 } #end funcions
