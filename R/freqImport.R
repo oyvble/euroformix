@@ -17,7 +17,7 @@ freqImport = function(f=NULL,url=FALSE,xml=FALSE) {
  dbList <- list() #list of populations
  if(xml) {
    if(url) { #if f was given as an url 
-    f <- RCurl::getURL(f) #get url
+    f <- RCurl::getURL(f,.opts = RCurl::curlOptions(ssl.verifypeer=FALSE, verbose=TRUE)) #get url
    } 
    xml = XML::xmlTreeParse(f, useInternalNodes=TRUE) #read to text to XML-object
    locs <- unlist(XML::xpathApply(xml, "//name", XML::xmlValue)) #get list of markers

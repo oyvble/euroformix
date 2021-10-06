@@ -1,3 +1,14 @@
+EuroForMix v3.3.2 (Release date: 2021-10-06)
+=============================================
+
+Fixing Import from STRidER issue giving "SSL certificate problem.." crash:
+- The getURL call in freqImport function was updated.
+
+Fixing a whitespace issue which occured for some textfiles:
+- The sample_tableToList now also ignores " " alleles.
+
+Minor update:
+- Included MiniFiler as a kit (Thanks to Oskar Hansson to providing this).
 
 EuroForMix v3.3.1 (Release date: 2021-05-26)
 =============================================

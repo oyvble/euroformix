@@ -511,7 +511,7 @@ efm = function(envirfile=NULL) {
  }
 
  #helpfunction to get value in from user and store
- setValueUser <- function(what1,what2,txt,allowNULL=FALSE) {
+ setValueUser <- function(what1,what2,txt,allowNULL=FALSE,allowText=FALSE) {
    listopt <- get(what1,envir=mmTK) #get object what 1.
    val <- listopt[[what2]]
    if(is.null(val)) val ="" #gwidgets2 does not handle NULL, must use empty string
@@ -524,10 +524,13 @@ efm = function(envirfile=NULL) {
     if(allowNULL && GUIval=="") { #if accepting empty string
       tmp = NULL #Insert NULL
     } else {
-      tmp <- as.numeric(GUIval) #insert new value
-      if(is.na(tmp)) {
-       NAerror(what2)
-       return()
+      tmp <- GUIval
+      if(!allowText) {
+        tmp <- as.numeric(GUIval) #insert new value
+        if(is.na(tmp)) {
+          NAerror(what2)
+          return()
+        }
       }
     }
     listopt[[what2]] <- tmp
@@ -757,7 +760,7 @@ suppressWarnings({
       setValueUser(what1="optFreq",what2="wildsize",txt="Set number of missmatches (wildcards) in false positive match:") 
     }),
     gWidgets2::gaction('Set URL for STRidER import',handler=function(h,...) {  
-      setValueUser(what1="STRidER",what2="url",txt="Set URL path:") 
+      setValueUser(what1="STRidER",what2="url",txt="Set URL path:",allowText=TRUE) 
     })
   ),
   Optimization=list(
@@ -858,7 +861,7 @@ suppressWarnings({
  if(!is.null(wd)) setwd(wd)
  
  #Main window:
- mainwin <- gWidgets2::gwindow(format(softname), visible=FALSE, width=mwW,height=mwH)
+ mainwin <- gWidgets2::gwindow(softname, visible=FALSE, width=mwW,height=mwH)
  gWidgets2::gmenu(mblst,container=mainwin)
  nb = gWidgets2::gnotebook(container=mainwin)
  tabGEN = gWidgets2::glayout(spacing=spc,container=nb,label="Generate data") #tab1: Generates data(with peak heights) for a given model (plot EPG in addition)
