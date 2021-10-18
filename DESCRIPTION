@@ -1,8 +1,8 @@
 Package: euroformix
 Type: Package
 Title: A Quantitative Model for Interpreting DNA Mixtures
-Version: 3.3.2
-Date: 2021-10-06
+Version: 3.3.3
+Date: 2021-10-14
 Author: Oyvind Bleka <oyvble@hotmail.com>
 Maintainer: Oyvind Bleka <oyvble@hotmail.com>
 Description: Contains procedures for maximization, integration and MCMC of likelihoods of a quantitative model for DNA mixtures (STR/SNP) for a general specifications of hypotheses. It also contains procedures for estimating the profiles of unknown contributors (deconvolution). The implemented model takes care of drop-out, drop-in, degradation, stutters (both backward and forward). It also contains a graphical user interface (efm) to ease the use.
@@ -10,7 +10,6 @@ URL: http://euroformix.com/
 NeedsCompilation: yes 
 License: GPL(>=2)
 Depends: R (>= 3.0.1)
-LinkingTo: BH
 Suggests: 
 	gWidgets2,
 	cubature,

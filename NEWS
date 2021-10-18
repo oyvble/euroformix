@@ -1,3 +1,8 @@
+EuroForMix v3.3.3 (Release date: 2021-10-14)
+=============================================
+Faster computations (~10% increase).
+- Now using Rmath::pgamma instead of boost::gamma_p function in the C-code (the BH R-package is no longer required).
+
 EuroForMix v3.3.2 (Release date: 2021-10-06)
 =============================================
 

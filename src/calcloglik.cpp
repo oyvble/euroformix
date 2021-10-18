@@ -15,21 +15,13 @@ Both functions first structure data in the EFMmarker class before calculating th
 2) cumvalgammaC calls 'calccumval' (all model types): Calculates the cumulative probabilities of AT (analytical threshold) and maxY (max obtainable PH) for each alleles separately (conditioned on the others)
 */
 
-
-#include <iostream> //print to terminal
-#include <fstream> ////READ FROM DATA
 #include <vector> //vector storage
 #include <cmath> //includes lgamma
-#include <ctime> //calculate time
 #include <thread> //used to obtain number of logical processes
-#include <string> //
-#include <stdio.h> //indludes printf-function
 #include <omp.h> //parallelization
-#include <boost/math/special_functions/gamma.hpp> 
+#include <Rmath.h> //includes pgamma
 
 using namespace std;
-using namespace boost::math;
-//using namespace dlib; Conflict with boost::math it seems...
 
 class EFMmarker {
 	private: 
@@ -371,12 +363,8 @@ class EFMmarker {
 							//evidProb *= lambda*exp(lambda*(Yvec[a]-AT))*prC*Fvec[a]; //add to dropin prob to sum			
 							logevidProb += dropin0[cind]; //log(*lambda) - (*lambda)*(Yvec[cind] - (*AT) ) + log(*prC) + log(Fvec[a]); //add to dropin prob to sum										
 						}							
-					} else if(shapev2[a] > smalltol) { //IF PH missing  and contribution(it't a dropout //CONTRIBUTION SET (B)
-						try{ //high values of shape1 with low values of const1 causes error -> Need to handle the exception to avoid crash
-							logevidProb += log( gamma_p(shapev2[a],(*AT)*const1) );  //Add log(dropout-probability)
-						} catch(...) {
-							logevidProb += log(0); //Add with -INF
-						}
+					} else if(shapev2[a] > smalltol) { //IF PH missing  and contribution(it't a dropout //CONTRIBUTION SET (B)						
+						logevidProb += pgamma(*AT, shapev2[a],scale, 1, 1); //log( gamma_p(shapev2[a],(*AT)*const1) );  //Add log(dropout-probability)							
 					}
 				} //end for each replicates (r)
 			} //end for each observed alleles
@@ -391,12 +379,8 @@ class EFMmarker {
 					if(BWPvec[a] != -1) { //if a+1 stutter of a exists (found in BWPstutter info)
 						shape1 += (*xiB0)*shapev[BWPvec[a]]; //proportion obtained from allele a+1
 					}
-					if( shape1>smalltol) { //if there was a contribution, we need to calculate the prob for dropout
-						try{ //high values of shape1 with low values of const1 causes error -> Need to handle the exception to avoid crash
-							logevidProb += nRep*log( gamma_p(shape1,(*AT)*const1) ); //scaling with number replicates
-						} catch(...) {
-							logevidProb += log(0); //Add with -INF
-						}
+					if( shape1>smalltol) { //if there was a contribution, we need to calculate the prob for dropout						
+							logevidProb += nRep*pgamma(*AT, shape1,scale, 1, 1); //log( gamma_p(shape1,(*AT)*const1) ); //scaling with number replicates
 					}
 				}
 			}
@@ -505,11 +489,7 @@ class EFMmarker {
 						
 			//Calculate for the dropout allele (also including potential stutters:
 			if(shapev[nAlleles-1]>smalltol) { //only if any contributors
-				try{ //high values of shape1 with low values of const1 causes error -> Need to handle the exception to avoid crash
-					logevidProb += log( gamma_p(shapev[nAlleles-1],(*AT)*const1) ); 
-				} catch(...) {
-					logevidProb += log(0); //Add with -INF
-				}
+					logevidProb += pgamma(*AT, shapev[nAlleles-1],scale, 1, 1); //log( gamma_p(shapev[nAlleles-1],(*AT)*const1) ); 
 			}
 			
 			if(!anyDropin) { //if no drop-in occured
@@ -624,11 +604,7 @@ class EFMmarker {
 						
 			//Calculate for the dropout allele (also including potential stutters:
 			if(shapev[nAlleles-1]>smalltol) { //only if any contributors
-				try{ //high values of shape1 with low values of const1 causes error -> Need to handle the exception to avoid crash
-					logevidProb += log( gamma_p(shapev[nAlleles-1],(*AT)*const1) ); 
-				} catch(...) {
-					logevidProb += log(0); //Add with -INF
-				}
+					logevidProb += pgamma(*AT, shapev[nAlleles-1],scale, 1, 1); //log( gamma_p(shapev[nAlleles-1],(*AT)*const1) ); 
 			}
 			//Need to add this block to calc unobserved potential stutters
 			for (a = 0; a < nPstutters; a++) { //traverse for each unobserved potential stutters
@@ -640,11 +616,7 @@ class EFMmarker {
 					shape1 += (*xiB0)*shapev[BWPvec[a]]; //proportion obtained from allele a+1
 				}
 				if( shape1 > smalltol ) { //if there was a contribution, we need to calculate the prob for dropout
-					try{ //high values of shape1 with low values of const1 causes error -> Need to handle the exception to avoid crash
-						logevidProb += log( gamma_p(shape1,(*AT)*const1) ); //
-					} catch(...) {
-						logevidProb += log(0); //Add with -INF
-					}
+						logevidProb += pgamma(*AT, shape1,scale, 1, 1); //log( gamma_p(shape1,(*AT)*const1) ); //
 				}
 			}
 			
@@ -800,14 +772,16 @@ class EFMmarker {
 										logevidProb += log(*lambda) - (*lambda)*(Yvec[cind] - (*AT) ) + log(*prC) + log(Fvec[a]); //add to dropin prob to sum										
 									}							
 								}  else if(shapev2[a]>smalltol) { //IF PH missing  and contribution(it't a dropout //CONTRIBUTION SET (B)
-									logevidProb += log( gamma_p(shapev2[a],(*AT)*const1) );  //Add log(dropout-probability)
+									logevidProb += pgamma(*AT, shapev2[a],scale, 1, 1); //log( gamma_p(shapev2[a],(*AT)*const1) );  //Add log(dropout-probability)
 								}
 							} else { //modify if allele index is same (assures that Yvec[cind]>=(*AT) (see early in loop)
 								if(shapev2[a]>smalltol) { //If contribution and PH>0  					//CONTRIBUTION SET (A)
 									if(j==0) { //CASE OF PH
-										logevidProb += log( gamma_p(shapev2[a],Yvec[cind]*const1) -  gamma_p(shapev2[a],(*AT)*const1) );  //evaluate for upper limit - lower limit
+										logevidProb += log( pgamma(Yvec[cind], shapev2[a],scale, 1, 0) - pgamma(*AT, shapev2[a],scale, 1, 0));
+										//logevidProb += log( gamma_p(shapev2[a],Yvec[cind]*const1) -  gamma_p(shapev2[a],(*AT)*const1) );  //evaluate for upper limit - lower limit
 									} else if(j==1) { //in case of j=1:  //CASE OF maxY
-										logevidProb += log( gamma_p(shapev2[a],(*maxY)*const1) - gamma_p(shapev2[a],(*AT)*const1) );  //evaluate for upper limit - lower limit										
+										logevidProb += log( pgamma(*maxY, shapev2[a],scale, 1, 0) - pgamma(*AT, shapev2[a],scale, 1, 0));
+										//logevidProb += log( gamma_p(shapev2[a],(*maxY)*const1) - gamma_p(shapev2[a],(*AT)*const1) );  //evaluate for upper limit - lower limit										
 									} 
 									
 								} else { //If contribution and PH>0 //DROPIN SET (C)
@@ -834,7 +808,7 @@ class EFMmarker {
 								shape1 += (*xiB0)*shapev[BWPvec[a]]; //proportion obtained from allele a+1
 							}
 							if( shape1 > smalltol ) { //if there was a contribution, we need to calculate the prob for dropout
-								logevidProb += nRep*log( gamma_p(shape1,(*AT)*const1) ); //scaling with number replicates
+								logevidProb += nRep*pgamma(*AT, shape1,scale, 1, 1); //log( gamma_p(shape1,(*AT)*const1) ); //scaling with number replicates
 							}
 						}
 					}
