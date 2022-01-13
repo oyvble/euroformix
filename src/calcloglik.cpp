@@ -18,7 +18,9 @@ Both functions first structure data in the EFMmarker class before calculating th
 #include <vector> //vector storage
 #include <cmath> //includes lgamma
 #include <thread> //used to obtain number of logical processes
+#ifdef _OPENMP
 #include <omp.h> //parallelization
+#endif
 #include <Rmath.h> //includes pgamma
 
 using namespace std;
@@ -880,9 +882,11 @@ void loglikgammaC(double *logLik, int *NOC, int *NOK, int *knownGind, double *mi
 	//isPhi = boolean of whether Real domain of mixture proportion variable should be considered (must transform back)
 	//anyRel = boolean of whether any of the unknowns are related 
 	
+#ifdef _OPENMP
 	int numThreads = thread::hardware_concurrency();
 	int useThreads = min(numThreads,*maxThreads);
-	omp_set_num_threads(useThreads);  //set number of threads to use 
+	omp_set_num_threads(useThreads);  //set number of threads to use
+#endif
 	
 	//Baseline of Backward (BW) expected stutter param per marker
 	//Slope of Backward (BW) expected stutter param per marker
@@ -940,9 +944,11 @@ void cumvalgammaC(double *pvalPH, double *pvalMAX, double *maxY, int *NOC, int *
 	//pval PH/AT/MAX  cumulative value vectors with size nReps*nAlleles' 
 	//maxY	is maximum value to use
 
+#ifdef _OPENMP
 	int numThreads = thread::hardware_concurrency();
 	int useThreads = min(numThreads,*maxThreads);
-	omp_set_num_threads(useThreads);  //set number of threads to use 
+	omp_set_num_threads(useThreads);  //set number of threads to use
+#endif
 	
 	//Baseline of Backward (BW) expected stutter param per marker
 	//Slope of Backward (BW) expected stutter param per marker
