@@ -5,10 +5,9 @@
 #' @param mlefit A fitted mle object from contLikMLE function (assuming Hp fitted object)
 #' @param tipind Index in condOrder which are replaced with a random man
 #' @param ntippet Number of samples to draw
-#' @param verbose Boolean whether printing optimization progress. Default is FALSE.
+#' @param verbose Whether printing optimization progress. Default is FALSE.
 #' @param seed The user can set seed if wanted
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
-
 #' @return logL log-likelihood values of noncontributors
 #' @export 
 

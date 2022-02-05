@@ -5,7 +5,8 @@
 \title{prepareData}
 \usage{
 prepareData(mixData, refData = NULL, popFreq = NULL, minF = NULL,
-  normalize = FALSE, threshT = NULL, fillHomGen = TRUE)
+  normalize = FALSE, threshT = NULL, fillHomGen = TRUE,
+  verbose = TRUE)
 }
 \arguments{
 \item{mixData}{A list with evidence profiles [[sample]][[locus]]$adata/hdata}
@@ -16,11 +17,13 @@ prepareData(mixData, refData = NULL, popFreq = NULL, minF = NULL,
 
 \item{minF}{The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.}
 
-\item{normalize}{A boolean of whether normalization should be applied or not. Default is FALSE.}
+\item{normalize}{Whether normalization should be applied or not. Default is FALSE.}
 
 \item{threshT}{A detection threshold value or thresholds per makers (marker names must be defined). NULL ignores filtering.}
 
-\item{fillHomGen}{A boolean of whether to fill in homozygote genotypes given with one allele}
+\item{fillHomGen}{Whether to fill in homozygote genotypes given with one allele}
+
+\item{verbose}{Whether printing out information}
 }
 \value{
 Restructured data in list used as input for functions evaluating the liklihood function

@@ -15,11 +15,11 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
 \arguments{
 \item{NOC}{#The vector of number of contributors to search}
 
-\item{modelDegrad}{Boolean of whether degradation should be modeled (requires kit to be specified): can be vector (FALSE,TRUE)}
+\item{modelDegrad}{Whether degradation should be modeled (requires kit to be specified): can be vector (FALSE,TRUE)}
 
-\item{modelBWstutt}{Boolean of whether backward stutter should be modeled: can be vector (FALSE,TRUE)}
+\item{modelBWstutt}{Whether backward stutter should be modeled: can be vector (FALSE,TRUE)}
 
-\item{modelFWstutt}{Boolean of whether forward stutter should be modeled: can be vector (FALSE,TRUE)}
+\item{modelFWstutt}{Whether forward stutter should be modeled: can be vector (FALSE,TRUE)}
 
 \item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
 
@@ -47,7 +47,7 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
 
 \item{kit}{Used to model degradation. Must be one of the shortnames of kit: check getKit()}
 
-\item{verbose}{Boolean whether printing optimization progress. Default is TRUE.}
+\item{verbose}{Whether printing optimization progress. Default is TRUE.}
 
 \item{maxIter}{Maximum number of iterations for the optimization. Default is 100.}
 
@@ -69,10 +69,7 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
 ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
 }
 \description{
-contLikSearch search through the models  optimizes the likelihood function of the DNA mixture model
-}
-\details{
-Function calls the likelihood function implemented in C++ which uses the package Boost and paralellisation using OpenMP
+contLikSearch search through the models which optimizes the likelihood function
 }
 \author{
 Oyvind Bleka

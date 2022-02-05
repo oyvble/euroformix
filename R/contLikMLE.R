@@ -1,8 +1,7 @@
-
 #' @title contLikMLE
 #' @author Oyvind Bleka
 #' @description contLikMLE optimizes the likelihood function of the DNA mixture model 
-#' @details Function calls the likelihood function implemented in C++ which uses the package Boost and paralellisation using OpenMP
+#' @details Function calls the likelihood function implemented in C++ which uses OpenMP for parallelization
 #'
 #' @param nC Number of contributors in model. Must be a constant.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
@@ -19,7 +18,7 @@
 #' @param pXi Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.
 #' @param delta Scaling of variation of normal distribution when drawing random startpoints. Default is 1.
 #' @param kit Used to model degradation. Must be one of the shortnames of kit: check getKit()
-#' @param verbose Boolean whether printing optimization progress. Default is TRUE.
+#' @param verbose Whether printing optimization progress. Default is TRUE.
 #' @param maxIter Maximum number of iterations for the optimization. Default is 100.
 #' @param knownRel gives the index of the reference which the 1st unknown is related to.
 #' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)
@@ -31,7 +30,6 @@
 #' @return ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
 #' @export
 #' @examples
-#' @examples
 #' \dontrun{
 #' kit = "ESX17"
 #' sep0 = .Platform$file.sep
@@ -42,9 +40,10 @@
 #' popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
 #' samples = sample_tableToList(tableReader(evidfn))
 #' refData = sample_tableToList(tableReader(reffn))
-#' dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) #obtain data to use for analysis
+#' dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) 
 #' plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
-#' mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
+#' mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,
+#' 	xi=NULL,prC=0.05,lambda=0.01,seed=1)
 #' }
 
 
@@ -99,17 +98,17 @@ contLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
     startind1 =  tail(ind1,1)
     startindR =  tail(indR,1)
   }
-  if(usedeg) { #if degradation 
-    alpha0 <- mean(sapply(samples,function(x) max(sapply(x, function(y) sum(as.numeric(y$hdata)))))/(2)) #mean het. allele. peak height at largest marker when degradation
-    th0 <- c(alpha0,0.4,0.8)
-    suppressWarnings({ tryCatch({  th0 <- euroformix::fitgammamodel(sumY,x=meanbp,niter=1,delta=0,offset=0,scale=1)  }, error = function(e) e) }) #fit model with DEG
-  } else { #if no degradation
-    alpha0 <- mean(sapply(samples,function(x) mean(sapply(x, function(y) sum(as.numeric(y$hdata)))))/(2)) #mean het. allele. peak height averaged on all markers used when no degradation
-    th0 <- c(alpha0,0.4)
-    suppressWarnings({ tryCatch({ th0 <- euroformix::fitgammamodel(sumY,niter=1,delta=0)  }, error = function(e) e) }) #fit sum of peak height model
-  }
-  #if(verbose) cat(paste0("theta0=",paste0(th0,collapse=",")))  
   
+  #obtain good start values based on sum Peak heights:
+  if(!usedeg) meanbp = NULL
+  th0 <- NULL
+  tryCatch({
+    #y=sumY;x=meanbp;niter=10;delta=1;offset=0;scale=1
+    #euroformix::fitgammamodel(y=sumY,x=meanbp,niter=10,delta=delta,offset=0,scale=1,plott = TRUE)
+    th0 <- euroformix::fitgammamodel(y=sumY,x=meanbp,niter=10,delta=delta,offset=0,scale=1)
+  })
+  if(is.null(th0) || any(is.infinite(th0))) stop("Failed to find suitable start values in fitgammamodel!")
+   
   #PREPEARING THE LIKELIHOOD OPTIMZATION (what parameters are provided?):
   useParamOther = rep(TRUE,3)  #index of parameters used (set NA if fixed)
   if(!usedeg) useParamOther[1] = FALSE #degrad not used

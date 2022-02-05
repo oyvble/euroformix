@@ -6,8 +6,9 @@
 #' @param kitname Name of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @param refcond condition on a list$refname$locname$adata of reference alleles which are labeled in EPG
-#' @param showPH Boolean whether peak heights should be included in the plot
+#' @param showPH Whether peak heights should be included in the plot
 #' @export
+
 plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
  #Data is list with allele and height data. Only one sample!
  #for selected sample:

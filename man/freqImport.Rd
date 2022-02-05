@@ -9,18 +9,18 @@ freqImport(f = NULL, url = FALSE, xml = FALSE)
 \arguments{
 \item{f}{The path of file(s) or an url. If file(s), then the url argument must be FALSE.}
 
-\item{url}{A boolean of whether f is pointing to an url or not. Default is FALSE.}
+\item{url}{Whether f is pointing to an url or not. Default is FALSE.}
 
-\item{xml}{A boolean of whether f is pointing to an xml format file or not. If FALSE then table formats with standard separator types are considered. Default is FALSE.}
+\item{xml}{Whether f is pointing to an xml format file or not. If FALSE then table formats with standard separator types are considered. Default is FALSE.}
 }
 \value{
 dblist A list giving the population frequencies for every population
 }
 \description{
-FreqImport is a function to import allele frequencies directly from file(s) supporting text format, xml. It also supports an URL path reading XML format (as for the STRidER webpage).
+FreqImport is a function to import allele frequencies directly from file(s) or URLs
 }
 \details{
-The function reads XML as input, directly from an URL or local file, and return a list of populations.
+The function supports XML as input, directly from an URL or local file (for instance from the STRidER webpage).
 }
 \author{
 Oyvind Bleka

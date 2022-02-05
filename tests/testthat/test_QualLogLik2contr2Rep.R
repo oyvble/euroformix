@@ -3,11 +3,7 @@
 
 #rm(list=ls());library(euroformix);library(testthat)
 kit0 = "testkit" #name of selected kit
-
-expect_approx = function(tol,x,y) { #helpfunction with specified tolerance
-  expect_equal(as.numeric(x),as.numeric(y),tolerance = tol)
-}
-
+s0 = 3 #signif
 #Helpfunction for checking model after model fit
 checkModel0Unknown = function(mle) {
   
@@ -177,8 +173,8 @@ test_that("Hyp 1: R1+R2 (common drop-out parameter):", {
   #steptol=1e-6; prDv0=c(0.1,0.35,0.7); knownRef=NULL; nC=NOC;samples=dat$samples;popFreq=dat$popFreq;refData=dat$refData;condOrder=cond;prC=pCv;fst=fstv;maxIter=maxiter;prDcontr = c(0,NA);prDcommon = NULL
   mle = qualLikMLE(nC=2,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,maxIter=maxiter)
 
-  expect_approx(1e-6,mle$loglik,c( -95.1168543762792) ) #compare with manual derived
-  expect_approx(1e-6,mle$pDhatContr,c(  0.0730126, 0.0730126) ) #compare with manual derived
+  expect(round(mle$loglik,s0),c( -95.117) ) #compare with manual derived
+  expect(round(mle$pDhatContr,s0),c( 0.073, 0.073) ) #compare with manual derived
   
   checkModel0Unknown(mle) #check per-marker numeric
 })
@@ -190,10 +186,9 @@ test_that("Hyp 2: R1+R2 (cond zero drop-out prob for R1):", {
 #steptol=1e-6; prDv0=c(0.1,0.35,0.7); knownRef=NULL; nC=NOC;samples=dat$samples;popFreq=dat$popFreq;refData=dat$refData;condOrder=cond;prC=pCv;fst=fstv;maxIter=maxiter;prDcontr = c(0,NA);prDcommon = NULL
   mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,maxIter=maxiter,prDcontr = c(0,NA),prDcommon = NULL)
 
-  expect_approx(1e-6,mle$pDhatContr,c( 0.0000000,0.146267) ) #compare with manual derived
-  expect_approx(1e-6,mle$loglik,c( -92.9160998773281) ) #compare with manual derived
+  expect(round(mle$pDhatContr,s0),c( 0.000, 0.146) ) #compare with manual derived
+  expect(round(mle$loglik,s0),c( -92.916) ) #compare with manual derived
   checkModel0Unknown(mle) #check per-marker numeric
-  
 })
 
 
@@ -202,8 +197,8 @@ test_that("Hyp 3: R1+R2 (two drop-out prob params):", {
   cond = c(1,2)
   mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,maxIter=100,prDcommon = c(1,2))
   
-  expect_approx(1e-6,mle$pDhatContr,c( 2.148840e-07, 1.462671e-01) ) #compare with manual derived
-  expect_approx(1e-6,mle$loglik,c( -92.9161043007301) ) #compare with manual derived
+  expect(round(mle$pDhatContr,s0),c( 0.000, 0.146) ) #compare with manual derived
+  expect(round(mle$loglik,s0),c( -92.916) ) #compare with manual derived
   checkModel0Unknown(mle) #check per-marker numeric
 })
 
@@ -214,9 +209,8 @@ test_that("Hyp 4: R1+1U (common drop-out parameter):", {
   cond = c(1,0)
   mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=maxiter)
   
-  expect_approx(1e-6,mle$loglik,c( -77.6593191143117) ) #compare with manual derived
-  expect_approx(1e-6,mle$pDhatContr ,c(   0.03809141, 0.03809141) ) #compare with manual derived
-
+  expect(round(mle$loglik,s0),c( -77.659) ) #compare with manual derived
+  expect(round(mle$pDhatContr,s0) ,c(   0.038, 0.038) ) #compare with manual derived
   checkModel1Unknown(mle) #check per-marker numeric
 })
 
@@ -226,9 +220,8 @@ test_that("Hyp 5: R1+1U (cond zero drop-out prob for R1):", {
   cond = c(1,0)
   mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=maxiter,prDcontr = c(0,NA))
   
-  expect_approx(1e-6,mle$loglik,c( -76.45014717778) ) #compare with manual derived
-  expect_approx(1e-6,mle$pDhatContr ,c(   0.00000000, 0.07507119) ) #compare with manual derived
-  
+  expect(round(mle$loglik,s0),c( -76.45) ) #compare with manual derived
+  expect(round(mle$pDhatContr,s0) ,c(   0, 0.075) ) #compare with manual derived
   checkModel1Unknown(mle) #check per-marker numeric
 })
 
@@ -237,9 +230,8 @@ test_that("Hyp 6: R1+1U (two drop-out prob params):", {
   cond = c(1,0)
   mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=100,prDcommon = c(1,2))
   
-  expect_approx(1e-6,mle$loglik,c( -76.4501520858114) ) #compare with manual derived
-  expect_approx(1e-6,mle$pDhatContr ,c(  2.195409e-07,7.507018e-02) ) #compare with manual derived
-  
+  expect(round(mle$loglik,s0),c( -76.45) ) #compare with manual derived
+  expect(round(mle$pDhatContr,s0) ,c(  0, 0.075) ) #compare with manual derived
   checkModel1Unknown(mle) #check per-marker numeric
 })
 

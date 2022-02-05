@@ -6,7 +6,7 @@
 #' @param fst Assumed theta/fst-correction
 #' @param refKlist contains a list of vector of alleles for the known typed reference profiles (a,b,c,d...)
 #' @param refRlist contains a list of vector of alleles for a related reference profile (a,b)
-#' @param ibd the identical by decent coefficients of the relationship denotation
+#' @param ibd The identical by decent coefficients of the relationship denotation
 #' @return Glist A list with genotypes and genotype probabilities for each locus.
 #' @export 
  getGlist <- function(popFreq,fst=0,refKlist=NULL,refRlist=NULL,ibd=c(1,0,0)) {

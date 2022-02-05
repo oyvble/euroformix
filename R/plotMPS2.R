@@ -7,7 +7,7 @@
 #' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param grpsymbol A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.
-#' @param locYmax A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
+#' @param locYmax Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
 #' @param options A list of possible plot configurations. See comments below
 #' @return sub A plotly widget
 #' @export
@@ -162,8 +162,8 @@ for(ss in sn) {
 
    p = plotly::plot_ly(dfs,height=h1,showlegend = TRUE,colors=repcols[1:nR] )
    p = plotly::layout(p, xaxis = list(showticklabels = FALSE,title = ""),yaxis=list(range=c(0,ymax1), showline = TRUE,title = ""))
-   if(!is.null(AT))   p = plotly::layout(p,shapes = list(hline(AT, xr=c(-0.5,nA1-0.5) ) ))
-   if(!is.null(ST))   p = plotly::layout(p,shapes = list(hline(ST, xr=c(-0.5,nA1-0.5) ) ))
+   if(!is.null(AT))   p = plotly::layout(p,shapes = list(hline(AT1, xr=c(-0.5,nA1-0.5) ) ))
+   if(!is.null(ST))   p = plotly::layout(p,shapes = list(hline(ST1, xr=c(-0.5,nA1-0.5) ) ))
    p = plotly::add_trace(p,type = "bar", x = xpos1,y=~Height,name=repcol,hoverinfo="y+text",hoverlabel=list(font=list(size=12),namelength=1000),text =~Allele,color=as.factor(repcol))
 
    if(max(atxtL)<=5) p = plotly::add_annotations(p, x=xpos0 ,y=rep(0,nA1),text=av1 ,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-10)  #ADD ALLELE NAMES

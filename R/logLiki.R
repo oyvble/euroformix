@@ -1,14 +1,13 @@
 #' @title logLiki
 #' @author Oyvind Bleka
-#' @description logLiki returns the likelihood for each markers (based on the MLE results)
+#' @description logLiki returns the likelihood for each marker based on the MLE fit
 #'
 #' @param mlefit Fitted object using contLikMLE
-#' @param verbose Boolean whether printing deconvolution progress. Default is TRUE.
+#' @param verbose Whether printing deconvolution progress. Default is TRUE.
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
 #' @return ret A vector with log-likelihood-values for each locus for given model
 #' @export
 
-#Get value of likelihood for each marker given model fit.
 logLiki <- function(mlefit,verbose=FALSE,maxThreads=32){
   
   thhat <- mlefit$fit$thetahat #condition on mle parameter

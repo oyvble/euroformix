@@ -18,9 +18,9 @@ plotEPG2(mixData, kit, refData = NULL, AT = NULL, ST = NULL,
 
 \item{ST}{A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names}
 
-\item{dyeYmax}{A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)}
+\item{dyeYmax}{Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)}
 
-\item{plotRepsOnly}{A boolean of whether only replicate-plot is shown in case of multiple samples (TRUE is default)}
+\item{plotRepsOnly}{Whether only replicate-plot is shown in case of multiple samples (TRUE is default)}
 
 \item{options}{A list of possible plot configurations. See comments below}
 }

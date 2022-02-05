@@ -1,11 +1,13 @@
 #' @title combineRank
 #' @author Oyvind Bleka
 #' @description A search algorithm which creates a ranked table of the greatest combined sum from each vector-elements in a list.
-#' @details The procedure takes a list with vector elements of decreased sorted values and creates a ranked table of the most probable summed values (sum) from each vector-elements in the list.
+#' @details Helpfunction used in earlier version of deconvolution to obtain a global ranking of full profiles (across all markers)
+
+#' The procedure takes a list with vector elements of decreased sorted values and creates a ranked table of the most probable summed values (sum) from each vector-elements in the list.
 #'
 #' The search is stopped when SUM(exp(sum-loghdval))>alpha or when the size of the ranked table is equal maxsearch
 #'
-#' The search algorithm tries iterately compares a set new paths (by considering one step down in the ranked list for each list-elements). The information of earlier visited paths are stored with corresponing total sum. For the considered set of paths, the next iterative optimal path is the one with largest total sum.
+#' The search algorithm iterately compares a set new paths (by considering one step down in the ranked list for each list-elements). The information of earlier visited paths are stored with corresponing total sum. For the considered set of paths, the next iterative optimal path is the one with largest total sum.
 #'
 #' @param dlist A list with vector elements of decreased sorted values.
 #' @param loghdval An optional value used to stop the search together with alpha.
@@ -13,7 +15,7 @@
 #' @param maxsearch The size of the ranked deconvolved profile table will not exceed this number (used to avoid endless search).
 #' @return ret A list(rankG,pG) where rankG is the ranked genotypes with corresponding probabilities in pG.
 #' @export
-#' @keywords optimalisation
+#' @keywords discrete optimalisation
 combineRank <- function(dlist,loghdval=Inf,alpha=0.99,maxsearch=1000) {
  nD <- sapply(dlist,length)
  nL <- length(dlist)

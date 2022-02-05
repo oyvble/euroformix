@@ -5,9 +5,10 @@
 #' @param mixData List of adata- and hdata-elements. adata must be separated with LUSsymbol
 #' @param sn The Sample name, will be plotted in title.
 #' @param threshT The detection threshold can be shown in gray in the plot.
-#' @param refData condition on a list$refname$locname$adata of reference alleles which are labeled in EPG
+#' @param refData Condition on a list$refname$locname$adata of reference alleles which are labeled in EPG
 #' @param LUSsymbol The separator for each allele. Assumed to be "_" separating sequence variant and LUS.
 #' @export
+
 plotLUS <- function(mixData,sn="",refData=NULL,threshT=0,LUSsymbol="_") {
  #Data is list with allele and height data. Only one sample!
  locs <- toupper(names(mixData))

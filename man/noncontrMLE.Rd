@@ -14,7 +14,7 @@ noncontrMLE(mlefit, tipind = NULL, ntippet = 100, verbose = FALSE,
 
 \item{ntippet}{Number of samples to draw}
 
-\item{verbose}{Boolean whether printing optimization progress. Default is FALSE.}
+\item{verbose}{Whether printing optimization progress. Default is FALSE.}
 
 \item{seed}{The user can set seed if wanted}
 

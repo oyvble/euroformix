@@ -9,7 +9,7 @@ logLiki(mlefit, verbose = FALSE, maxThreads = 32)
 \arguments{
 \item{mlefit}{Fitted object using contLikMLE}
 
-\item{verbose}{Boolean whether printing deconvolution progress. Default is TRUE.}
+\item{verbose}{Whether printing deconvolution progress. Default is TRUE.}
 
 \item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
@@ -17,7 +17,7 @@ logLiki(mlefit, verbose = FALSE, maxThreads = 32)
 ret A vector with log-likelihood-values for each locus for given model
 }
 \description{
-logLiki returns the likelihood for each markers (based on the MLE results)
+logLiki returns the likelihood for each marker based on the MLE fit
 }
 \author{
 Oyvind Bleka

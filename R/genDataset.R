@@ -1,16 +1,16 @@
 #' @title genDataset
 #' @author Oyvind Bleka 
-#' @description Function for generating replicated mixture samples given same contributors and model parameters.
+#' @description Function for generating mixture samples for given model parameters
 #' @details genDataset samples random mixture peak heights given as gamma(rho*sum(h_k),tau), with h_k as peak height of k-te contributor.
 #' genData conditions on alleles given by refData. Empty references are generated with population frequencies.
 #' @param nC Number of contributors in model.
-#' @param popFreq A list of allele frequencies for a given population.
+#' @param popFreq A list with allele frequencies for a given population.
 #' @param mu Expected peak heights for a het. single contributor allele
 #' @param sigma Coeffecient of variance of peak heights.
-#' @param sorted Boolean for wheter sorting the contributors with respect to decreasingly mixture proportions.
+#' @param sorted Wheter sorting the contributors with respect to decreasingly mixture proportions.
 #' @param threshT Required allele peak height in mixture (can be a vector with names giving the loci names)
-#' @param refData A list of given reference profiles given as refData[[i]][[s]]. Default is random from population. 
-#' @param mx A vector of known mixture proportions. Default is random uniform.
+#' @param refData A list with given reference profiles given as refData[[i]][[s]]. Default is random from population. 
+#' @param mx A vector with known mixture proportions. Default is random uniform.
 #' @param nrep Number of peak height replicates (same contributors) to generate. Default is 1.
 #' @param stutt A numerical stutter proportion (n-1). Default is 0.
 #' @param prC A numerical dropin probability (can be a vector with names giving the loci names). Default is 0. 

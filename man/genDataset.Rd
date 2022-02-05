@@ -11,19 +11,19 @@ genDataset(nC, popFreq, mu = 1000, sigma = 0.1, sorted = FALSE,
 \arguments{
 \item{nC}{Number of contributors in model.}
 
-\item{popFreq}{A list of allele frequencies for a given population.}
+\item{popFreq}{A list with allele frequencies for a given population.}
 
 \item{mu}{Expected peak heights for a het. single contributor allele}
 
 \item{sigma}{Coeffecient of variance of peak heights.}
 
-\item{sorted}{Boolean for wheter sorting the contributors with respect to decreasingly mixture proportions.}
+\item{sorted}{Wheter sorting the contributors with respect to decreasingly mixture proportions.}
 
 \item{threshT}{Required allele peak height in mixture (can be a vector with names giving the loci names)}
 
-\item{refData}{A list of given reference profiles given as refData[[i]][[s]]. Default is random from population.}
+\item{refData}{A list with given reference profiles given as refData[[i]][[s]]. Default is random from population.}
 
-\item{mx}{A vector of known mixture proportions. Default is random uniform.}
+\item{mx}{A vector with known mixture proportions. Default is random uniform.}
 
 \item{nrep}{Number of peak height replicates (same contributors) to generate. Default is 1.}
 
@@ -43,7 +43,7 @@ genDataset(nC, popFreq, mu = 1000, sigma = 0.1, sorted = FALSE,
 List with elements theta,samples,refData where theta is the true parameters of the model. samples is a list with samples which for each samples has locus-list elements with list elements adata and hdata
 }
 \description{
-Function for generating replicated mixture samples given same contributors and model parameters.
+Function for generating mixture samples for given model parameters
 }
 \details{
 genDataset samples random mixture peak heights given as gamma(rho*sum(h_k),tau), with h_k as peak height of k-te contributor.

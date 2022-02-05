@@ -1,12 +1,13 @@
 #' @title plotTopLUS
 #' @author Oyvind Bleka
 #' @description A dataplotter for MPS data with LUS format
-#' @details  Plots the expected coverage reads of the top genotypes. The coverage reads for corresponding alleles (one sample) are superimposed.
+#' @details Plots the expected coverage reads of the top genotypes. The coverage reads for corresponding alleles (one sample) are superimposed.
 #' @param MLEobj An object returned from contLikMLE
 #' @param DCobj An object returned from devonvolve: Must be run with same object as MLEobj
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @param LUSsymbol The separator for each allele. Assumed to be "_" separating sequence variant and LUS.
 #' @export
+
 plotTopLUS <- function(MLEobj,DCobj=NULL,threshT=0,LUSsymbol="_") {
   if(is.null(DCobj)) DCobj <- deconvolve(MLEobj,maxlist=1) #get top candidate profiles
   #extract info from DC (deconvolution) object

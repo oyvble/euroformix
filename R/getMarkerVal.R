@@ -1,4 +1,3 @@
-#
 #' @title getMarkerVal 
 #' @author Oyvind Bleka
 #' @description Extract value with respect to names of an input (case insensitive)

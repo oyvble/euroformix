@@ -1,3 +1,28 @@
+EuroForMix v3.4.0 (Release date: 2022-02-05)
+=============================================
+
+The STRidER import issue is fixed:
+ -> Connection is using curl instead of Rcurl to parse text from file directly (package dependency changed).
+
+Important decision changes:
+- In efm:L2140: References which are put forward to the Hypothesis specification GUI, but not included as contributors, are included as typed non-contributors. 
+- Model validation calculations slightly modified to integrate from 'AT-1' instead of 'AT'; calcloglik.cpp:L(782,785,793,795).
+ -> The reason is that peak heights are discrete and not continuous.
+ -> This avoids zero pvalue when observed peak=AT .
+- The unknown related individual under Hd is now last contributor.
+
+Minor updates:
+- Avoiding hardcoded flags in Makevars file enables better system compatibility for Linux/MAC (thanks to Simon Urbanek for this suggestion).
+- The numerical test code has been tidied up (testthat).
+- Fixed bug in plotMPS2: Marker specific AT/ST argument was not used if provided.
+- prepareData now does no longer require that alleles of references are stored in element name "adata".
+- The fitgammamodel function was updated: Make pre-fitting of optimization start points even better and more robust (based on linear regression):
+ -> The MLE approach calculations may give slightly different values, depending on the steptol parameter.
+- Fixed a formula error for kinship calculations when Fst>0 and at least two unknowns (thanks to Jerry Hoogenboom for highlighting this).
+ -> In calcloglik.cpp: The relatedness genotype probability is now calculated last (OK when having one relationship).
+ -> calcGjoint function was updated.
+ -> Several kinship hypotheses was added to test_logLik2contr1RepNoStutter.
+
 EuroForMix v3.3.3 (Release date: 2021-10-14)
 =============================================
 Faster computations (~10% increase).

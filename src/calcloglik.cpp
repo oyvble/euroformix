@@ -18,8 +18,10 @@ Both functions first structure data in the EFMmarker class before calculating th
 #include <vector> //vector storage
 #include <cmath> //includes lgamma
 #include <thread> //used to obtain number of logical processes
-#include <omp.h> //parallelization
 #include <Rmath.h> //includes pgamma
+#ifdef _OPENMP
+#include <omp.h> //parallelization
+#endif
 
 using namespace std;
 
@@ -53,8 +55,10 @@ class EFMmarker {
     //The constructor prepares the variables with necessary data (arguments in constructor)
 
 	//added for related individuals
-	vector<int> kindRel; //which contributor index the related individual has
-
+	//vector<int> kindRel; //which contributor index the related individual has
+	int kindRel0 = -1; //(unknown) contributor index of related (k=1,..,NOU)
+	int GindRel0 = -1; //genotype index of related
+	
 	public: 
 	vector< vector<double> > cumprobvals; //nAlleles x 2 matrix with cumulative probabilities (used in function	calccumval)
 	
@@ -125,23 +129,26 @@ class EFMmarker {
 		//Prepare vector for known contributors (and also unknown): Need to know positions!
 		GindKnown.assign(NOK,0); //genotype index in vector 
 		kindKnown.assign(NOK,0); //contributor index in vector
-		kindUnknown.assign(NOU,0); //contributor index in vector
-		kindRel.assign(NOC,-1); //genotype index in vector, one index for each contributors  (-1 means no related)
+		kindUnknown.assign(NOU,-1); //contributor index in vector
+		//kindRel.assign(NOC,-1); //genotype index in vector, one index for each contributors  (-1 means no related)
 		
 		cc = 0; //counters for known
 		j = 0; //counter for unknowns
 		for(i=0; i<NOC; i++) { //for each contributors:
-			kindRel[i] = relGind[i]; //copy genotype index 		
 			if(knownGind[i]>=0) { //If contributor is known (genotype given)
 				GindKnown[cc] = knownGind[i]; //copy genotype index
 				kindKnown[cc] = i; //insert contributor index
 				cc++; //update counter for knowns
 			} else { //if contributor is unknown (genotype not given)
-				kindUnknown[j] = i; //insert contributor index
+				if(relGind[i] != -1 ) { //in case of related
+					kindRel0 = j; //insert contributor index of unknowns
+					GindRel0 = relGind[i]; //insert genotype index
+				}					
+				kindUnknown[j] = i; //insert contributor index of unknown. 
 				j++; //update counter for unknowns
+				
 			}
-		}
-		
+		}		
 	} //end constructor
 	
 		
@@ -291,7 +298,7 @@ class EFMmarker {
 				}
 								
 				//CALCULATE GENOTYPE PROBS OF UNKNOWNS (MAY BE RELATED != -1)
-				if( kindRel[kindUnknown[k]] == -1 ) {
+				if( kindRel0 != k ) { //if unknown is not related
 					for(a = 0;a<2; a++) {
 						aind = outG1mat[jointGind[k]][a]; //get allele index of genotype g_a
 						genoProd *= ((*fst)*maTypedvec2[aind] + (1-*fst)*Fvec[aind]) / (1 + (nTyped2-1)*(*fst)); 
@@ -301,15 +308,13 @@ class EFMmarker {
 					if(outG1mat[jointGind[k]][0]!=outG1mat[jointGind[k]][1]) { // heterozygous variant
 						genoProd *=2; //multiply by 2  if het. variant
 					} 
-				} else { //IF RELATED WE CALL ANOTHER FUNCTION
-					// Multiply the genotype probability of unknown (potential) related individual (related index = kindUnknown[k])
-					genoProd *= prob_relUnknown( jointGind[k], kindRel[kindUnknown[k]], (ibd + 3*kindUnknown[k]), fst, &(maTypedvec2[0]), &nTyped2);	 //Note: scale with 3 because ibd is a '3-long vector' per contributor						
-					//LAST: UPDATE COUNTERS FOR ALLELES (a and b)
-					maTypedvec2[outG1mat[jointGind[k]][0]] += 1; //update allele count for particular allele
-					maTypedvec2[outG1mat[jointGind[k]][1]] += 1; //update allele count for particular allele
-					nTyped2 += 2; //update total count
-				}
-			} //end for each unknown contributor
+				} 
+			} //end for each unknown unrelated contributors
+
+			//AN UNKNOWN RELATED IS CALCULATED LAST (AFTER ALLELE COUNT UPDATES)
+			if( kindRel0 != -1 ) { //if an unknown was related (then k=kindRel0)
+				genoProd *= prob_relUnknown( jointGind[kindRel0], GindRel0, (ibd + 3*kindUnknown[kindRel0]), fst, &(maTypedvec2[0]), &nTyped2);	 //Note: scale with 3 because ibd is a '3-long vector' per contributor						
+			}
 
 			//////////////////////////////////////////////
 			//Calculating the inner sum-part begins here//
@@ -695,7 +700,7 @@ class EFMmarker {
 						}
 						
 						//CALCULATE GENOTYPE PROBS OF UNKNOWNS (MAY BE RELATED != -1)
-						if( kindRel[kindUnknown[k]] == -1 ) {
+						if( kindRel0 != k ) {
 							for(a = 0;a<2; a++) {
 								aind = outG1mat[jointGind[k]][a]; //get allele index of genotype g_a
 								genoProd *= ((*fst)*maTypedvec2[aind] + (1-*fst)*Fvec[aind]) / (1 + (nTyped2-1)*(*fst)); 
@@ -705,16 +710,12 @@ class EFMmarker {
 							if(outG1mat[jointGind[k]][0]!=outG1mat[jointGind[k]][1]) { // heterozygous variant
 								genoProd *=2; //multiply by 2  if het. variant
 							} 
-						} else { //IF RELATED WE CALL ANOTHER FUNCTION
-							// Multiply the genotype probability of unknown (potential) related individual (related index = kindUnknown[k])
-							genoProd *= prob_relUnknown( jointGind[k], kindRel[kindUnknown[k]], (ibd + 3*kindUnknown[k]), fst, &(maTypedvec2[0]), &nTyped2); //Note: scale with 3 because ibd is a '3-long vector' per contributor	
-							//LAST: UPDATE COUNTERS FOR ALLELES (a and b)
-							maTypedvec2[outG1mat[jointGind[k]][0]] += 1; //update allele count for particular allele
-							maTypedvec2[outG1mat[jointGind[k]][1]] += 1; //update allele count for particular allele
-							nTyped2 += 2; //update total count
-						}
-
+						} 
 						
+						//AN UNKNOWN RELATED IS CALCULATED LAST (AFTER ALLELE COUNT UPDATES)
+						if( kindRel0 != -1 ) { //if an unknown was related (k=kindRel0)
+							genoProd *= prob_relUnknown( jointGind[kindRel0], GindRel0, (ibd + 3*kindUnknown[kindRel0]), fst, &(maTypedvec2[0]), &nTyped2);	 //Note: scale with 3 because ibd is a '3-long vector' per contributor						
+						}						
 					} //end for each unknown contributor
 
 					//////////////////////////////////////////////
@@ -777,10 +778,10 @@ class EFMmarker {
 							} else { //modify if allele index is same (assures that Yvec[cind]>=(*AT) (see early in loop)
 								if(shapev2[a]>smalltol) { //If contribution and PH>0  					//CONTRIBUTION SET (A)
 									if(j==0) { //CASE OF PH
-										logevidProb += log( pgamma(Yvec[cind], shapev2[a],scale, 1, 0) - pgamma(*AT, shapev2[a],scale, 1, 0));
+										logevidProb += log( pgamma(Yvec[cind], shapev2[a],scale, 1, 0) - pgamma(*AT-1, shapev2[a],scale, 1, 0));
 										//logevidProb += log( gamma_p(shapev2[a],Yvec[cind]*const1) -  gamma_p(shapev2[a],(*AT)*const1) );  //evaluate for upper limit - lower limit
 									} else if(j==1) { //in case of j=1:  //CASE OF maxY
-										logevidProb += log( pgamma(*maxY, shapev2[a],scale, 1, 0) - pgamma(*AT, shapev2[a],scale, 1, 0));
+										logevidProb += log( pgamma(*maxY, shapev2[a],scale, 1, 0) - pgamma(*AT-1, shapev2[a],scale, 1, 0));
 										//logevidProb += log( gamma_p(shapev2[a],(*maxY)*const1) - gamma_p(shapev2[a],(*AT)*const1) );  //evaluate for upper limit - lower limit										
 									} 
 									
@@ -788,9 +789,9 @@ class EFMmarker {
 									anyDropin[r] = true; //there was at least one dropin
 									logevidProb += log(*prC) + log(Fvec[a]); //add to cumulative dropin prob to sum	
 									if(j==0) { //CASE OF PH		
-										logevidProb += log( 1 - exp(- (*lambda)*(Yvec[cind]-*AT))); //calc logarithm of cumulative expression
+										logevidProb += log( 1 - exp(- (*lambda)*( Yvec[cind] - (*AT-1) )) ); //calc logarithm of cumulative expression
 									} else if(j==1) { //CASE OF maxY
-										logevidProb += log( 1 - exp(- (*lambda)*(*maxY-*AT))); //calc logarithm of cumulative expression
+										logevidProb += log( 1 - exp(- (*lambda)*(*maxY-(*AT-1)))); //calc logarithm of cumulative expression
 									} 							
 								}							
 							}							
@@ -879,10 +880,11 @@ void loglikgammaC(double *logLik, int *NOC, int *NOK, int *knownGind, double *mi
 	//maxThreads = max number of threads used for paralellisation
 	//isPhi = boolean of whether Real domain of mixture proportion variable should be considered (must transform back)
 	//anyRel = boolean of whether any of the unknowns are related 
-	
+	#ifdef _OPENMP
 	int numThreads = thread::hardware_concurrency();
 	int useThreads = min(numThreads,*maxThreads);
 	omp_set_num_threads(useThreads);  //set number of threads to use 
+	#endif
 	
 	//Baseline of Backward (BW) expected stutter param per marker
 	//Slope of Backward (BW) expected stutter param per marker
@@ -940,9 +942,11 @@ void cumvalgammaC(double *pvalPH, double *pvalMAX, double *maxY, int *NOC, int *
 	//pval PH/AT/MAX  cumulative value vectors with size nReps*nAlleles' 
 	//maxY	is maximum value to use
 
+	#ifdef _OPENMP
 	int numThreads = thread::hardware_concurrency();
 	int useThreads = min(numThreads,*maxThreads);
 	omp_set_num_threads(useThreads);  //set number of threads to use 
+	#endif
 	
 	//Baseline of Backward (BW) expected stutter param per marker
 	//Slope of Backward (BW) expected stutter param per marker

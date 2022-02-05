@@ -9,10 +9,10 @@
 #' @param POIind Index of the references being Person of interest (POI), only Hp
 #' @param condInd Index of conditional references (both Hp and Hd)
 #' @param kit Kitname (shortname of kit obtained by getKit()). Used to model degradation and visualize EPG. 
-#' @param modelDegrad Boolean of whether degradation should be modeled (requires kit to be specified)
-#' @param modelBWstutt Boolean of whether backward stutter should be modeled
-#' @param modelFWstutt Boolean of whether forward stutter should be modeled
-#' @param findOptimalModel Boolean of whether to find the optimal model (using AIC criterion)
+#' @param modelDegrad Whether degradation should be modeled (requires kit to be specified)
+#' @param modelBWstutt Whether backward stutter should be modeled
+#' @param modelFWstutt Whether forward stutter should be modeled
+#' @param findOptimalModel Whether to find the optimal model (using AIC criterion)
 #' @param fst The co-ancestry coefficient (theta-correction). Can be a vector (must be number of marker long)
 #' @param lambda Parameter in modeled peak height shifted exponential model. Can be a vector (must be number of marker long)
 #' @param prC Allele drop-in probability. Can be a vector (must be number of marker long)

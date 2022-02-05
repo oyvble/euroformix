@@ -29,23 +29,23 @@ prepareC(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 
 \item{fst}{The co-ancestry coefficient. Default is 0. Can be a vector following markers.}
 
-\item{incS}{A boolean whether potential BW stutters are included}
+\item{incS}{Whether potential BW stutters are included}
 
-\item{incFS}{A boolean whether potential FW stutters are included}
+\item{incFS}{Whether potential FW stutters are included}
 }
 \value{
 ret A list of data input to call the C-code with
 }
 \description{
-prepareC is used in the functions contLikMLE,contLikMarg and contLikMCMC to prepare input to C-call
+prepareC is used in the functions contLikMLE,contLikMarg and contLikMCMC to prepare input to C++ call
 }
 \details{
-Assumes that all PH below threshold are removed. The function builds the data input to the C-code
+Assumes that all PH below threshold are removed. The function builds the data input to the C++ code
 }
 \examples{
 \dontrun{
 kit = "ESX17"
-popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
+popfn = paste(path.package("euroformix"),"FreqDatabases",
  paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
 evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
  sep=.Platform$file.sep)

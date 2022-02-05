@@ -1,14 +1,12 @@
 #' @title deconvolve
 #' @author Oyvind Bleka
-#' @description deconvolve ranks the set of the most conditional posterior probability of genotypes the STR DNA mixture given a fitted model under a hypothesis.
-#' @details The procedure calculates the likelihood for each single locus. Then it combines the most probable genotypes from each loci to produce a ranked list of deconvolved profiles.
+#' @description deconvolve calculates the posterior probability of each genotypes based on a fitted MLE model
+#' @details The procedure calculates the likelihood for each single locus. 
 #' 
-#' Function calls the likelihood procedure in C++ by using the package Boost.
-#'
 #' @param mlefit Fitted object using contLikMLE function.
 #' @param alpha Required sum of the listed posterior probabilities.
 #' @param maxlist The ranked deconvolved profile list will not exceed this number (used to avoid endless search).
-#' @param verbose Boolean whether printing deconvolution progress. Default is TRUE.
+#' @param verbose Whether printing deconvolution progress. Default is TRUE.
 #' @return ret A list(table1,table2,table3,table4,rankGi,rankG,pG) where rankG is the ranked genotypes with corresponding probabilities in pG. rankgGi is the same, but per marker. table1 is rankG and pG combined (joint results). table2 uses rankGi to find marginal results for top-genotypes. table3 and table4 shows this marginalized on genotypes and alleles per contributor 
 #' @export
 #' @references Cowell,R.G. et.al. (2014). Analysis of forensic DNA mixtures with artefacts. Applied Statistics, 64(1),1-32.
@@ -89,7 +87,12 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000,verbose=TRUE){ #alpha=0.95;
   #MUST SPECIFY MODEL OF model object here
   if(!all(model$popFreq[[loc]]==c$FvecLong[ind1])) stop("Frequencies in model$popFreq and prepareC was different!") #extract frequencies
   refInd = c(which(model$condOrder>0),model$knownRef) #obtain ref index of BOTH conditional contr and known non-contributors (must be given as known ref alleles)
-  pGlist = calcGjoint(freq=model$popFreq[[loc]],nU=nU,fst = fstv[m], refK = unlist(model$refData[[loc]][refInd]) , refR = unlist(model$refData[[loc]][model$knownRel]), ibd = model$ibd, sortComb = TRUE)
+  refRel = unlist(model$refData[[loc]][model$knownRel]) #obtain related ref
+  if(is.null(refRel)) {
+    pGlist = calcGjoint(freq=model$popFreq[[loc]],nU=nU,fst = fstv[m], refK = unlist(model$refData[[loc]][refInd]) , refR = refRel, ibd = model$ibd, sortComb = TRUE)
+  } else {
+    pGlist = calcGjoint(freq=model$popFreq[[loc]],nU=nU,fst = fstv[m], refK = unlist(model$refData[[loc]][refInd]) , refR = refRel, ibd = model$ibd, sortComb = FALSE)
+  }
   Gset <- Glist2[[loc]] <- pGlist$G #genotype possibilities
 
   Glist <- list() #get genotype index list of all outcome
@@ -108,7 +111,9 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000,verbose=TRUE){ #alpha=0.95;
 #    Gset[knownGind2+1,] #show Genotype combinations
     dvec[gind]  = .C("loglikgammaC",as.numeric(0),as.integer(nC),as.integer(nC),as.integer(knownGind2),as.numeric(mixprop),as.numeric(mu1),as.numeric(sig1),as.numeric(beta1),as.numeric(xiB),as.numeric(xiF),as.numeric(ATv[m]),as.numeric(pCv[m]),as.numeric(lambdav[m]),as.numeric(fstv[m]),c$nReps[m],as.integer(1),c$nA[m],c$YvecLong[ind2],c$FvecLong[ind1],c$nTypedLong[m],c$maTypedLong[ind1],c$basepairLong[ind1],c$BWvecLong[ind1],c$FWvecLong[ind1],c$nPS[m],c$BWPvecLong[indPS],c$FWPvecLong[indPS],as.integer(1),as.integer(0),as.integer(0),c$relGind,c$ibdLong,PACKAGE="euroformix")[[1]] #Note: genotype probailities (related) is not considered here, since the prob is calculated after
 
-    if(nU>2) genoUind[-1] <- sort(genoUind[-1],decreasing=TRUE) #sort the indices to be ordered from 2.index
+    if(is.null(refRel)) { #if kinship (unknown related is last contibutor which must be placed first)
+      genoUind[-1] <- sort(genoUind[-1],decreasing=TRUE) #sort the indices to be ordered from 2.index
+    } 
     pg = pGlist$Gprob[ rbind(genoUind) ]  #CALCULATING JOINT PROB GENOTYPE (may include relatedness probs)
     dvec[gind] <- dvec[gind] + log(pg) #insert log joint prob
   }

@@ -1,12 +1,11 @@
 #Testing that the numerical calculation of loglik is correct (for SNP data)
 #rm(list=ls());library(euroformix);library(testthat)
 seed0 = 1 #important to get reproducible results
+nDone0=4
+steptol0=1e-6
+s0 = 3 #signif of checking
+
 kit0 = NULL #No kit
-
-expect_approx = function(tol,x,y) { #helpfunction with specified tolerance
-  expect_equal(as.numeric(x),as.numeric(y),tolerance = tol)
-}
-
 examples = paste(path.package("euroformix"),"examples",sep=.Platform$file.sep)
 popfn = paste(examples,paste0("SNP_freq.csv"),sep=.Platform$file.sep)
 evidfn = paste(examples,paste0("SNP_evids.csv"),sep=.Platform$file.sep)
@@ -18,144 +17,73 @@ samples = sample_tableToList(tableReader(evidfn)) #use only first replicate #,th
 refs = sample_tableToList(tableReader(reffn))
 
 #Set common settings for all markers:
-ATv = 60 #put 60 to remove alleles in one replicate but not the other
-pCv = 0.05
-lamv = 0.01
-fstv = 0.02
+AT = 60 #put 60 to remove alleles in one replicate but not the other
+pC = 0.05
+lam = 0.01
+fst = 0.02
+
+init = function(x) setNames(rep(x,length(popFreq)),names(popFreq))
+ATv = init(AT)
+pCv = init(pC)
+lamv =  init(lam)
+fstv =  init(fst)
 
 #plotEPG2(samples,kit0,refs, AT=ATv) #plot data
 dat = prepareData(samples,refs,popFreq,threshT=ATv,minF=NULL, normalize = TRUE) #obtain data to use for analysis
+NOC = 2
 
 test_that("check maximum likelihood Hp:", {
-  NOC = 2
   cond = c(1,2)
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,xi=0,prC=pCv,nDone=2,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0,seed=seed0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
-
+  
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
   logLikv = logLiki(mle) #obtain per marker resutls
   expect_equal(sum(logLikv),mle$fit$loglik)
   
-  #exctract params:  
-  mx=thhat[1:NOC]
-  shape0 = 1/(thhat[NOC+2]^2) #get shape param
-  scale0 = thhat[NOC+1]/shape0 #get scale param
-
-  locsCheck = names(logLikv) #loci to check values for
-  for(loc in locsCheck) {
-#loc=locsCheck[1]
-    freq = dat$popFreq[[loc]]
-    Aset = names(freq) #get allele outcome 
-    
-    condRef =  dat$refData[[loc]][cond] #get alleles of conds
-    if(any(sapply(condRef,is.null))) next #Skip if any references are missing
-    nAG = matrix(0,nrow=length(Aset),ncol=NOC,dimnames = list(Aset)) #create allele counting matrix for unknown contributors
-    for(ind in 1:length(condRef)) nAG[,ind] = table(factor(condRef[[ind]],level=Aset)) #insert contribution
-    
-    #Prepare PH data (same order as Aset):
-    Ylist = list() #list per samples
-    for(sample in names(dat$samples)) {
-      Ylist[[sample]] = rep(0,length(Aset))  #preparing PHs after extending allele vector
-      Ylist[[sample]][match(dat$samples[[sample]][[loc]]$adata,Aset)] = dat$samples[[sample]][[loc]]$hdata  #insert PHs
-    }
-    mui <-  c(nAG[,drop=FALSE]%*%mx)*shape0 #expected contribution
-
-    vali = 0
-    for(sample in names(dat$samples)) {
-      psiDI <- which( Ylist[[sample]]>0 & mui==0 ) #drop-in (not a stutter). ANY DROPIN?
-      psiYmu <- which( Ylist[[sample]]>0 & mui>0 )  #contributing to model and observed PH
-      psiDO <- which( Ylist[[sample]]==0 & mui>0 )  #dropout elem
-      
-      if(length(psiYmu)>0) vali =  vali + sum(dgamma(Ylist[[sample]][psiYmu],shape=mui[psiYmu],scale=scale0,log=TRUE))   # CONTRIBUTION TO PH
-      if(length(psiDO)>0) vali = vali + sum(pgamma(ATv,shape=mui[psiDO],scale=scale0,log=TRUE)) #CONTR TO DROPOUT
-      if(length(psiDI)>0) vali = vali + sum( dexp( Ylist[[sample]][psiDI]-ATv, rate=lamv, log=TRUE) + log(pCv*freq[psiDI]) ) #CONTR TO DROPIN: Scaled for each dropin. THIS IS OK
-      if(length(psiDI)==0) vali = vali + log(1-pCv) #in case of no dropin
-    }
-    expect_equal(as.numeric(logLikv[loc]),as.numeric(vali))
-  }      
-    
-  #Excpected joint values:
-  expect_approx(1e-3,thhat,c(0.784287340610599,0.215712659389401,797.885130883847,0.590903414911386))
-  expect_equal(mle$fit$loglik,-3980.05359609996) #check
-    
-  valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,alpha=0.01,verbose = FALSE) #check 20 first only
-  expect_approx(1e-3,valid$ProbObs[1:20],c(0.549096125474773,0.535092179262372,0.826887844117223,0.882357942413679,0.23164476702976,0.314145305928015,0.352790002895515,0.430217208963195,0.987545264943279,0.98878315417829,0.604512633654525,0.633268630267128,0.839451971275505,0.780315767107799,0.799021640515115,0.799873487917275,0.548019621819006,0.815724995230886,0.267254047924345,0.589649584713638))
+  #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, modelStutt=FALSE,  modelDEG=FALSE)
+  expect(logLikv,logLikv2)
   
+  #Check param and loglik values:
+  #paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c(0.784,0.216,797.862,0.591) )
+  expect(round(mle$fit$loglik,s0),-3980.054) 
+  
+  #CHECK Cumulative probs    
+  #paste0(round(valid$ProbObs,s0),collapse = ",")
+  valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
+  expect(round(valid$ProbObs,s0),c(0.549,0.535,0.827,0.882,0.232,0.314,0.357,0.434,0.988,0.989,0.605,0.633,0.839,0.78,0.8,0.801,0.548,0.816,0.267,0.59,0.768,0.929,0.051,0.157,0.564,0.618,0.966,0.97,0.891,0.944,0.24,0.345,0.435,0.489,0.74,0.79,0.273,0.49,0.064,0.189,0.003,0.071,0.259,0.551,0.475,0.422,0.514,0.54,0.942,0.953,0.621,0.656,0.723,0.922,0.357,0.411,0.177,0.211,0.001,0.002,0.526,0.731,0.898,0.912,0.341,0.411,0.227,0.492,0.886,0.951,0.203,0.348,0.033,0.152,0.016,0.059,0.529,0.702,0.609,0.743,0.08,0.097,0.585,0.699,0.948,0.955,0.757,0.762,0.749,0.733,0.702,0.768,0.885,0.942,0.33,0.65,0.005,0.121,0.584,0.536,0.964,0.961,0.62,0.849,0.075,0.106,0.776,0.81,0.187,0.165,0.622,0.748,0.582,0.745,0.591,0.597,0.8,0.799,0.4,0.342,0.653,0.673,0.129,0.688,0.002,0.18,0.805,0.831,0.788,0.826,0.646,0.791,0.782,0.811,0.006,0.003,0.047,0.002,0.006,0.004,0.398,0.171,0.674,0.059,0.548,0.911,0.936,0.813,0.782,0.707,0.397,0.242,0.073,0.104,0.362,0.793,0.904,0.402,0.518,0.471,0.63,0.096,0.19,0.686,0.794,0.491,0.593,0.355,0.333,0.86,0.837,0.733,0.673,0.63,0.767,0.482,0.571,0.741,0.673,0.232,0.218,0.797,0.869,0.492,0.592,0.05,0.023,0.376,0.397,0.965,0.995,0.084,0.322,0.966,0.981,0.361,0.455,0.923,0.934,0.206,0.19,0.833,0.882,0.266,0.27,0.166,0.337,0.009,0.149,0.697,0.573,0.237,0.214,0.092,0.377,0.06,0.343,0.239,0.19,0.607,0.604,0.955,0.943,0.825,0.881,0.567,0.629,0.152,0.443,0.743,0.914,0.955,0.983,0.115,0.29,0.266,0.408,0.605,0.76,0.885,0.899,0.668,0.661,0.48,0.782,0.422,0.745,0.529,0.543,0.921,0.91,0.029,0.074,0.919,0.958,0.423,0.673,0.963,0.977,0.299,0.61,0.451,0.846,0.551,0.582,0.795,0.845,0.006,0.431,0.012,0.429,0.366,0.496,0.665,0.751,0.871,0.891,0.418,0.59,0.925,0.883,0.894,0.883,0.477,0.602,0.779,0.879,0.638,0.761,0.412,0.453,0.371,0.305,0.942,0.907,0.388,0.721,0.863,0.912,0.787,0.891,0.678,0.689,0.912,0.909,0.183,0.218,0.165,0.221,0.954,0.955,0.501,0.532,0.425,0.397,0.539,0.57,0.48,0.604,0.907,0.89,0.843,0.857,0.002,0.059,0.313,0.685,0.809,0.583,0.835,0.369,0.504,0.751,0.795,0.031,0.121,0.026,0.104,0.821,0.85,0.424,0.564,0.082,0.223,0.402,0.615,0.315,0.5,0.846,0.877,0.229,0.347,0.7,0.832,0.42,0.579,0.725,0.792,0.817,0.859,0.611,0.791,0.709,0.789,0.668,0.55,0.939,0.908,0.814,0.884,0.679,0.817,0.091,0.22,0.386,0.494,0.2,0.313,0.697,0.752,0.357,0.483,0.407,0.414,0.495,0.553,0.172,0.245,0.254,0.34,0.307,0.424,0.408,0.48,0.875,0.869,0.882,0.881,0.331,0.672,0.362,0.468,0.492,0.752,0.708,0.845,0.499,0.52,0.932,0.949,0.774,0.854,0.348,0.39,0.402,0.396,0.92,0.881,1,1,0.523,0.619,0.616,0.678,0.591,0.663,0.011,0.017,0.024,0.528,0.631,0.914,0.937,0.56,0.684,0.844,0.826,0.842,0.837,0.855,0.793,0.365,0.284,0.729,0.658,0.573,0.524,0.808,0.73,0.429,0.417,0.042,0.064,0.958,0.971,0.81,0.769,0.623,0.768,0.807,0.799,0.979,0.987,0.59,0.656,0.631,0.628,0.876,0.84,0.579,0.614,0.703,0.701,0.099,0.135,0.709,0.75,0.344,0.384,0.524,0.67,0.267,0.317,0.13,0.155,0.028,0.057,0.303,0.403,0.144,0.263,0.527,0.609,0.885,0.892,0.698,0.693,0.372,0.59,0.422,0.783,0.77,0.842,0.769,0.83))
+  #sum(valid$Significant)
 })
 
 test_that("check maximum likelihood Hd (unrelated):", {
-  NOC = 2
-  #CALC loglik under Hp:
   cond = c(1,0)
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = 2,xi=0,prC=pCv,nDone=2,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0,seed=seed0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = 2,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
   logLikv = logLiki(mle) #obtain per marker resutls
   expect_equal(sum(logLikv),mle$fit$loglik)
   
-  #exctract params:  
-  mx=thhat[1:NOC]
-  shape0 = 1/(thhat[NOC+2]^2) #get shape param
-  scale0 = thhat[NOC+1]/shape0 #get scale param
-
-  locsCheck = names(logLikv) #loci to check values for
-  for(loc in locsCheck) {
-#loc=locsCheck[2]
-    freq = dat$popFreq[[loc]]
-    Aset = names(freq) #get allele outcome 
-
-    #Assuming 1 known contribtion
-    condRef =  dat$refData[[loc]][cond] #get alleles of conds
-    if(any(sapply(condRef,is.null))) next #Skip if any references are missing
-    
-    nAG = matrix(0,nrow=length(Aset),ncol=NOC,dimnames = list(Aset)) #create allele counting matrix for unknown contributors
-    for(ind in 1:length(condRef)) nAG[,ind] = table(factor(condRef[[ind]],level=Aset)) #insert contribution
-    
-    #Prepare PH data (same order as Aset):
-    Ylist = list() #list per samples
-    for(sample in names(dat$samples)) {
-      Ylist[[sample]] = rep(0,length(Aset))  #preparing PHs after extending allele vector
-      Ylist[[sample]][match(dat$samples[[sample]][[loc]]$adata,Aset)] = dat$samples[[sample]][[loc]]$hdata  #insert PHs
-    }
-
-    nAG0 = nAG #temporary store
-    Glist = calcGjoint(freq=freq,nU=1,fst=fstv,refK=unlist( dat$refData[[loc]]))
-    Gset = Glist$G #get allele out come of unknowns
-
-    pEvid = 0 #obtain probabiliity of evidence (sum over all genotypes)
-    for(gind in 1:nrow(Gset)) { #traverse all genorypes
-      nAG = nAG0
-      nAG[,2] = table(factor(Gset[gind,],level=Aset)) #insert contribution
-      mui <-  c(nAG[,drop=FALSE]%*%mx)*shape0 #expected contribution
-
-      vali = 0 
-      for(sample in names(dat$samples)) { #traversing all samples
-        #Divide set into dropin, contr and dropout
-        psiDI <- which( Ylist[[sample]]>0 & mui==0 ) #drop-in (not a stutter). ANY DROPIN?
-        psiYmu <- which( Ylist[[sample]]>0 & mui>0 )  #contributing to model and observed PH
-        psiDO <- which( Ylist[[sample]]==0 & mui>0 )  #dropout elem
-        
-        if(length(psiYmu)>0) vali =  vali + sum(dgamma(Ylist[[sample]][psiYmu],shape=mui[psiYmu],scale=scale0,log=TRUE))   # CONTRIBUTION TO PH
-        if(length(psiDO)>0) vali = vali + sum(pgamma(ATv,shape=mui[psiDO],scale=scale0,log=TRUE)) #CONTR TO DROPOUT
-        if(length(psiDI)>0) vali = vali + sum( dexp( Ylist[[sample]][psiDI]-ATv, rate=lamv, log=TRUE) + log(pCv*freq[psiDI]) ) #CONTR TO DROPIN: Scaled for each dropin. THIS IS OK
-        if(length(psiDI)==0) vali = vali + log(1-pCv) #in case of no dropin
-      }
-      pEvid = pEvid + exp( vali + log(Glist$Gprob[gind])) #sum up
-    } #end for each genotype
-    expect_equal(as.numeric(logLikv[loc]),as.numeric(log(pEvid)))
-  }      
+  #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, modelStutt=FALSE,  modelDEG=FALSE)
+  expect(logLikv,logLikv2)
   
-  #Excpected joint values:
-  expect_approx(1e-3,thhat,c(0.666100819168908,0.333899180831092,815.87511749016,0.5130965438557))
-  expect_equal(mle$fit$loglik,-3807.17711247693) #check
+  #Check param and loglik values:
+  #paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c(0.666,0.334,815.875,0.513) )
+  expect(round(mle$fit$loglik,s0),-3807.177) 
   
-  valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,alpha=0.01,verbose = FALSE)
-  expect_approx(1e-3,valid$ProbObs[1:20],c(0.726790292608432,0.712919160966207,0.699109750829867,0.796738750078469,0.242610970624618,0.339553372676808,0.203522487453136,0.272233089671143,0.961761695281427,0.965808886347945,0.787992312637902,0.811710455551996,0.898829992718985,0.847228444081038,0.70813046277954,0.709339415292811,0.391519590292488,0.75919484571863,0.301499156240431,0.688403837316524))
-
+  #CHECK Cumulative probs    
+  #paste0(round(valid$ProbObs,s0),collapse = ",")
+  valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
+  expect(round(valid$ProbObs,s0),c(0.727,0.713,0.699,0.797,0.243,0.34,0.206,0.274,0.962,0.966,0.788,0.812,0.899,0.847,0.709,0.71,0.392,0.759,0.302,0.688,0.407,0.756,0.099,0.279,0.74,0.788,0.7,0.717,0.711,0.844,0.505,0.641,0.579,0.641,0.583,0.661,0.101,0.27,0.064,0.215,0.005,0.133,0.045,0.151,0.541,0.48,0.328,0.356,0.635,0.663,0.787,0.816,0.61,0.893,0.209,0.264,0.166,0.206,0.007,0.021,0.128,0.329,0.776,0.806,0.572,0.653,0.373,0.69,0.658,0.838,0.063,0.169,0.024,0.161,0.03,0.111,0.157,0.32,0.274,0.455,0.189,0.224,0.785,0.872,0.597,0.619,0.608,0.616,0.837,0.823,0.838,0.89,0.824,0.918,0.082,0.246,0.009,0.202,0.731,0.683,0.957,0.953,0.478,0.787,0.037,0.059,0.497,0.559,0.404,0.365,0.445,0.612,0.664,0.827,0.698,0.705,0.728,0.727,0.532,0.459,0.462,0.491,0.031,0.488,0.001,0.21,0.851,0.877,0.796,0.841,0.655,0.822,0.805,0.837,0.002,0,0.006,0.001,0.002,0.001,0.374,0.063,0.518,0.053,0.622,0.954,0.97,0.799,0.758,0.567,0.202,0.33,0.088,0.031,0.214,0.698,0.868,0.531,0.663,0.262,0.441,0.101,0.216,0.708,0.829,0.434,0.56,0.461,0.433,0.807,0.773,0.627,0.549,0.629,0.789,0.441,0.549,0.663,0.57,0.263,0.244,0.666,0.784,0.584,0.692,0.045,0.018,0.188,0.205,0.612,0.823,0.176,0.54,0.933,0.965,0.578,0.684,0.769,0.8,0.484,0.458,0.674,0.766,0.435,0.441,0.041,0.125,0.007,0.175,0.559,0.396,0.316,0.284,0.029,0.268,0.032,0.342,0.24,0.182,0.48,0.477,0.895,0.869,0.832,0.895,0.594,0.665,0.251,0.625,0.323,0.553,0.54,0.674,0.249,0.522,0.299,0.476,0.466,0.681,0.864,0.884,0.762,0.756,0.443,0.806,0.38,0.77,0.724,0.737,0.753,0.724,0.084,0.191,0.389,0.503,0.664,0.874,0.593,0.659,0.362,0.727,0.26,0.789,0.561,0.599,0.804,0.86,0,0.279,0.005,0.48,0.455,0.61,0.514,0.639,0.683,0.727,0.577,0.755,0.944,0.902,0.935,0.925,0.638,0.76,0.404,0.53,0.452,0.631,0.535,0.585,0.682,0.607,0.83,0.736,0.229,0.61,0.871,0.926,0.845,0.938,0.83,0.839,0.859,0.854,0.141,0.177,0.077,0.123,0.875,0.876,0.676,0.707,0.38,0.347,0.512,0.55,0.319,0.459,0.922,0.904,0.897,0.909,0.004,0.004,0.095,0.556,0.724,0.647,0.895,0.475,0.635,0.622,0.69,0.008,0.066,0.008,0.053,0.696,0.744,0.585,0.735,0.01,0.061,0.346,0.599,0.258,0.477,0.729,0.784,0.344,0.504,0.579,0.762,0.262,0.433,0.608,0.698,0.879,0.914,0.686,0.862,0.572,0.683,0.824,0.721,0.631,0.564,0.735,0.836,0.668,0.826,0.025,0.098,0.294,0.414,0.207,0.341,0.659,0.725,0.388,0.535,0.468,0.476,0.298,0.359,0.175,0.261,0.122,0.186,0.339,0.477,0.234,0.302,0.935,0.931,0.813,0.812,0.273,0.668,0.32,0.445,0.597,0.854,0.502,0.72,0.633,0.657,0.914,0.938,0.693,0.81,0.434,0.487,0.584,0.578,0.559,0.484,0.943,0.906,0.804,0.87,0.562,0.641,0.634,0.717,0.005,0.009,0.015,0.693,0.79,0.872,0.91,0.67,0.793,0.719,0.689,0.834,0.828,0.917,0.863,0.528,0.421,0.535,0.432,0.682,0.628,0.737,0.623,0.134,0.128,0.07,0.106,0.966,0.978,0.864,0.824,0.719,0.856,0.679,0.667,0.968,0.982,0.78,0.833,0.748,0.746,0.833,0.778,0.617,0.656,0.683,0.68,0.062,0.092,0.563,0.623,0.474,0.524,0.42,0.605,0.268,0.33,0.039,0.053,0.015,0.041,0.143,0.223,0.149,0.29,0.37,0.465,0.837,0.848,0.823,0.819,0.311,0.575,0.385,0.805,0.745,0.836,0.84,0.895))
+  #valid$Significant
+  
   #Calculate deconvolution (DC):
   DC = deconvolve(mle,verbose=FALSE)
-  expect_approx(1e-3,DC$table2[1:20,5],c(0.7031,0.9075,0.7596,0.904,0.6718,0.8387,0.887,0.6318,0.7209,0.7599,0.7601,0.8476,0.9067,0.988,0.6098,0.9391,0.5548,0.7928,0.6857,0.8198))
-  
+  #paste0( round(as.numeric(DC$table2[1:20,5]),s0),collapse = ",")
+  expect(round(as.numeric(DC$table2[1:20,5]),s0),c(0.703,0.907,0.76,0.904,0.672,0.839,0.887,0.632,0.721,0.76,0.76,0.848,0.907,0.988,0.61,0.939,0.555,0.793,0.686,0.82))
 })
 

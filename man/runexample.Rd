@@ -27,13 +27,13 @@ runexample(NOC, popfn, evidfn, reffn, POIind = 1, condInd = NULL,
 
 \item{kit}{Kitname (shortname of kit obtained by getKit()). Used to model degradation and visualize EPG.}
 
-\item{modelDegrad}{Boolean of whether degradation should be modeled (requires kit to be specified)}
+\item{modelDegrad}{Whether degradation should be modeled (requires kit to be specified)}
 
-\item{modelBWstutt}{Boolean of whether backward stutter should be modeled}
+\item{modelBWstutt}{Whether backward stutter should be modeled}
 
-\item{modelFWstutt}{Boolean of whether forward stutter should be modeled}
+\item{modelFWstutt}{Whether forward stutter should be modeled}
 
-\item{findOptimalModel}{Boolean of whether to find the optimal model (using AIC criterion)}
+\item{findOptimalModel}{Whether to find the optimal model (using AIC criterion)}
 
 \item{fst}{The co-ancestry coefficient (theta-correction). Can be a vector (must be number of marker long)}
 
@@ -75,7 +75,7 @@ Using following inbuilt methods:  sample_tableToList,prepareData,contLikMLE,logL
 \examples{
 \dontrun{
 kit = "ESX17"
-popfn = paste(path.package("euroformix"),"tutorialdata","FreqDatabases",
+popfn = paste(path.package("euroformix"),"FreqDatabases",
  paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
 evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
  sep=.Platform$file.sep)

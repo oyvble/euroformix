@@ -1,16 +1,16 @@
 #' @title Qassignate
 #' @author Oyvind Bleka
-#' @description Q-designation. It also takes care of include new alleles into popFreq by assigning it lowest observed frequnce.
-#' @details Assignes non-shown alleles as one single allele.
+#' @description Q-designation. It also takes care of including new/rare alleles
+#' @details Assigns non-shown alleles as one single allele (the Q-allele).
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
 #' @param popFreq A list of allele frequencies for a given population.
 #' @param refData Reference objects with list element [[s]]$adata[[i]]. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.
-#' @param doQ A boolean whether to Q-designate or not
-#' @param incR A boolean whether to include reference-alleles in the Q-assignation 
-#' @param incS A boolean whether to include potential BW stutters in the Q-assignation 
+#' @param doQ Whether to Q-designate or not
+#' @param incR Whether to include reference-alleles in the Q-assignation 
+#' @param incS Whether to include potential BW stutters in the Q-assignation 
 #' @param minF The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.
-#' @param normalize A boolean of whether normalization should be applied or not. Default is FALSE.
-#' @param verbose A boolean of whether printing out information
+#' @param normalize Whether normalization should be applied or not. Default is FALSE.
+#' @param verbose Whether printing out information
 #' @return ret A list(popFreq,refData,samples) with Q-designated alleles. 
 #' @export
 

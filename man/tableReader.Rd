@@ -9,7 +9,7 @@ tableReader(filename, header = TRUE, delims = c("\\t", ",", ";"))
 \arguments{
 \item{filename}{Name of file to be read.}
 
-\item{header}{Boolean of whether header should be included or not}
+\item{header}{Whether header should be included or not}
 
 \item{delims}{delimiter options to use when reading table}
 }

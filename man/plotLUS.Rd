@@ -12,7 +12,7 @@ plotLUS(mixData, sn = "", refData = NULL, threshT = 0,
 
 \item{sn}{The Sample name, will be plotted in title.}
 
-\item{refData}{condition on a list$refname$locname$adata of reference alleles which are labeled in EPG}
+\item{refData}{Condition on a list$refname$locname$adata of reference alleles which are labeled in EPG}
 
 \item{threshT}{The detection threshold can be shown in gray in the plot.}
 

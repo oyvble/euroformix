@@ -16,7 +16,7 @@ getGlist(popFreq, fst = 0, refKlist = NULL, refRlist = NULL,
 
 \item{refRlist}{contains a list of vector of alleles for a related reference profile (a,b)}
 
-\item{ibd}{the identical by decent coefficients of the relationship denotation}
+\item{ibd}{The identical by decent coefficients of the relationship denotation}
 }
 \value{
 Glist A list with genotypes and genotype probabilities for each locus.

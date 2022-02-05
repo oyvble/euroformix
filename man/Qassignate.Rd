@@ -15,26 +15,26 @@ Qassignate(samples, popFreq, refData = NULL, doQ = TRUE,
 
 \item{refData}{Reference objects with list element [[s]]$adata[[i]]. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.}
 
-\item{doQ}{A boolean whether to Q-designate or not}
+\item{doQ}{Whether to Q-designate or not}
 
-\item{incR}{A boolean whether to include reference-alleles in the Q-assignation}
+\item{incR}{Whether to include reference-alleles in the Q-assignation}
 
-\item{incS}{A boolean whether to include potential BW stutters in the Q-assignation}
+\item{incS}{Whether to include potential BW stutters in the Q-assignation}
 
 \item{minF}{The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.}
 
-\item{normalize}{A boolean of whether normalization should be applied or not. Default is FALSE.}
+\item{normalize}{Whether normalization should be applied or not. Default is FALSE.}
 
-\item{verbose}{A boolean of whether printing out information}
+\item{verbose}{Whether printing out information}
 }
 \value{
 ret A list(popFreq,refData,samples) with Q-designated alleles.
 }
 \description{
-Q-designation. It also takes care of include new alleles into popFreq by assigning it lowest observed frequnce.
+Q-designation. It also takes care of including new/rare alleles
 }
 \details{
-Assignes non-shown alleles as one single allele.
+Assigns non-shown alleles as one single allele (the Q-allele).
 }
 \author{
 Oyvind Bleka

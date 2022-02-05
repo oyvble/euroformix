@@ -1,15 +1,15 @@
 #' @title validMLEmodel
 #' @author Oyvind Bleka
-#' @description validMLEmodel makes model validation whether the observed peak heights fits the maximum likelihood fitted gamma distribution.
-#' @details The cumulative probability of the observed allele peaks are calculated and compared with a uniform distribution.
-#' Function calls a 'cumulative procedure' in C++ which uses the package Boost and performs paralellisation (OpenMP).
+#' @description validMLEmodel makes model validation of whether the observed peak heights fits the fitted model
+#' @details Obtaining the cumulative probability of the observed allele peaks are calculated and compared with a uniform distribution (theoretical)
+#' Function calls a 'cumulative procedure' in C++ which utilizes paralellisation (OpenMP).
 #'
 #' @param mlefit Fitted object using contLikMLE
 #' @param kit Shortname of kit used
 #' @param plottitle Maintitle text used in the PP-plot
 #' @param alpha The significance level used for the envelope test. Default is 0.01
-#' @param createplot Boolean of whether plot should be created
-#' @param verbose Boolean of whether printing out information about significant alleles
+#' @param createplot Whether plot should be created
+#' @param verbose Whether printing out information about significant alleles
 #' @param maxThreads Maximum number of threads to be executed by the parallelization
 #' @return retinfo A dataframe with information from the calculated validation model
 #' @export
@@ -24,9 +24,10 @@
 #' popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
 #' samples = sample_tableToList(tableReader(evidfn))
 #' refData = sample_tableToList(tableReader(reffn))
-#' dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) #obtain data to use for analysis
+#' dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) 
 #' plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
-#' mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
+#' mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,
+#' 	xi=NULL,prC=0.05,lambda=0.01,seed=1)
 #' validMLEmodel(mlefit,kit=kit)
 #' }
 

@@ -10,7 +10,7 @@ getKit(kit = NULL, what = NA, fileName = "kit.txt",
 \arguments{
 \item{kit}{Short name of kit: See supported kits with getKit()}
 
-\item{what}{options: {"Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}}
+\item{what}{Options: {"Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}}
 
 \item{fileName}{Name of kit file used to extract kitinformation}
 
@@ -20,7 +20,7 @@ getKit(kit = NULL, what = NA, fileName = "kit.txt",
 res A data frame with kit information
 }
 \description{
-Function to get kit information. Tided up and slightly modified by Oyvind Bleka
+Function to get kit information. Tidied up and slightly modified by Oyvind Bleka
 }
 \details{
 Returns kit information

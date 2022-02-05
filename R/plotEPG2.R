@@ -7,8 +7,8 @@
 #' @param refData List of refData[[rr]][[loc]] or refData[[loc]][[rr]] to label references (flexible). Visualizer will show dropout alleles. 
 #' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
-#' @param dyeYmax A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
-#' @param plotRepsOnly A boolean of whether only replicate-plot is shown in case of multiple samples (TRUE is default) 
+#' @param dyeYmax Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
+#' @param plotRepsOnly Whether only replicate-plot is shown in case of multiple samples (TRUE is default) 
 #' @param options A list of possible plot configurations. See comments below
 #' @return sub A plotly widget
 #' @export

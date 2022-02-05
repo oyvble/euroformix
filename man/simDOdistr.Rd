@@ -16,9 +16,9 @@ simDOdistr(totA, nC, popFreq, refData = NULL, M = 1000, minS = 2000,
 
 \item{refData}{List with alleles to condition on. ref[[locname]][[referencename]]=(A1,A2)}
 
-\item{M}{is number of samples for each iteration.}
+\item{M}{The number of samples for each iteration.}
 
-\item{minS}{is number of minimum accepted samples.}
+\item{minS}{The number of minimum accepted samples.}
 
 \item{prC}{Assumed drop-in probability. Can be a vector (must contain the marker names)}
 

@@ -1,4 +1,3 @@
-#
 #' @title setVecRightOrder
 #' @author Oyvind Bleka
 #' @description Sorting vector with respect to names of an input (case insensitive)

@@ -7,6 +7,7 @@
 #' @param kitname Name of kit:  Obtained from getKit()
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @export
+
 plotTopEPG <- function(MLEobj,DCobj=NULL,kitname=NULL,threshT=0) {
   threshT = threshT[1] #use only first element of threshT argument
   

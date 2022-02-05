@@ -18,7 +18,7 @@ contLikMCMC(mlefit, niter = 10000, delta = 2, maxxi = 1,
 
 \item{maxxiFW}{Upper boundary of the xiFW-parameters}
 
-\item{verbose}{Boolean whether printing simulation progress. Default is TRUE}
+\item{verbose}{Whether printing simulation progress. Default is TRUE}
 
 \item{seed}{The user can set seed if wanted}
 
@@ -28,13 +28,12 @@ contLikMCMC(mlefit, niter = 10000, delta = 2, maxxi = 1,
 ret A list (logmargL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
 }
 \description{
-contLikMCMC simulates from the posterior distribution for a bayesian STR DNA mixture model.
+contLikMCMC provides samples from the posterior distribution for the model.
 }
 \details{
-The procedure are doing MCMC to approximate the marginal probability over noisance parameters. Mixture proportions have flat prior.
+The procedure are doing MCMC to approximate the marginal probability over model parameters. 
 
-The Metropolis Hastings routine uses a Multivariate Normal distribution with mean 0 and covariance as delta multiplied with the inverse negative hessian with MLE inserted as transistion kernel.
-Function calls procedure in c++ by using the package Armadillo and Boost.
+The Metropolis Hastings routine uses following proposal: Multivariate Normal distribution with mean 0 and covariance as delta multiplied with the inverse negative hessian with MLE inserted.
 Marginalized likelihood (Bayesian) is estimated using Metropolis Hastings with the "GD-method, Gelfand and Dey (1994).
 }
 \examples{
@@ -48,9 +47,10 @@ reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=
 popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
 samples = sample_tableToList(tableReader(evidfn))
 refData = sample_tableToList(tableReader(reffn))
-dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) #obtain data to use for analysis
+dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) 
 plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
-mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
+mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,
+	kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
 mcmcfit = contLikMCMC(mlefit,niter=5000,delta=1,seed=1) #mcmcfit$acc
 }
 }

@@ -5,7 +5,6 @@
 #' @param envirfile A Rdata file including a saved environment of a project
 #' @export
 
-
 efm = function(envirfile=NULL) {
  LUSsymbol = "_" #Added in version 1.11.0 defined as constant. Used for showing MPS based STRs in RU_LUS format (LUS must be numeric)
  MPSsymbol = ":" #Added in version 2.2.0 defined as constant. Used for showing MPS based SNPs/STRs in RU:something format (both can be strings)
@@ -1240,7 +1239,7 @@ suppressWarnings({
    popFreq <- get("popFreq",envir=mmTK) #get frequencies
    if(is.null(popFreq)) {
      gWidgets2::gmessage("Please import and select population frequencies!",icon="info")
-     return
+     return()
    } else {
      nL <- length(popFreq)
      unAchr <- unique(unlist(lapply( popFreq,names) )) #get character alleles
@@ -1927,9 +1926,9 @@ suppressWarnings({
    gWidgets2::size(tabmodelA3[nR+1,2]) = 4 #set with
    
    #BLOCK added in version 2.0.0: Relatedness
-   tabmodelA3[nR+2,1] <-  gWidgets2::glabel(text="\n1st unknown is",container=tabmodelA3)
+   tabmodelA3[nR+2,1] <-  gWidgets2::glabel(text="\nLast unknown is",container=tabmodelA3)
    relatednessIBD = rbind( c(1,0,0), t(replicate(2,c(0,1,0))) , c(1/4,1/2,1/4),  t(replicate(5,c(1/2,1/2,0))) ,c(3/4,1/4,0), c(0,0,1) )  #Defined at https://strbase.nist.gov/pub_pres/Lewis-Towson-kinship-Apr2010.pdf
-   relname <- rownames(relatednessIBD) <- c("Unrelated" , "Parent","Child", "Sibling" , "Uncle","Nephew","Grandparent","Grandchild","Half-sibling" , "Cousin" , "Twin (ident.)")
+   relname <- rownames(relatednessIBD) <- c("Unrelated" , "Parent","Child", "Sibling" , "Uncle","Nephew","Grandparent","Grandchild","Half-sibling" , "Cousin", "Twin (ident.)")
  
    tabmodelA3[nR+3,1] <-  gWidgets2::gcombobox(items=rownames(relatednessIBD),container=tabmodelA3,editable=FALSE) 
    tabmodelA3[nR+4,1] <-  gWidgets2::glabel(text="to",container=tabmodelA3)
@@ -2117,10 +2116,10 @@ suppressWarnings({
          samples[[msel]][[loc]] <- subD #insert samples
        }
        if(nR>0) refData[[loc]] <- list()
-       for(rsel in refSel) refData[[loc]][[rsel]] <- refD[[rsel]][[loc]]$adata #insert references: Note the chaning format!!
+       for(rsel in refSel) refData[[loc]][[rsel]] <- refD[[rsel]][[loc]]$adata #insert references: Note the changing format!!
       } #end for each locus
 
-      #get specified preposition 
+      #get specified hypotheses  (contributors)
       condOrder_hp <- condOrder_hd <- rep(0,nR)
       if(type=="DC") condOrder_hp <- NULL
       for(rsel in refSel) { #for each reference under hp and hd
@@ -2131,12 +2130,11 @@ suppressWarnings({
         valhd <- as.integer(gWidgets2::svalue(tabmodelA3[which(rsel==refSel),1])) 
         condOrder_hd[which(rsel==refSel)] <- valhd + valhd*max(condOrder_hd)
       }
-      #get specified preposition 
-      knownref_hp <- knownref_hd <- NULL #known non-contributors under Hp always NULL (since they exist under condOrder)
-      if(type=="EVID") { #only for Evidence
-       knownref_hd <- which(condOrder_hp>0 & condOrder_hd==0) #those references conditioned under hp but not hd
-       if(length(knownref_hd)==0) knownref_hd <- NULL
-      }
+      
+      #get specified hypotheses (typed non-contributors but): 
+      #UPDATE IN v3.4.0: INCLUDE REFS NOT PUT FORWARD IN ANY HYPOTHESIS
+      knownref_hp <- which(condOrder_hp==0) #those references not condition on under hp
+      knownref_hd <- which(condOrder_hd==0) #those references not condition on under hd
 
       #number of contributors in model:
       nC_hp <- NULL
@@ -2159,7 +2157,7 @@ suppressWarnings({
       ############################################
       #################RELATEDNESS################
       ############################################
-      #get relationship type of 1st unknown under Hd
+      #get relationship type of last unknown under Hd
       rel_type <- gWidgets2::svalue( tabmodelA3[nR+3,1]) #get selected relationship (name)
       rel_ibd <- relatednessIBD[relname==rel_type,] #get selected ibd
       names(rel_ibd) <- rel_type
@@ -2243,7 +2241,7 @@ suppressWarnings({
         par <- set$param #get parameter/model settings     
         maxNOC = mod$nC_hd #get number of contributors under hd  (this is max)   
 
-        knownRefPOI = mod$knownref_hd #get index of POI
+        knownRefPOI = setdiff(mod$knownref_hd, mod$knownref_hp) #get index of POI (in Hd but not in Hp)
         if(length(knownRefPOI)!=1) {
           gWidgets2::gmessage("Only one POI can be selected. Please respecify hypotheses to proceed!")
           return(NULL) #return from function
@@ -2698,7 +2696,7 @@ suppressWarnings({
     txt <- paste0(txt,"\nNumber of contributors: ",model$nC) #Number of contributors
     txt <- paste0(txt,"\nKnown contributors: ",paste0(names(model$refData[[1]])[which(model$condOrder>0)],collapse="/")) #conditional references
     if(length(model$knownRef)) txt <- paste0(txt,"\nKnown non-contributors: ",paste0(names(model$refData[[1]])[model$knownRef],collapse="/")) #conditional references
-    if(length(model$knownRel)) txt <- paste0(txt,"\nAssumed relationship: 1st Unknown is a ",names(model$ibd)[1]," to reference ",names(model$knownRel)) #Relationship
+    if(length(model$knownRel)) txt <- paste0(txt,"\nAssumed relationship: Last contributor is a ",names(model$ibd)[1]," to reference ",names(model$knownRel)) #Relationship
     return(txt)
    }
 

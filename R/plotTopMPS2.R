@@ -5,7 +5,7 @@
 #' @param MLEobj An object returned from contLikMLE
 #' @param DCobj An object returned from devonvolve: Must be run with same object as MLEobj
 #' @param grpsymbol A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.
-#' @param locYmax A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
+#' @param locYmax Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
 #' @param options A list of possible plot configurations. See comments below
 #' @return sub A plotly widget
 #' @export

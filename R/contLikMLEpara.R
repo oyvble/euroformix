@@ -1,8 +1,7 @@
 
 #' @title contLikMLEpara
 #' @author Oyvind Bleka
-#' @description Same as the contLikMLE function (dummy function)
-#' @details Function calls the likelihood function implemented in C++ which uses the package Boost and paralellisation using OpenMP
+#' @description Same as the contLikMLE function (dummy function): earlier version did parallelization
 #'
 #' @param nC Number of contributors in model. Must be a constant.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
@@ -19,7 +18,7 @@
 #' @param pXi Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.
 #' @param delta Scaling of variation of normal distribution when drawing random startpoints. Default is 1.
 #' @param kit Used to model degradation. Must be one of the shortnames of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}. 
-#' @param verbose Boolean whether printing optimization progress. Default is TRUE.
+#' @param verbose Whether printing optimization progress. Default is TRUE.
 #' @param maxIter Maximum number of iterations for the optimization. Default is 100.
 #' @param knownRel gives the index of the reference which the 1st unknown is related to.
 #' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)

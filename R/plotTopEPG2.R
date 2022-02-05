@@ -5,8 +5,8 @@
 #' @param MLEobj An object returned from contLikMLE
 #' @param DCobj An object returned from devonvolve: Must be run with same object as MLEobj
 #' @param kit Short name of kit: See supported kits with getKit(). Argument ignored if degradation model used.
-#' @param dyeYmax A boolean of whether the Y-axis scale should be dye specific
-#' @param plotRepsOnly A boolean of whether only replicates are plotted 
+#' @param dyeYmax Whether the Y-axis scale should be dye specific
+#' @param plotRepsOnly Whether only replicates are plotted 
 #' @param options Layout options can be provided: w0 (layout width),marg0 (margin), txtsize0 (text size), locsize0 (locus name size), minY (minimum Y-axis height), ymaxscale (Scaling maximum Y-axis height), transdeg (transparanct of bars 0=max, 1=min)
 #' @return sub A plotly widget
 #' @export

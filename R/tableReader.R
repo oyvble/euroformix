@@ -3,9 +3,10 @@
 #' @description  A robust function for reading tables
 #' @details This function reads text based tables and recognizes which of the three common separates that are used.
 #' @param filename Name of file to be read.
-#' @param header Boolean of whether header should be included or not
+#' @param header Whether header should be included or not
 #' @param delims delimiter options to use when reading table
 #' @export
+
  tableReader=function(filename, header=TRUE, delims = c("\t",",",";")) {
    
   reader = function(delim) read.table(filename,header=header,sep=delim,as.is=TRUE,row.names=NULL,check.names = FALSE,comment.char = "") 

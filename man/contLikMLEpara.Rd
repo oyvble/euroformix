@@ -42,7 +42,7 @@ contLikMLEpara(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 
 \item{kit}{Used to model degradation. Must be one of the shortnames of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}.}
 
-\item{verbose}{Boolean whether printing optimization progress. Default is TRUE.}
+\item{verbose}{Whether printing optimization progress. Default is TRUE.}
 
 \item{maxIter}{Maximum number of iterations for the optimization. Default is 100.}
 
@@ -64,10 +64,7 @@ contLikMLEpara(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 ret A list(fit,model,nDone,delta,prepareC) where fit is Maximixed likelihood elements for given model.
 }
 \description{
-Same as the contLikMLE function (dummy function)
-}
-\details{
-Function calls the likelihood function implemented in C++ which uses the package Boost and paralellisation using OpenMP
+Same as the contLikMLE function (dummy function): earlier version did parallelization
 }
 \author{
 Oyvind Bleka

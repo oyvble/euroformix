@@ -18,7 +18,7 @@ contLikMCMCpara(mlefit, niter = 10000, delta = 2, maxxi = 1,
 
 \item{maxxiFW}{Upper boundary of the xiFW-parameters}
 
-\item{verbose}{Boolean whether printing simulation progress. Default is TRUE}
+\item{verbose}{Whether printing simulation progress. Default is TRUE}
 
 \item{seed}{The user can set seed if wanted}
 
@@ -28,7 +28,7 @@ contLikMCMCpara(mlefit, niter = 10000, delta = 2, maxxi = 1,
 ret A list (margL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
 }
 \description{
-Same as the contLikMCMC function (dummy function)
+Same as the contLikMCMC function (dummy function): earlier version did parallelization
 }
 \author{
 Oyvind Bleka

@@ -1,7 +1,7 @@
 #' @title prepareC 
 #' @author Oyvind Bleka
-#' @description prepareC is used in the functions contLikMLE,contLikMarg and contLikMCMC to prepare input to C-call
-#' @details Assumes that all PH below threshold are removed. The function builds the data input to the C-code
+#' @description prepareC is used in the functions contLikMLE,contLikMarg and contLikMCMC to prepare input to C++ call
+#' @details Assumes that all PH below threshold are removed. The function builds the data input to the C++ code
 #' @param nC Number of contributors in model.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
 #' @param popFreq A list of allele frequencies for a given population (possibly including "99" Q-alleles).
@@ -12,8 +12,8 @@
 #' @param knownRel Specify the index of the related contributing reference from refData (one index). For instance knownRel=2 means that unknown1 is related to reference 2 with ibd specified relationship.
 #' @param ibd the identical by decent coefficients list of the relationship for each unknowns (specifies the type of relationship). Default is NULL, meaning no related inds
 #' @param fst The co-ancestry coefficient. Default is 0. Can be a vector following markers.
-#' @param incS A boolean whether potential BW stutters are included
-#' @param incFS A boolean whether potential FW stutters are included
+#' @param incS Whether potential BW stutters are included
+#' @param incFS Whether potential FW stutters are included
 #' @return ret A list of data input to call the C-code with
 #' @export 
 #' @examples
@@ -96,7 +96,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
    }
  }
  #NOU = nC - NOK #number of unknowns per markers
- startUindex = max(NOK) + 1 #index of first unknown to be related
+ relUindex = nC #set rel as last contributor #max(NOK) + 1 #index of first unknown to be related
  
  #Assign genotypes of related references to relGind-matrix
  relGind <- matrix(-1,ncol=nL,nrow=nC) #default is no references (=-1)
@@ -116,7 +116,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
        
        Gind1 <- subRef[[k]][1]==Gset[[loc]][,1] & subRef[[k]][2]==Gset[[loc]][,2]
        Gind2 <- subRef[[k]][2]==Gset[[loc]][,1] & subRef[[k]][1]==Gset[[loc]][,2]
-       relGind[startUindex,locind] = which(Gind1 | Gind2) - 1 #subtract with one since we work from 0-indice
+       relGind[relUindex,locind] = which(Gind1 | Gind2) - 1 #subtract with one since we work from 0-indice
      }
    }
  }
@@ -125,7 +125,7 @@ prepareC = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL
  ibdList = list()
  for(cc in 1:nC) ibdList[[cc]] =   ibd0 #insert default values for each contributors  
  if(!is.null(ibd) && anyRel && ibd[1]<1) { #critetion for relatedness
-   ibdList[[startUindex]] = ibd #insert given ibs to the unknown
+   ibdList[[relUindex]] = ibd #insert given ibs to the unknown
  } else {
    anyRel = FALSE #no related otherwise
  }

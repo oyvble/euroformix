@@ -58,16 +58,16 @@ contLikINT(nC, samples, popFreq, lower, upper, refData = NULL,
 
 \item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 
-\item{verbose}{Boolean whether printing limits to integrate over. Printing progress if maxEval>0. Default is TRUE.}
+\item{verbose}{Whether printing limits to integrate over. Printing progress if maxEval>0. Default is TRUE.}
 }
 \value{
 ret A list(margL,deviation,nEvals,scale) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
 }
 \description{
-contLikINT marginalizes the likelihood of the STR DNA mixture given some assumed a bayesian model by numerical integration.
+contLikINT marginalizes the likelihood through numerical integration.
 }
 \details{
-The procedure are doing numerical integration to approximate the marginal probability over the noisance parameters. Mixture proportions have flat prior.
+The procedure does numerical integration to approximate the marginal probability over the model parameters.
 }
 \references{
 Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.
@@ -75,5 +75,5 @@ Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Com
 \author{
 Oyvind Bleka
 }
-\keyword{Likelihood}
 \keyword{Marginalized}
+\keyword{likelihood}

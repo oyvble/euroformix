@@ -8,13 +8,14 @@
 #' @param refData A list with reference profiles [[reference]][[locus]]$adata
 #' @param popFreq A list with population frequencies [[locus]]
 #' @param minF The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.
-#' @param normalize A boolean of whether normalization should be applied or not. Default is FALSE.
+#' @param normalize Whether normalization should be applied or not. Default is FALSE.
 #' @param threshT A detection threshold value or thresholds per makers (marker names must be defined). NULL ignores filtering.
-#' @param fillHomGen A boolean of whether to fill in homozygote genotypes given with one allele
+#' @param fillHomGen Whether to fill in homozygote genotypes given with one allele
+#' @param verbose Whether printing out information
 #' @return Restructured data in list used as input for functions evaluating the liklihood function
 #' @export
 
-prepareData = function(mixData,refData=NULL,popFreq=NULL,minF=NULL,normalize=FALSE,threshT=NULL,fillHomGen=TRUE) { #Helpfunction to get data to analyse
+prepareData = function(mixData,refData=NULL,popFreq=NULL,minF=NULL,normalize=FALSE,threshT=NULL,fillHomGen=TRUE, verbose=TRUE) { #Helpfunction to get data to analyse
   if(is.null(popFreq)) stop("Populatation frequency object must be provided")
   locs <- names(popFreq) #get loci in popFreq (decides order)
   mixData2 <- lapply(mixData,function(x) return(x[locs])) #default is all data included
@@ -40,12 +41,12 @@ prepareData = function(mixData,refData=NULL,popFreq=NULL,minF=NULL,normalize=FAL
     refData2 <- list()
     for(loc in locs)  {
       refData2[[loc]] <- lapply(refData,function(x) {
-        av = x[[loc]]$adata #get alleles
+        av = unlist(x[[loc]])#$adata #get alleles
         if(fillHomGen && length(av)==1) av = rep(av,2) #alleles given only ones m
         return(av) #return selected loci
       })
     }
   }
-  Qret <- Qassignate(mixData2, popFreq, refData2,incS=FALSE,incR=FALSE, minF = minF, normalize = normalize)
+  Qret <- Qassignate(mixData2, popFreq, refData2,incS=FALSE,incR=FALSE, minF = minF, normalize = normalize,verbose=verbose)
   return(list(samples=Qret$samples,refData=Qret$refData,popFreq=Qret$popFreq))
 }

@@ -6,8 +6,8 @@
 #' @param nC Number of contributors to assume in the preposition.
 #' @param popFreq Population frequencies listed for each loci popFreq[[locname]]
 #' @param refData List with alleles to condition on. ref[[locname]][[referencename]]=(A1,A2)
-#' @param M is number of samples for each iteration.
-#' @param minS is number of minimum accepted samples.
+#' @param M The number of samples for each iteration.
+#' @param minS The number of minimum accepted samples.
 #' @param prC Assumed drop-in probability. Can be a vector (must contain the marker names)
 #' @param pDknown A vector of known drop-out probabilities for each contributors. Default is NA which means it is unknown.
 #' @return Vector with accepted samples from the dropout distribution

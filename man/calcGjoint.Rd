@@ -10,7 +10,7 @@ calcGjoint(freq, nU = 1, fst = 0, refK = NULL, refR = NULL,
 \arguments{
 \item{freq}{A vector of allele frequencies for a given population.}
 
-\item{nU}{Number of unknowns (where the first is a related)}
+\item{nU}{Number of unknowns (where the LAST is a related)}
 
 \item{fst}{Assumed theta/fst-correction}
 
@@ -20,7 +20,7 @@ calcGjoint(freq, nU = 1, fst = 0, refK = NULL, refR = NULL,
 
 \item{ibd}{the identical by decent coefficients of the relationship denotation}
 
-\item{sortComb}{boolean of whether only the outcome G1,G2>=G3>=...>=GnU should be calculated (the Gprobs are symmetrical for k=2,..,U)}
+\item{sortComb}{Whether only the outcome G1,G2>=G3>=...>=GnU should be calculated (the Gprobs are symmetrical for k=2,..,U)}
 }
 \value{
 Glist A list with genotypes and genotype probabilities
@@ -30,16 +30,16 @@ getGlist Returns a list of joint genotypes with corresponding joing probabilitie
 }
 \details{
 The function returns the list of all possible genotypes, with corresponding probabilities. The allele-names in popFreq needs to be numbers.
+If a related unknown is provided that will always be the first one
 }
 \examples{
 \dontrun{
 freq = rgamma(8,1,1)
 freq = freq/sum(freq) 
 names(freq) <- 1:length(freq)
-foo1 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
- refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
+foo1 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),sortComb=TRUE)
 foo2 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
- refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=TRUE)
+ refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
 }
 }
 \author{

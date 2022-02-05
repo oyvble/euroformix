@@ -1,12 +1,10 @@
 #' @title freqImport
 #' @author Oyvind Bleka
-#' @description FreqImport is a function to import allele frequencies directly from file(s) supporting text format, xml. It also supports an URL path reading XML format (as for the STRidER webpage).
-#' @details
-#' The function reads XML as input, directly from an URL or local file, and return a list of populations.
-#'
+#' @description FreqImport is a function to import allele frequencies directly from file(s) or URLs
+#' @details The function supports XML as input, directly from an URL or local file (for instance from the STRidER webpage).
 #' @param f The path of file(s) or an url. If file(s), then the url argument must be FALSE.
-#' @param url A boolean of whether f is pointing to an url or not. Default is FALSE.
-#' @param xml A boolean of whether f is pointing to an xml format file or not. If FALSE then table formats with standard separator types are considered. Default is FALSE.
+#' @param url Whether f is pointing to an url or not. Default is FALSE.
+#' @param xml Whether f is pointing to an xml format file or not. If FALSE then table formats with standard separator types are considered. Default is FALSE.
 #' @return dblist A list giving the population frequencies for every population
 #' @export
 
@@ -17,7 +15,10 @@ freqImport = function(f=NULL,url=FALSE,xml=FALSE) {
  dbList <- list() #list of populations
  if(xml) {
    if(url) { #if f was given as an url 
-    f <- RCurl::getURL(f,.opts = RCurl::curlOptions(ssl.verifypeer=FALSE, verbose=TRUE)) #get url
+    #f <- RCurl::getURL(f,.opts = RCurl::curlOptions(ssl.verifypeer=FALSE, verbose=TRUE)) #get url
+	con = curl::curl(url = f)
+	f = readLines(con) #reading text
+	close(con)	
    } 
    xml = XML::xmlTreeParse(f, useInternalNodes=TRUE) #read to text to XML-object
    locs <- unlist(XML::xpathApply(xml, "//name", XML::xmlValue)) #get list of markers

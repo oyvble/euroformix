@@ -1,12 +1,11 @@
 #' @title contLikSearch
 #' @author Oyvind Bleka
-#' @description contLikSearch search through the models  optimizes the likelihood function of the DNA mixture model 
-#' @details Function calls the likelihood function implemented in C++ which uses the package Boost and paralellisation using OpenMP
+#' @description contLikSearch search through the models which optimizes the likelihood function
 #'
 #' @param NOC #The vector of number of contributors to search
-#' @param modelDegrad Boolean of whether degradation should be modeled (requires kit to be specified): can be vector (FALSE,TRUE)
-#' @param modelBWstutt Boolean of whether backward stutter should be modeled: can be vector (FALSE,TRUE)
-#' @param modelFWstutt Boolean of whether forward stutter should be modeled: can be vector (FALSE,TRUE)
+#' @param modelDegrad Whether degradation should be modeled (requires kit to be specified): can be vector (FALSE,TRUE)
+#' @param modelBWstutt Whether backward stutter should be modeled: can be vector (FALSE,TRUE)
+#' @param modelFWstutt Whether forward stutter should be modeled: can be vector (FALSE,TRUE)
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
 #' @param popFreq A list of allele frequencies for a given population.
 #' @param refData Reference objects with (2-size) allele-vector given in list element [[i]][[s]].
@@ -20,7 +19,7 @@
 #' @param pXi Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.
 #' @param delta Scaling of variation of normal distribution when drawing random startpoints. Default is 1.
 #' @param kit Used to model degradation. Must be one of the shortnames of kit: check getKit()
-#' @param verbose Boolean whether printing optimization progress. Default is TRUE.
+#' @param verbose Whether printing optimization progress. Default is TRUE.
 #' @param maxIter Maximum number of iterations for the optimization. Default is 100.
 #' @param knownRel gives the index of the reference which the 1st unknown is related to.
 #' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)

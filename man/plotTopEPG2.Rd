@@ -14,9 +14,9 @@ plotTopEPG2(MLEobj, DCobj = NULL, kit = NULL, dyeYmax = TRUE,
 
 \item{kit}{Short name of kit: See supported kits with getKit(). Argument ignored if degradation model used.}
 
-\item{dyeYmax}{A boolean of whether the Y-axis scale should be dye specific}
+\item{dyeYmax}{Whether the Y-axis scale should be dye specific}
 
-\item{plotRepsOnly}{A boolean of whether only replicates are plotted}
+\item{plotRepsOnly}{Whether only replicates are plotted}
 
 \item{options}{Layout options can be provided: w0 (layout width),marg0 (margin), txtsize0 (text size), locsize0 (locus name size), minY (minimum Y-axis height), ymaxscale (Scaling maximum Y-axis height), transdeg (transparanct of bars 0=max, 1=min)}
 }

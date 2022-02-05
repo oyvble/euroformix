@@ -15,7 +15,7 @@ plotEPG(Data, kitname, threshT = 0, refcond = NULL, showPH = FALSE)
 
 \item{refcond}{condition on a list$refname$locname$adata of reference alleles which are labeled in EPG}
 
-\item{showPH}{Boolean whether peak heights should be included in the plot}
+\item{showPH}{Whether peak heights should be included in the plot}
 }
 \description{
 EPG plotter created by Oskar Hansson.

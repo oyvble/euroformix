@@ -14,7 +14,7 @@ plotTopMPS2(MLEobj, DCobj = NULL, grpsymbol = "_", locYmax = TRUE,
 
 \item{grpsymbol}{A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.}
 
-\item{locYmax}{A boolean of whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)}
+\item{locYmax}{Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)}
 
 \item{options}{A list of possible plot configurations. See comments below}
 }
