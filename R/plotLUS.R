@@ -30,7 +30,7 @@ plotLUS <- function(mixData,sn="",refData=NULL,threshT=0,LUSsymbol="_") {
   if(!is.null(refData)) {
    av2 = lapply(refData,function(x) {
       ind = which(toupper(names(x))==locs[l]) #loci is not casesensetive for refs
-      if(length(ind)>0) return(x[[ind]]$adata)
+      if(length(ind)>0) return(unlist( x[[ind]]) )
    })
    av2 <-  unique( unlist(av2)) #get only unique
    newa <- av2[!av2%in%av] #new variants

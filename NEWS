@@ -1,6 +1,16 @@
+
+EuroForMix v3.4.1 (Release date: 2022-03-22)
+=============================================
+- efm function updates:
+ -> Fixed issue with possible wrong reference name under Hd when hovering Mix-prop parameters.
+ -> Additional statistics given when hovering Mix-prop parameters: "Average rfu (across markers) multiplied with mixture proportion"
+ -> Avoid crash when directory of stored project was not found.
+ -> Restoring MLE results from a stored project when deconvolution module was used.
+- plotLUS updated: accepts no adata attribute for refData.
+- Added license file: GNU Lesser General Public License v3.0
+
 EuroForMix v3.4.0 (Release date: 2022-02-05)
 =============================================
-
 The STRidER import issue is fixed:
  -> Connection is using curl instead of Rcurl to parse text from file directly (package dependency changed).
 

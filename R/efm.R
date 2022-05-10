@@ -5,6 +5,7 @@
 #' @param envirfile A Rdata file including a saved environment of a project
 #' @export
 
+#library(euroformix);envirfile=NULL
 efm = function(envirfile=NULL) {
  LUSsymbol = "_" #Added in version 1.11.0 defined as constant. Used for showing MPS based STRs in RU_LUS format (LUS must be numeric)
  MPSsymbol = ":" #Added in version 2.2.0 defined as constant. Used for showing MPS based SNPs/STRs in RU:something format (both can be strings)
@@ -857,7 +858,7 @@ suppressWarnings({
 
  #change working directory to the one stored in mmTK-environment
  wd=get("workdir",envir=mmTK) #assign working directory to mmTK-environment
- if(!is.null(wd)) setwd(wd)
+ if(!is.null(wd) && file.exists(wd) ) setwd(wd)
  
  #Main window:
  mainwin <- gWidgets2::gwindow(softname, visible=FALSE, width=mwW,height=mwH)
@@ -3038,16 +3039,26 @@ suppressWarnings({
 
     ###################################
     #helpfunction used to show MLE fit#
+    #mlefit=get("setEVID",envir=mmTK)$mlefit_hp #get setup for EVID
     tableMLE <- function(mlefit,tabmleX,sig0=2) {
+      markerReps  = mlefit$prepareC$nReps #get number of replicates per marker
+      markerInd = rep(1:mlefit$prepareC$nM,  markerReps*mlefit$prepareC$nA) #indicate marker
+      SUM_PH = aggregate(mlefit$prepareC$YvecLong,by=list(markerInd),sum)$x #get sumPH per marker (across all reps)
+      SUM_PH = SUM_PH/markerReps #standardize on number of replicates
+      AVG_PH = mean(SUM_PH)
+      
       mle <- cbind(mlefit$fit$thetahat2,sqrt(diag(mlefit$fit$thetaSigma2)))
       pnames2 <- rownames(mle) #parameter names
       tab <- cbind(pnames2,format(mle,digits=sig0))
       colnames(tab) <- c("param","MLE","Std.Err.")
     
-      nCond = sum(mlefit$model$condOrder>0) #number of conditional contr
-      NOC = mlefit$model$nC #number of contr
-      refNames = unique(sapply(mlefit$model$refData,names))[1:nCond] #obtain conditional reference names
+      isCondInd = which(mlefit$model$condOrder>0) #get index of conditional
+      nCond = length(isCondInd) #number of conditional contr
       
+      NOC = mlefit$model$nC #number of contr
+      nRefsMarkers = sapply(mlefit$model$refData,length)
+      refNames = names(mlefit$model$refData[[which.max(nRefsMarkers)]]) #obtain reference names
+
       #show results in table:  
       tabmleX1 = gWidgets2::glayout(spacing=1,container=(tabmleX[1,1] <-gWidgets2::gframe("Parameter estimates:",container=tabmleX,expand=T,fill=T)),expand=T,fill=T) 
       #gWidgets2::gdf(tab,container=tabmleX1,expand=T,fill=T)#,noRowsVisible=TRUE) #add to frame
@@ -3063,11 +3074,13 @@ suppressWarnings({
           tabmleX1[j+1,i] = gWidgets2::glabel(tab[j,i],container=tabmleX1)
           
           if(i%in%1:2 && j<=NOC) {
-            Mxtxt = paste0("Mix-prop=",format( as.numeric(tab[j,2])*100,digits=2),"%")
+            Mx = as.numeric(tab[j,2]) #obtain Mx
+            Mxtxt = paste0("Mix-prop=",format( Mx*100,digits=2),"%")
+            Mxtxt2 = paste0("RFU*Mx=",round( AVG_PH*Mx,2))
             if(j<=nCond) {
-              helptext(tabmleX1[j+1,i],paste0("Contr: ",refNames[j],"\n",Mxtxt) )
+              helptext(tabmleX1[j+1,i],paste0("Contr: ",refNames[isCondInd[j]],"\n",Mxtxt,"\n",Mxtxt2) )
             } else {
-              helptext(tabmleX1[j+1,i],paste0("Contr: Unknown ",j-nCond,"\n",Mxtxt) )
+              helptext(tabmleX1[j+1,i],paste0("Contr: Unknown ",j-nCond,"\n",Mxtxt,"\n",Mxtxt2) )
             }
           } #end if first 
         }
@@ -3086,14 +3099,15 @@ suppressWarnings({
 
     if(type=="START") { #loads already calculated results if program starts
       set <- get("setEVID",envir=mmTK) #get setup for EVID
+      if(is.null(set)) {
+        set <- get("setDC",envir=mmTK) #get setup for DC
+      }
       mlefit_hd <- set$mlefit_hd
       mlefit_hp <- set$mlefit_hp
-      if(is.null(mlefit_hd)) return(); #LR has not been calculated, return out of function!
+      if(is.null(mlefit_hd)) return(); #EVID/DC was not prev calculated, return out of function!
     } else { #otherwise, function was called to make new calculations
-     if(type=="EVID") set <- get("setEVID",envir=mmTK) #get setup for EVID
-     if(type=="DB") set <- get("setDB",envir=mmTK) #get setup for DB
-     if(type=="DC") set <- get("setDC",envir=mmTK) #get setup for DC
-
+	 set <- get( paste0("set",type) ,envir=mmTK) #get setup for EVID/DB/DC
+	 
      #take out relevant parameters from stored list
      mod <- set$model
      par <- set$param     
@@ -3180,7 +3194,7 @@ suppressWarnings({
      gWidgets2::enabled(tabmleA3[1,1]) <- FALSE #deactivate MCMC
      gWidgets2::enabled(tabmleA3[4,1]) <- FALSE #deactivate Model fitted PH
     }
-    if(type=="EVID" || type=="START") { #used only for weight-of-evidence
+    if( !is.null(mlefit_hp) ) { #used only for weight-of-evidence
      tabmleB = gWidgets2::glayout(spacing=0,container=(tabMLEtmp[1,2] <-gWidgets2::gframe("Estimates under Hp",container=tabMLEtmp,expand=T,fill=T)),expand=T,fill=T) 
      tableMLE(mlefit_hp,tabmleB)
      tabmleB3 = gWidgets2::glayout(spacing=0,container=(tabmleB[3,1] <-gWidgets2::gframe("Further Action",container=tabmleB))) 
@@ -3209,7 +3223,7 @@ suppressWarnings({
 
     if(type=="EVID")  if(!is.infinite(mlefit_hd$fit$loglik) && is.infinite(mlefit_hp$fit$loglik)) gWidgets2::gmessage(fixmsg,title="Wrong model specification",icon="error")
 
-    if(type=="EVID" || type=="START") {
+    if( !is.null(mlefit_hp) ) { #used only for weight-of-evidence
      tabmleC = gWidgets2::glayout(spacing=5,container=(tabMLEtmp[1,3] <-gWidgets2::gframe("",container=tabMLEtmp))) 
      resLR <- get("resEVID",envir=mmTK) #get EVID calculations 
      
