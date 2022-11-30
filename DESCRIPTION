@@ -1,8 +1,8 @@
 Package: euroformix
 Type: Package
 Title: A Quantitative Model for Interpreting DNA Mixtures
-Version: 3.4.1
-Date: 2022-05-10
+Version: 4.0.0
+Date: 2022-11-28
 Author: Oyvind Bleka <oyvble@hotmail.com>
 Maintainer: Oyvind Bleka <oyvble@hotmail.com>
 Description: Contains procedures for maximization, integration and MCMC of likelihoods of a quantitative model for DNA mixtures for a general specifications of hypotheses. It also contains procedures for estimating the profiles of unknown contributors. The implemented model takes care of drop-out, drop-in, degradation, stutters (both backward and forward). It also contains a graphical user interface to ease the use.
@@ -10,11 +10,13 @@ URL: http://euroformix.com/
 NeedsCompilation: yes 
 License: GPL-3 + file LICENSE
 Depends: R (>= 3.0.1)
+Imports: stats, methods, Rcpp
+LinkingTo: Rcpp, RcppArmadillo
 Suggests: 
 	gWidgets2,
 	cubature,
-    forensim,
     curl,
     XML,
     plotly,
     testthat
+RoxygenNote: 7.2.1

@@ -1,4 +1,85 @@
 
+SUGGESTIONS:
+ - Also perform model search under Hp.
+ - Include progressbar for Model validation when time consuming (check time for 1 allele and use this)
+ - Adding new functionality: EFM remembers last used settings when closed. 
+   Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies. ??
+ - Include ordinary scale of LR (at least for qualitative model)?
+
+EuroForMix v4.0.0 (Release date: 2022-11-28)
+=============================================
+ Special thanks to: Victor Saragoni (tester), Damir Tesanovic (tester) and Jerry Hoogenboom (algorithm).
+
+- Major changes:
+ -> Speedup of qualitative likelihood calculations: calcQual is an alternative implementation of forensim::likEvid (can be ~10x faster)
+ -> Speedup of quantitative likelihood calculations: MLE, INT, MCMC based calculations utilizes this.
+ -> Modified underlying C++ code for deconvolution and validMLE (utilizing EFMrep development).
+ -> All calculation functions are back-compatible: Same arguments are kept.
+  - The old functions calls the new ones indirectly: contLikINT->calcINT, contLikMLE->calcMLE
+
+ -> Modified fragment length designations:
+  - Non-observed alleles now linearly interpolated instead of using closest.
+  - New model option for assigning the fragment length of Q-allele: Weighted average of non-observed allele frequencies.
+	- Can be turned on in Settings or given as argument in following functions: calcMLE,calcINT,contLikSearch.
+  
+ -> Updated feature for Conservative LR calculation (LR sensitivity): 
+  - The calculation can be done accumulatively. In the GUI: Pressing the button again will extended the MCMC chain.
+  - A 95% CI is included to take into account the MCMC simulation uncertainty.
+  - A traceplot is included to give the user an idea of accuracy as a function of number of iterations.
+  - The Bayes Factor estimate based on MCMC is also superimposed in both plots.
+    
+ -> Added functions:
+  - Main functions: tableSaver, efm_gfile, efm_DBsearch (database search module is extracted outside of efm function)
+  - Helpfunctions (hidden) used for calculations:  .convBack, .paramrandomizer, .calcJacobian, .secondToTimeformat, .printTable, .plotTippet, .getFragLength
+  - plotSumPH placed outside efm function (used to show degradation trends)
+  
+ -> New functions to simplified calculations where input is fitted models under Hp and Hd.
+	1) calcLRmle: Returns MLE based LRs.
+	2) calcLRmcmc: Based on MCMC. Provides both conservative and estimated full bayesian.
+	3) calcLRint: First utilizes getParamLimits based on fitted model under Hd to obtain param limits.
+	4) calcTippet: Non-contributor analysis
+  
+ -> Updated Upper boundary LR: Now takes into account following (results may differ due to this):
+  - All typed individuals (under Hp) are included for calculations. 
+  - Missing markers of POI should not affect RMP and scaling.
+
+ -> In GUI:
+  - Created button for showing LR-per markers in results
+  - Imported Profiles/Databases can now be removed from the selection list (Data panel).
+  - In "MLEfit" panel: Also show which sample(s) and hypotheses that are evaluated.
+  - A new button for storing top ranked genotypes as references (after Deconvolution), stores as EFM-format.
+  - Integration based LR (Bayes Factor) is no longer possible for database search.
+  - Changed options for Integration, MCMC
+  - All calculated results are stored in resEVID: MLE,INT,MCMC (and validHp/validHd). SEARCH is stored in setEVID.
+  - The created reported is now done in a separate function: createReport (taking mmTK environment as input).
+  - Additional comparison values of Ref->Evid added when "View Reference".
+  - When importing profiles: Gives user option whether to still import data if OL alleles are observed (automatically removed)
+  - The data selection in Model panel is moved to a separate window (activated with button). Also accepting any number of markers
+  - In settings: "Max number of loci" is removed. This is no longer a limitation (data selection and LR-per marker modified)
+  - Peak height plots: EPG/Bar-plots are shown in Browser only if plotly is installed.
+  - The sumPeakHeight visualiziation against fragment length is modified: 
+	A smoothing curve is shown for each replicate (colored). Also no longer showing p-values.
+  
+ -> The calcLikMLE argument "maxIter" is replaced with "difftol": tolerance for being exact in log-likelihood value (relevant when nDone>1).
+ -> Function noncontrMLE replaced with a new function calcTippet (supports both MLE/INT).
+ -> Additional information added to the report:
+  - Detailed information about samples and references are included into the report.
+  - The number of evaluations and time usage for the MLE method is included to the report ("Number of evaluations")
+
+ -> Update in plotTopEPG2/plotTopMPS2 plots: Stutter products are now also shown
+
+ -> Minor changes: 
+  - Tidy up RMP printout for references.
+  - Fixed issue of showing MCMC when assuming one contributor.
+  - Degradation option can now be included for the model search.
+  - Plot functions plotEPG2/plotMPS2
+  - plotTopEPG2/plotTopMPS2 now uses information from fitted model (prepareC)
+  - Fixed crash when replicates without kit specification is visualized (L1257: Use lapply instead of sapply).
+  - Database search LR results now shown on log10 scale
+  - Better error handling regarding the markerSpecific settings. 
+    Still error if user forget to use "Save settings".
+	Added guidance text to "setVecRightOrder" function.
+ 
 EuroForMix v3.4.1 (Release date: 2022-03-22)
 =============================================
 - efm function updates:

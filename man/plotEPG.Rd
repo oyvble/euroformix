@@ -9,7 +9,7 @@ plotEPG(Data, kitname, threshT = 0, refcond = NULL, showPH = FALSE)
 \arguments{
 \item{Data}{List of adata- and hdata-elements.}
 
-\item{kitname}{Name of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}}
+\item{kitname}{Short name of kit: See supported kits with getKit()}
 
 \item{threshT}{The detection threshold can be shown in gray in the plot.}
 

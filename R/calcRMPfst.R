@@ -1,12 +1,11 @@
 #' @title calcRMPfst
 #' @author Oyvind Bleka
 #' @description A helpfunction for calculating the random match probability for a person of interest (given fst)
-#'
 #' @param dat A object retured from getData function
 #' @param POIind Index of the references being Person of interest (POI)
 #' @param condInd Index of conditional references 
 #' @param fst The co-ancestry coefficient (theta-correction). Can be a vector (must contain the marker names)
-#' @return ret A vector with random match probabilities for each markers
+#' @return ret A vector with random match probabilities for each marker
 #' @export
 
 calcRMPfst = function(dat,POIind=1,condInd=NULL,fst=0) {

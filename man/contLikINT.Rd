@@ -4,12 +4,32 @@
 \alias{contLikINT}
 \title{contLikINT}
 \usage{
-contLikINT(nC, samples, popFreq, lower, upper, refData = NULL,
-  condOrder = NULL, knownRef = NULL, xi = NULL, prC = 0,
-  reltol = 0.01, threshT = 50, fst = 0, lambda = 0,
-  pXi = function(x) 1, kit = NULL, scale = 0, maxEval = 0,
-  knownRel = NULL, ibd = c(1, 0, 0), xiFW = 0, pXiFW = function(x)
-  1, maxThreads = 32, verbose = TRUE)
+contLikINT(
+  nC,
+  samples,
+  popFreq,
+  lower,
+  upper,
+  refData = NULL,
+  condOrder = NULL,
+  knownRef = NULL,
+  xi = NULL,
+  prC = 0,
+  reltol = 0.01,
+  threshT = 50,
+  fst = 0,
+  lambda = 0,
+  pXi = function(x) 1,
+  kit = NULL,
+  scale = 0,
+  maxEval = 0,
+  knownRel = NULL,
+  ibd = c(1, 0, 0),
+  xiFW = 0,
+  pXiFW = function(x) 1,
+  maxThreads = 0,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{nC}{Number of contributors in model.}
@@ -67,7 +87,7 @@ ret A list(margL,deviation,nEvals,scale) where margL is Marginalized likelihood 
 contLikINT marginalizes the likelihood through numerical integration.
 }
 \details{
-The procedure does numerical integration to approximate the marginal probability over the model parameters.
+Replaced by new function calcINT
 }
 \references{
 Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.

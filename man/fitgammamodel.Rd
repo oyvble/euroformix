@@ -4,8 +4,17 @@
 \alias{fitgammamodel}
 \title{fitgammamodel}
 \usage{
-fitgammamodel(y, x = NULL, niter = 10, delta = 1, plott = FALSE,
-  alpha = 0.05, offset = 125, scale = 100, restrictDeg = TRUE)
+fitgammamodel(
+  y,
+  x = NULL,
+  niter = 10,
+  delta = 1,
+  plott = FALSE,
+  alpha = 0.05,
+  offset = 125,
+  scale = 100,
+  restrictDeg = TRUE
+)
 }
 \arguments{
 \item{y}{Vector with sum peak heights (per loci)}
@@ -41,7 +50,6 @@ th = c(1000,0.8,0.6)
 n = 100 #number of samples
 x = seq(10,300,l=n)
 y = rgamma(n,shape=2/th[2]^2*th[3]^((x-125)/100),scale=th[1]*th[2]^2)
-fitgammamodel(y,x,plott=TRUE,alpha=0.05)
 fitgammamodel(y,x,plott=TRUE,alpha=0.05)
 }
 }

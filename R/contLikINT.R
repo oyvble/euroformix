@@ -2,7 +2,7 @@
 #' @title contLikINT
 #' @author Oyvind Bleka
 #' @description contLikINT marginalizes the likelihood through numerical integration.
-#' @details The procedure does numerical integration to approximate the marginal probability over the model parameters.
+#' @details Replaced by new function calcINT
 #' 
 #' @param nC Number of contributors in model.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
@@ -34,167 +34,17 @@
 #' @keywords Marginalized likelihood
 
 
-contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,maxThreads=32,verbose=TRUE){
- if(is.null(maxEval)) maxEval <- 0
- if(length(lower)!=length(upper)) stop("Length of integral limits differs")
- np = length(lower)
-
- c <- prepareC(nC,samples,popFreq,refData,condOrder,knownRef,kit,knownRel,ibd,fst,incS=is.null(xi) || xi>0,incFS=is.null(xiFW) || xiFW>0)
- usedeg  <- !is.null(kit) #boolean whether modeling degradation TRUE=YES, FALSE=NO
- 
- #Prepare fixed params:
- nM = c$nM #number of markers to evaluate
- 
- #Check AT:
- if(length(threshT)==1) {
-   ATv = rep(threshT,nM) #common detection threshold for all markers
- } else {
-   ATv = setVecRightOrder(threshT,  c$locs) #get right order of vector 
- }
- 
- #Check dropin prob
- if(length(prC)==1) {
-   pCv = rep(prC,nM) #common dropin prob for all markers
- } else {
-   pCv = setVecRightOrder(prC,  c$locs) 
- }
- 
- #Check hyperparam DI
- if(length(lambda)==1) {
-   lambdav = rep(lambda,nM) #common hyperparam DI for all markers
- } else {
-   lambdav = setVecRightOrder(lambda,  c$locs) 
- }
- 
- #Check theta correction
- if(length(fst)==1) {
-   fstv = rep(fst,nM) #common theta correction for all markers
- } else {
-   fstv = setVecRightOrder(fst,  c$locs)
- }
- names(ATv) <- names(pCv) <- names(lambdav) <- names(fstv) <- c$locs #insert locus names (correct order)
- 
- #PREPEARING THE LIKELIHOOD OPTIMZATION (what parameters are provided?):
- useParamOther = rep(TRUE,3)  #index of parameters used (set NA if fixed)
- if(!usedeg) useParamOther[1] = FALSE #degrad not used
- if(!is.null(xi)) useParamOther[2] = FALSE #BW stutter not used
- if(!is.null(xiFW)) useParamOther[3] = FALSE  #FW stutter not used
- indexParamOther = rep(NA,3)
- if(any(useParamOther)) indexParamOther[useParamOther] = 1:sum(useParamOther) #init indices
- 
- liktheta <- function(theta) {
-  mixprop = as.numeric() #Length zero for 1 contributor
-  if(nC>1) mixprop = theta[1:(nC-1)] #extract parms
-  muv = rep(theta[nC],nM)   #common param for each locus
-  sigmav = rep(theta[nC+1],nM)  #common param for each locus
-
-  #Prepare the remaining variables
-  beta1 = 1.0 #set default values
-  xiB = xi #set default values
-  xiF = xiFW #set default values
-  tmp = theta[ (nC+1) + indexParamOther ] #obtain params
-  if(useParamOther[1]) beta1 = tmp[1]
-  if(useParamOther[2]) xiB = tmp[2]
-  if(useParamOther[3]) xiF = tmp[3]
-  betav = rep(beta1,nM) #common param for each locus
-  xiBv = rep(xiB,nM) #common param for each locus
-  xiFv = rep(xiF,nM) 
-    
-  loglik = .C("loglikgammaC",as.numeric(0),c$nC,c$NOK,c$knownGind,as.numeric(mixprop),as.numeric(muv),as.numeric(sigmav),as.numeric(betav),as.numeric(xiBv),as.numeric(xiFv),as.numeric(ATv),as.numeric(pCv),as.numeric(lambdav),as.numeric(fstv),c$nReps,c$nM,c$nA,c$YvecLong,c$FvecLong,c$nTypedLong,c$maTypedLong,c$basepairLong,c$BWvecLong,c$FWvecLong,c$nPS,c$BWPvecLong,c$FWPvecLong,as.integer(maxThreads),as.integer(0),c$anyRel,c$relGind,c$ibdLong,PACKAGE="euroformix")[[1]]
-  if(is.null(xi))  loglik <- loglik + log(pXi(xiB)) #weight with prior of xi
-  if(is.null(xiFW))  loglik <- loglik + log(pXiFW(xiF)) #weight with prior of xiFW
-  likval <- exp(loglik+scale) #note the scaling given as parameter "scale".
-  
-  if(verbose && maxEval>0) { #only show progressbar if verbose
-    progcount <<- progcount + 1
-    setTxtProgressBar(progbar,progcount)
-  } 
-  
-  return(likval) #weight with prior of tau and stutter.
- }
- 
- #DERIVED RESTRICTION FOR MIXTURE PROPORTIONS:
- nK = sum(condOrder>0) #number of conditionals
- nU <- nC-nK #number of unknowns
- if(nC==2 && nU==2) {
-  lower[1] <- max(1/2,lower[1]) #restrict to 1/2-size
- }
- if(nC==3 && nU==3) { #restrict to 1/6-size
-  lower[1] <-  max(1/3,lower[1])
-  upper[2] <- min(1/2,upper[2])
- }
- if(nC==4 && nU==4) { #restrict to 1/12-size
-  lower[1] <- max(1/4,lower[1])
-  upper[2] <- min(1/2,upper[2])
-  upper[3] <- min(1/3,upper[3])
- }
- if(nC==4 && nU==3) { #restrict to 1/2-size
-  upper[3] <- min(1/2,upper[3])
- }
- if(nC==5 && nU==5) { #restrict to 1/20-size
-  lower[1] <- max(1/5,lower[1])
-  upper[2] <- min(1/2,upper[2])
-  upper[3] <- min(1/3,upper[3])
-  upper[4] <- min(1/4,upper[4])
- }
- if(nC==5 && nU==4) { #restrict to 1/3-size
-  upper[3] <- min(1/2,upper[3])
-  upper[4] <- min(1/3,upper[4])
- }
- if(nC==5 && nU==3) { #restrict to 1/2-size
-  upper[4] <- min(1/2,upper[4])
- }
- if(nC==6 && nU==6) { #restrict to 1/25-size
-  lower[1] <- max(1/5,lower[1])
-  upper[2] <- min(1/2,upper[2])
-  upper[3] <- min(1/3,upper[3])
-  upper[4] <- min(1/4,upper[4])
-  upper[5] <- min(1/5,upper[5])
- }
- if(nC==6 && nU==5) { #restrict to 1/4-size
-  upper[3] <- min(1/2,upper[3])
-  upper[4] <- min(1/3,upper[4])
-  upper[5] <- min(1/4,upper[5])
- }
- if(nC==6 && nU==4) { #restrict to 1/3-size
-  upper[4] <- min(1/2,upper[4])
-  upper[5] <- min(1/3,upper[5])
- }
- if(nC==6 && nU==3) { #restrict to 1/2-size
-  upper[5] <- min(1/2,upper[5])
- }
-
- #Get number of combinations which are used to scale the integral (cause of calculating symmetries):
- comb <- 1
- if(nC>1) {
-   comb2 <- rep(1,nC-1) - (upper[1:(nC-1)]-lower[1:(nC-1)])
-   comb <- round(1/prod(comb2[comb2>0]))
- }
- 
-# NOC1  2  3  4  5  6
-# 1  1  1  1  1  1  1
-# 2 NA  2  1  1  1  1
-# 3 NA NA  6  2  2  2
-# 4 NA NA NA 12  3  3
-# 5 NA NA NA NA 20  4
-# 6 NA NA NA NA NA 25
-
- if(verbose) {
-   print(paste0("lower=",paste0(prettyNum(lower),collapse="/")))
-   print(paste0("upper=",paste0(prettyNum(upper),collapse="/")))
-
-   #Inititate progressbar if maxEval given
-   progcount = 1  #counter
-   if( maxEval>0 ) progbar <- txtProgressBar(min = 0, max = maxEval, style = 3) #create progress bar
- }
- 
- 
- foo <- cubature::adaptIntegrate(liktheta, lowerLimit = lower , upperLimit = upper , tol = reltol, maxEval=maxEval)#10000)
- val <- foo$integral
- dev <- val + c(-1,1)*foo$error
- nEvals <- foo[[3]]
- val <- comb*val
- dev <- comb*dev
- return(list(margL=val,deviation=dev,nEvals=nEvals,scale=scale))
+contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,maxThreads=0,verbose=TRUE){
+ DEG <- BWS <- FWS <- TRUE
+	if(is.null(kit)) DEG <- FALSE
+	if(!is.null(xi) && xi==0) BWS = FALSE
+	if(!is.null(xiFW) && xiFW==0) {
+	  FWS = FALSE
+	} else if(!BWS) {
+	  if(verbose) print("Backward stutter was switched on again..")
+	  BWS = TRUE #Back stutter must be ON if switched off (limitation of EFMfast)
+	}
+	int = euroformix::calcINT(nC,samples,popFreq, lower,upper, refData,condOrder,knownRef,kit,DEG,BWS,FWS,AT=threshT,pC=prC,lambda=lambda,fst=fst,knownRel=knownRel,ibd=ibd, priorBWS=pXi, priorFWS=pXiFW, reltol=reltol, scale=scale,maxEval=maxEval,maxThreads=maxThreads,verbose=verbose)
+	return(int)
 }
 

@@ -3,7 +3,7 @@
 #' @description EPG plotter created by Oskar Hansson.
 #' @details Plots peak height with corresponding allele for one sample for a given kit.
 #' @param Data List of adata- and hdata-elements.
-#' @param kitname Name of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
+#' @param kitname Short name of kit: See supported kits with getKit()
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @param refcond condition on a list$refname$locname$adata of reference alleles which are labeled in EPG
 #' @param showPH Whether peak heights should be included in the plot
@@ -25,13 +25,13 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 	# sampleName - title on the EPG.
 	# refList - a list of reference-index
 	# refnames - a vector with reference names
-      #samescale - boolean whether same scale should be plotted for all dyers
+  #samescale - boolean whether same scale should be plotted for all dyers
 
-      drawpeaks <- length(sn)==1 #draw peaks only if one replicate, otherwise draw points
+  drawpeaks <- length(sn)==1 #draw peaks only if one replicate, otherwise draw points
 
 	# CONSTANTS:
 	defaultRepeatUnit <- 4 # Default repeat unit in base pairs:
-      defaultLocusName <- "Locus " # Default locus name (will be suffixed with a number):
+  defaultLocusName <- "Locus " # Default locus name (will be suffixed with a number):
 	defaultMarkerSpacing <- 100 # Default marker spacing in base pairs:
 
 	# GRAPH CONSTANTS:
@@ -43,9 +43,9 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 	peakHalfWidth <- 0.4 # Peak half width in base pair (width of peak = 2 * peakHalfWidth):
 	alleleNameTxtSize <- 0.8 # Relative Allele name text size:	
 	yMarginTop <- 1.05 # Distance between the highest peak in a plot and the plot border (1.04 = 4% margin).
-     if(showPH) yMarginTop <- 1.3 
+  if(showPH) yMarginTop <- 1.3 
 		
-      kit <- getKit(typingKit) # Get kit information.
+  kit <- getKit(typingKit) # Get kit information.
 	# Check if kit was found.	
 	if (is.na(kit)[1]) {
 		print("Kit not found.")
@@ -53,16 +53,16 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 		kitFound <- FALSE
  	} else { # Kit found. Save information in vectors.
 		kitFound <- TRUE
-            unittab <- getKit(typingKit, what="offset")
-            rangetab <- getKit(typingKit, what="range") 
+    unittab <- getKit(typingKit, what="offset")
+    rangetab <- getKit(typingKit, what="range") 
 		locusVectorKit <- rangetab[,1] # Marker/locus names.
 		dyeVectorKit <- rangetab[,2] 	# Dye for each marker/locus    
 		offsetVectorKit <- unittab[,2] #Base pair start offset for each marker.
 		repeatUnitVectorKit <- unittab[,3] #Size in base pair of repeating unit for each marker.
 
-            #Range of markers:
-            locusMinVectorKit <- rangetab[,3]
-            locusMaxVectorKit <- rangetab[,4]
+    #Range of markers:
+    locusMinVectorKit <- rangetab[,3]
+    locusMaxVectorKit <- rangetab[,4]
 	}
 
 	# Check dye vector.
@@ -91,37 +91,38 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 
 	# Convert dye vector to numeric vector.
 	colors <- unique(dyeVector)  
-      nColors <-  length(colors) 
+  nColors <-  length(colors) 
 
 	# Create lists:
 	bpListByColorList <- list()
 	bpListByColorListRep <- list()
 	phListByColorRep <- list()
 	allelesByColorList <- list()	
-      markerByColorList <- list()
-      refByColorList <- list() 
-      isLab <- length(refnames)>0 #boolean have labels
-      bpmarkerByColorList <- list() #used for giving bp for a given marker
+  markerByColorList <- list()
+  refByColorList <- list() 
+  isLab <- length(refnames)>0 #boolean have labels
+  bpmarkerByColorList <- list() #used for giving bp for a given marker
 
 	# SORT DATA ACCORDING TO COLOR CHANNEL and
 	# CONVERT ALLELE NAMES TO FRAGMENT LENGTH IN BASE PAIRS
 
 	# Loop over all color channels.
 	for (color in 1:nColors){
-            basePairTmpLst <- list()
+    basePairTmpLst <- list()
+    
 		# Boolean vector indicating selected markers (same color).
  		selectedMarkers <- dyeVector == colors[color]
 
-            if (kitFound) {
-             markerByColorList[[color]] <- locusVectorKit[selectedMarkers] #EDIT by OB: marker names
+    if (kitFound) {
+      markerByColorList[[color]] <- locusVectorKit[selectedMarkers] #EDIT by OB: marker names
 		} else {
-             markerByColorList[[color]] <- locus #EDIT by OB: marker names
-            }
+      markerByColorList[[color]] <- locus #EDIT by OB: marker names
+    }
 		allelesByColor <- alleleList[selectedMarkers] # Extract all alleles in the same color channel.
 		heightsByColor <- heightList[selectedMarkers] # Extract all peak heights in the same color channel.		
 		offsetByColor <- offsetVector[selectedMarkers]# Extract all marker offsets in the same color channel.
 		repeatUnitByColor <- repeatUnitVector[selectedMarkers] # Extract all repeat unit sizes in the same color channel.
-            refByColor <- refList[selectedMarkers] #added OB
+    refByColor <- refList[selectedMarkers] #added OB
 
 		# Loop over all markers in that color channel.
 		for(marker in 1:length(markerByColorList[[color]]) ){
@@ -133,43 +134,43 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
                        x <- sub("Y", 2, toupper(x))
                        return(x)
                     })
-	            } 
-		      alleleValue <- lapply(alleleValue,as.numeric) 
+	    } 
+		  alleleValue <- lapply(alleleValue,as.numeric) 
             
 			# Convert all allele names in current marker to base pairs.
 			basePairTmpLst[[marker]] <- lapply(alleleValue,function(x) return(offsetByColor[marker] + floor(x) * repeatUnitByColor[marker] + (x %% 1) * 10) )
 		}
-            bpmarkerByColorList[[color]] <- sapply(basePairTmpLst,function(x) min(unlist(x)))
+    bpmarkerByColorList[[color]] <- sapply(basePairTmpLst,function(x) min(unlist(x)))
            
 		# Add basepair to list.
 		for(row in 1:length(allelesByColor)){
 
 			# Avoid 'subscript out of bounds' error.
-                  tmp <- cbind(unlist(allelesByColor[[row]]),unlist(basePairTmpLst[[row]]))
-                  if(isLab)  tmp <- cbind(tmp,unlist(refByColor[[row]]))
-                  tmp <- unique(tmp) #consider only the unique
+      tmp <- cbind(unlist(allelesByColor[[row]]),unlist(basePairTmpLst[[row]]))
+      if(isLab)  tmp <- cbind(tmp,unlist(refByColor[[row]]))
+      tmp <- unique(tmp) #consider only the unique
 
 			if (length(bpListByColorList)<color){
 				bpListByColorListRep[[color]] <- basePairTmpLst[[row]]
 				phListByColorRep[[color]] <- heightsByColor[[row]]
 				allelesByColorList[[color]] <- tmp[,1] #get unique alleles
 				bpListByColorList[[color]] <- as.numeric(tmp[,2]) #get unique base pairs
-                        if(isLab) refByColorList[[color]] <- tmp[,3]
+        if(isLab) refByColorList[[color]] <- tmp[,3]
 			} else {
-                        for(ss in sn) {
- 				 bpListByColorListRep[[color]][[ss]] <- c(bpListByColorListRep[[color]][[ss]], basePairTmpLst[[row]][[ss]]) 
-				 phListByColorRep[[color]][[ss]] <- c(phListByColorRep[[color]][[ss]], heightsByColor[[row]][[ss]])
-                        }
+        for(ss in sn) {
+ 				  bpListByColorListRep[[color]][[ss]] <- c(bpListByColorListRep[[color]][[ss]], basePairTmpLst[[row]][[ss]]) 
+				  phListByColorRep[[color]][[ss]] <- c(phListByColorRep[[color]][[ss]], heightsByColor[[row]][[ss]])
+        }
 				allelesByColorList[[color]] <- c(allelesByColorList[[color]], tmp[,1] )
-                        bpListByColorList[[color]] <- c(bpListByColorList[[color]],as.numeric(tmp[,2])) #get unique base pairs           
+        bpListByColorList[[color]] <- c(bpListByColorList[[color]],as.numeric(tmp[,2])) #get unique base pairs           
  				if(isLab) refByColorList[[color]] <- c(refByColorList[[color]],tmp[,3])
 			}
 		}
 	}
 
-     ################
+  ################
 	# CREATE GRAPH #
-     ################
+  ################
 	# Set up the plot window according to the number of color channels.
 	par(mfrow = c(nColors, 1))
 
@@ -185,37 +186,37 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 	xMin <- min(sapply( bpListByColorList,function(x) min(na.omit(x))))
 	xMax <- max(sapply( bpListByColorList,function(x) max(na.omit(x))))
 	yMaxCol <- sapply( phListByColorRep,function(x) max(sapply(x,function(y) max(na.omit(y)))) )  #get maximum of y per col
-        yMaxCol[is.infinite(yMaxCol)] = 1e-6 
+  yMaxCol[is.infinite(yMaxCol)] = 1e-6 
 
 	#Loop over all color channels.
-	for (color in 1:nColors){
+	for (color in 1:nColors) {
 
 		# Get alleles and peak heights for current marker.
 		bpVec <- bpListByColorList[[color]]
 		bpVecRep <- bpListByColorListRep[[color]]
 		hVec <- phListByColorRep[[color]]
 		aVec <- allelesByColorList[[color]]
-          if(isLab) rVec <- refByColorList[[color]] #references for each alleles
+    if(isLab) rVec <- refByColorList[[color]] #references for each alleles
 
 		# Create blank plot with axes.
-          yMax <- 1
+    yMax <- 1
 		noData <- FALSE
 		if(length(yMaxCol)>0) {
-              yMax <- yMaxCol[color]
-              if(samescale) yMax <- max(yMaxCol)
-            } else {
-              noData <- TRUE
-            }
+      yMax <- yMaxCol[color]
+      if(samescale) yMax <- max(yMaxCol)
+    } else {
+      noData <- TRUE
+    }
 
-	      plot(c(xMin, xMax), c(0, yMax), type="n", ylim = c(0, yMax * yMarginTop), ann = FALSE,axes=FALSE)
-            axis(side = 2)
-            bpgrid = 25
-            nl <- ceiling(xMax/bpgrid) #number of ticks (for each 25 bp)
-            xs = seq(0,bpgrid*nl,bpgrid)
-            axis(side = 1,at=xs,labels=rep("",length(xs)))
-            if(isLab && color==1) legend("topright",legend=paste0("Label ",1:length(refnames)," = ",refnames),bty="n")
-            abline(h=0)
-            if(threshT>0) abline(h=threshT,col="gray",lwd=0.5) #plot threshold
+    plot(c(xMin, xMax), c(0, yMax), type="n", ylim = c(0, yMax * yMarginTop), ann = FALSE,axes=FALSE)
+    axis(side = 2)
+    bpgrid = 25
+    nl <- ceiling(xMax/bpgrid) #number of ticks (for each 25 bp)
+    xs = seq(0,bpgrid*nl,bpgrid)
+    axis(side = 1,at=xs,labels=rep("",length(xs)))
+    if(isLab && color==1) legend("topright",legend=paste0("Label ",1:length(refnames)," = ",refnames),bty="n")
+    abline(h=0)
+    if(threshT>0) abline(h=threshT,col="gray",lwd=0.5) #plot threshold
 		if (noData) text(xMax / 1.4, yMax / 2, labels="No data", cex = 1.5) # Write text if no data.
 		if (color == 1) 	title(main = sampleName, col.main = "red", font.main = 4) # Create a title.
 		title(ylab = ylabel) # Label the y axes.
@@ -223,59 +224,61 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
 		# Write allele names under the alleles.
 		# The additional par(xpd=TRUE) makes it possible to write text outside of the plot region.
 		if(length(bpVec)==0) next #skip if no info
-          text(bpVec, 0, labels = aVec, cex = alleleNameTxtSize, pos = 1, xpd = TRUE) 
-          if(isLab) text(bpVec,-yMax/20,labels=rVec,cex = alleleNameTxtSize,pos=1, xpd = TRUE)
-          text(bpmarkerByColorList[[color]],  yMax * yMarginTop ,markerByColorList[[color]],cex=1,font=2,xpd = TRUE)
- 
-       	# Loop over all peaks.
-		for (peak in 1:length(bpVec)){
+      text(bpVec, 0, labels = aVec, cex = alleleNameTxtSize, pos = 1, xpd = TRUE) 
+      if(isLab) text(bpVec,-yMax/20,labels=rVec,cex = alleleNameTxtSize,pos=1, xpd = TRUE)
+      text(bpmarkerByColorList[[color]],  yMax * yMarginTop ,markerByColorList[[color]],cex=1,font=2,xpd = TRUE)
+
+   	# Loop over all peaks.
+		for (peak in 1:length(bpVec)) {
 			if (drawpeaks) { # Create corners of peak triangle.
-                   ph <- hVec[[1]][peak]
+       ph <- hVec[[1]][peak]
 			 xCords <- c(bpVec[peak] - peakHalfWidth, bpVec[peak], bpVec[peak] + peakHalfWidth)
 			 yCords <- c(0, ph, 0)
-	  		 polygon(xCords, yCords, col = tolower(as.character(colors[color]))) # Plot peaks as filled polygons.
-                   if(showPH && ph!=1e-6)  text(bpVec[peak],ph+20*nchar(ph), labels = hVec[[1]][peak], cex = alleleNameTxtSize,srt=90) 
+  		 polygon(xCords, yCords, col = tolower(as.character(colors[color]))) # Plot peaks as filled polygons.
+       if(showPH && ph!=1e-6)  text(bpVec[peak],ph+20*nchar(ph), labels = hVec[[1]][peak], cex = alleleNameTxtSize,srt=90) 
          
 			} else {# If scatterplot is to be drawn. 
-                   delta <- peakHalfWidth/length(sn)*4 #width of bars
-                   for(sind in 1:length(sn)) {
-                    if(is.na(bpVec[peak])) next
-			  ind <- which(round(bpVecRep[[sn[sind]]])==round(bpVec[peak]))
-                    x1 <- bpVec[peak]+delta*((sind-1)-length(sn)/2)
-                    x2 <- bpVec[peak]+delta*(sind-length(sn)/2)
-			  if(length(ind)>0) {
-                     ph <- hVec[[sn[sind]]][ind]
-                     rect(x1,0,x2,ph,border=tolower(as.character(colors[color])),col=sind,lwd=0.1)
-                     if(showPH && ph!=1e-6)  text((x1+x2)/2,ph+20*nchar(ph), labels = ph, cex = alleleNameTxtSize,srt=90,col=sind) 
-                    }
-                   }
+        delta <- peakHalfWidth/length(sn)*4 #width of bars
+        for(sind in 1:length(sn)) {
+          if(is.na(bpVec[peak])) next
+          ind <- which(round(bpVecRep[[sn[sind]]])==round(bpVec[peak]))
+          x1 <- bpVec[peak]+delta*((sind-1)-length(sn)/2)
+          x2 <- bpVec[peak]+delta*(sind-length(sn)/2)
+    		  if(length(ind)>0) {
+            ph <- hVec[[sn[sind]]][ind]
+            rect(x1,0,x2,ph,border=tolower(as.character(colors[color])),col=sind,lwd=0.1)
+            if(showPH && ph!=1e-6)  text((x1+x2)/2,ph+20*nchar(ph), labels = ph, cex = alleleNameTxtSize,srt=90,col=sind) 
+    		  }
+        }
 			} 
 		} #end for each peak
-	}#end for each color
- dev.new()
- op <- par(no.readonly = TRUE)
- dev.off()
- par(op)
-} #end plot function
+  }#end for each color
+  dev.new()
+  op <- par(no.readonly = TRUE)
+  dev.off()
+  par(op)
+ } #end plot function
 
- #START FUNCTION
-
+ ################
+ #START FUNCTION#
+ ################
+ 
   #fix order prior:
   kit <- getKit(kitname)
   sn <- names(Data) #sample names
   locs <- unique(unlist(lapply(Data,names))) #get unique loci
   alist <- hlist <- clist <- list() #lists to store allele and peak height data
   for(loc in locs) { #impute missing heights with 1
-   adata <- lapply(Data,function(x) x[[loc]]$adata)
-   hdata <- lapply(Data,function(x) x[[loc]]$hdata)
-   clist[[loc]] <- list()
-   for(ss in sn) { #impute missing heights with 1
-    lA <- length(adata[[ss]])
-    if(length(hdata[[ss]])==0 && length(lA>0)) hdata[[ss]] <- rep(1,lA) #impute with height 1 (if hdata is missing)
-   }
-
-   #reference data:
-   if(!is.null(refcond)) {
+    adata <- lapply(Data,function(x) x[[loc]]$adata)
+    hdata <- lapply(Data,function(x) x[[loc]]$hdata)
+    clist[[loc]] <- list()
+    for(ss in sn) { #impute missing heights with 1
+      lA <- length(adata[[ss]])
+      if(length(hdata[[ss]])==0 && length(lA>0)) hdata[[ss]] <- rep(1,lA) #impute with height 1 (if hdata is missing)
+    }
+  
+    #reference data:
+    if(!is.null(refcond)) {
      rdata <- lapply(refcond,function(x) unlist(x[[loc]]))
      unrdata <- unique(unlist(rdata))
      for(ss in sn) { 
@@ -300,37 +303,40 @@ plotEPG <- function(Data,kitname,threshT=0,refcond=NULL,showPH=FALSE) {
     }
     alist[[loc]] <- adata
     hlist[[loc]] <- hdata
-   } #end for each loci
-
-   if (!is.na(kit[[1]][1])) { #the kit was found.
-      kitlocs <- toupper(getKit(kitname,what="marker")) #make uppercase
-      sname <- paste0(kitname," - ",paste0(sn,collapse="/"))
-      AMELname <- kitlocs[grep("AM",kitlocs,fixed=TRUE)] #get amel-name
-      if(!is.null(AMELname)) {
-       AMind <- grep("AM",toupper(locs),fixed=TRUE)
-       locs[AMind] <- AMELname
-       names(alist)[AMind] <- AMELname
-       names(hlist)[AMind] <- AMELname
-       if(!is.null(refcond)) names(clist)[AMind] <- AMELname
+  } #end for each loci
+  
+  if (!is.na(kit[[1]][1])) { #the kit was found.
+    kitlocs <- toupper(getKit(kitname,what="marker")) #make uppercase
+    sname <- paste0(kitname," - ",paste0(sn,collapse="/"))
+    AMELname <- kitlocs[grep("AM",kitlocs,fixed=TRUE)] #get amel-name
+    if(!is.null(AMELname)) {
+     AMind <- grep("AM",toupper(locs),fixed=TRUE)
+     locs[AMind] <- AMELname
+     names(alist)[AMind] <- AMELname
+     names(hlist)[AMind] <- AMELname
+     if(!is.null(refcond)) names(clist)[AMind] <- AMELname
+    }
+    
+    #Insert missing loci:
+    missloc <- kitlocs[!kitlocs%in%locs] #get missing loci
+    for(loc in missloc) {
+      alist[[loc]] = rep(list(""),length(sn))
+      hlist[[loc]] = rep(list(1e-6),length(sn))
+      names(alist[[loc]]) <- names(hlist[[loc]]) <- sn
+      if(!is.null(refcond)) { 
+        clist[[loc]] = rep(list(""),length(sn))
+        names(clist[[loc]]) <- sn 
       }
-      #Insert missing loci:
-      missloc <- kitlocs[!kitlocs%in%locs] #get missing loci
-      for(loc in missloc) {
-        alist[[loc]] = rep(list(""),length(sn))
-        hlist[[loc]] = rep(list(1e-6),length(sn))
-        names(alist[[loc]]) <- names(hlist[[loc]]) <- sn
-        if(!is.null(refcond)) { 
-          clist[[loc]] = rep(list(""),length(sn))
-          names(clist[[loc]]) <- sn 
-        }
-      }
-	alist <- alist[kitlocs] 
-	hlist <- hlist[kitlocs] 
-	if(!is.null(refcond)) clist <- clist[kitlocs] 
-   } else {
+    }
+    alist <- alist[kitlocs] 
+    hlist <- hlist[kitlocs] 
+    if(!is.null(refcond))  clist <- clist[kitlocs] 
+    
+  } else {
     kitlocs <- locs
-   }
+  }
 #typingKit=kitname;alleleList=alist;heightList=hlist;locus=kitlocs;sampleName=sname;refList=clist;refnames=names(refcond);showPH=showPH
    generateEPG(typingKit=kitname,alleleList=alist,heightList=hlist, locus=kitlocs,sampleName=sname, refList=clist,refnames=names(refcond),showPH=showPH)
-}
+
+} 
 

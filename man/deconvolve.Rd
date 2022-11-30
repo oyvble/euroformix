@@ -4,7 +4,13 @@
 \alias{deconvolve}
 \title{deconvolve}
 \usage{
-deconvolve(mlefit, alpha = 0.95, maxlist = 1000, verbose = TRUE)
+deconvolve(
+  mlefit,
+  alpha = 0.95,
+  maxlist = 1000,
+  signif = 4,
+  checkCalcs = FALSE
+)
 }
 \arguments{
 \item{mlefit}{Fitted object using contLikMLE function.}
@@ -13,21 +19,19 @@ deconvolve(mlefit, alpha = 0.95, maxlist = 1000, verbose = TRUE)
 
 \item{maxlist}{The ranked deconvolved profile list will not exceed this number (used to avoid endless search).}
 
-\item{verbose}{Whether printing deconvolution progress. Default is TRUE.}
+\item{signif}{Number of significant numbers}
+
+\item{checkCalcs}{Return only calculated log-likelihood per markers (summed). Used for testing.}
 }
 \value{
 ret A list(table1,table2,table3,table4,rankGi,rankG,pG) where rankG is the ranked genotypes with corresponding probabilities in pG. rankgGi is the same, but per marker. table1 is rankG and pG combined (joint results). table2 uses rankGi to find marginal results for top-genotypes. table3 and table4 shows this marginalized on genotypes and alleles per contributor
 }
 \description{
-deconvolve calculates the posterior probability of each genotypes based on a fitted MLE model
+deconvolve ranks the set of the most conditional posterior probability of genotypes the STR DNA mixture given a fitted model under a hypothesis.
 }
 \details{
-The procedure calculates the likelihood for each single locus.
-}
-\references{
-Cowell,R.G. et.al. (2014). Analysis of forensic DNA mixtures with artefacts. Applied Statistics, 64(1),1-32.
+The procedure calculates the likelihood for each single locus. Then it combines the most probable genotypes from each loci to produce a ranked list of deconvolved profiles.
 }
 \author{
 Oyvind Bleka
 }
-\keyword{deconvolution}

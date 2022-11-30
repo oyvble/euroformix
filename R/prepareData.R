@@ -1,7 +1,8 @@
 #' @title prepareData
 #' @author Oyvind Bleka 
 #' @description Reorganasing data for calculation preparations
-#' @details Helpfunction to reorganising data which are input for further calculations (includes Qassignation). 
+#' @details Optionally to use beforehand (still required for Qual. calcs)
+#' Helpfunction to reorganising data which are input for further calculations (includes Qassignation). 
 #' Also takes detection thresholds as argument to remove possible alleles below the thresholds.
 #' 
 #' @param mixData A list with evidence profiles [[sample]][[locus]]$adata/hdata
@@ -47,6 +48,7 @@ prepareData = function(mixData,refData=NULL,popFreq=NULL,minF=NULL,normalize=FAL
       })
     }
   }
+  
   Qret <- Qassignate(mixData2, popFreq, refData2,incS=FALSE,incR=FALSE, minF = minF, normalize = normalize,verbose=verbose)
   return(list(samples=Qret$samples,refData=Qret$refData,popFreq=Qret$popFreq))
 }

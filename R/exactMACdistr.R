@@ -2,7 +2,6 @@
 #' @author Oyvind Bleka
 #' @description Calculation of false positive probability of Matching allele counter.
 #' @details This function will calculate the false positive probability for a given range of allele matches.
-#'
 #' @param si A vector with each element as the sum of allele frequencies for observed alleles.
 #' @return ret A vector with false positive probabilities for each given number of observed alleles.
 #' @export

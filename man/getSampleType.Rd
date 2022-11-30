@@ -7,15 +7,15 @@
 getSampleType(samples, kit = NULL, LUSsymbol = "_")
 }
 \arguments{
-\item{samples}{A list of samples (evidence) with structure [[samplename]][[locus]] = list(adata,hdata)}
+\item{samples}{A list of samples (evidence) with structure [[samplename]][[locus]] = list(adata,...)}
 
 \item{kit}{Kitname returned from getKit()}
 
 \item{LUSsymbol}{Symbol to be recognized as a LUS allele}
 }
 \description{
-A function for creating report based on CaseSolver object
+A function for determining data format
 }
 \details{
-The function returns the names of the selected profiles (when window is closed)
+returns "EPG" (CE),"LUS" (MPS with LUS format) or "MPS" (else it is string)
 }

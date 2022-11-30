@@ -1,8 +1,6 @@
-#' @title qualLikMLE
+#' @title calcQualMLE
 #' @author Oyvind Bleka
-#' @description Optimizing the likelihood function based on qualitative model (LRmix)
-#'
-#' @details The R-package forensim is used to calculate the likelihood value for given data and parameters.
+#' @description Optimizing the likelihood function based on qualitative model (LRmix).
 #'
 #' @param nC Number of contributors in model. Must be a constant.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
@@ -15,80 +13,93 @@
 #' @param prDcontr assumed known dropout parameter for all contributors, NA means to be optimized. Must be a nC long vector if given.
 #' @param prDcommon vector indicating which contributors should share common drop-out parameter. Assign integers to contributors with common parameters. NA means not optimized.
 #' @param steptol Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).
-#' @param maxIter Maximum number of iterations for the optimization
 #' @param prDv0 Start values for fitting the drop-out probabilities (will be spanned if multidimensional)
-#' 
+#' @param maxIter Maximum number of iterations for nlm
 #' @return ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
 #' @export
 #' @examples
 #' \dontrun{
-#' kit = "ESX17"
-#' popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv")
-#'	,sep=.Platform$file.sep)
-#' evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
-#'	sep=.Platform$file.sep)
-#' popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
-#' samples = sample_tableToList(tableReader(evidfn))
-#' dat = prepareData(samples,popFreq=popFreq) #obtain data to use for analysis
-#' fit = qualLikMLE(nC=2,samples=dat$samples,popFreq=dat$popFreq)
-#' fit = qualLikMLE(nC=3,samples=dat$samples,popFreq=dat$popFreq,prDcommon=c(1,1,2))
+#' AT = 50 #analytical threshold
+#' sep0 = .Platform$file.sep
+#' popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=sep0)
+#' evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=sep0)
+#' reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=sep0)
+#' popFreq = freqImport(popfn)[[1]] #population frequencies
+#' samples = sample_tableToList(tableReader(evidfn)) #evidence samples
+#' refData = sample_tableToList(tableReader(reffn)) #reference sample
+#' dat = prepareData(samples,refData,popFreq,threshT=AT) #needed for qual method
+#' condOrder = c(1,2,0) #assuming C1=ref1,C2=ref2
+#' logLik1 = calcQualMLE(2,dat$samples,dat$popFreq,dat$refData,condOrder)$loglik
+#' logLik2 = calcQualMLE(3,dat$samples,dat$popFreq,dat$refData,condOrder, prDcommon=c(1,1,2))$loglik
 #' }
 
-qualLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,prC=0.05,fst=0,prDcontr=NULL,prDcommon=NULL,steptol=1e-6,maxIter=100, prDv0= c(0.1,0.35,0.7)) {
+calcQualMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NULL,prC=0.05,fst=0,prDcontr=NULL,prDcommon=NULL,steptol=1e-6, prDv0= c(0.1,0.35,0.7), maxIter = 10000) {
 
   #Input checks:
   if(nC <= 0) stop("Number of contributors must be at least 1.")
   if(!is.null(condOrder)) {
-    conds = condOrder[condOrder>0] #obtain conditional indices
+    condRefsIdx = which(condOrder>0) #get references to condition on
+    conds = condOrder[condRefsIdx] #obtain conditional indices
     if( any(duplicated(conds)) ) stop("Wrong conditonal argument. Make sure to provide unique conditional indices.")
     if( nC < sum(condOrder>0) ) stop("The conditional number of references cannot exceed the number of contributors.")
-    if( !is.null(knownRef) && knownRef%in%condOrder) stop("The known non-contributor assigned in knownRef argument can't be a contributor in condOrder argument.")
+    if( !is.null(knownRef) && length(knownRef)>0 && length(condRefsIdx)>0 && knownRef%in%condRefsIdx) stop("The known non-contributor assigned in knownRef argument can't be a contributor in condOrder argument.")
   } 
   
   sampleNames = names(samples)
-  locs = names(popFreq) #loci to evaluate
-  nM = length(locs) #number of markers/loci
-  
+  locs_samples = unique(unlist(lapply(samples,names)))
+  locs_pop = names(popFreq) #loci to evaluate
+  locs = intersect(locs_samples,locs_pop) #use those in common only
+  nLocs = length(locs) #number of markers/loci
+
   #Check dropin prob
   if(length(prC)==1) {
-    pCv = rep(prC,nM) #common dropin prob for all markers
+    pCv = setNames(rep(prC,nLocs),locs) #common dropin prob for all markers
   } else {
     pCv = setVecRightOrder(prC, locs) 
   }
   
   #Check theta correction
   if(length(fst)==1) {
-    fstv = rep(fst,nM) #common theta correction for all markers
+    fstv = setNames(rep(fst,nLocs),locs) #common theta correction for all markers
   } else {
     fstv = setVecRightOrder(fst,  locs)
   }
   names(pCv) <- names(fstv) <- locs #insert locus names (correct order)
   
-  nUnknown = nC - sum(condOrder>0) #number of unknowns
-      
+  nCond = sum(condOrder>0) #number of conditionals
+  nUnknown = setNames(rep(NA,length(locs)),locs) #create vector for number of unknowns
+  
   #DATA IS PREPARED FOR OPTIMIZATION (for given hypothesis)
   #Note: STRINGS ARE ENCODED AS integers
   Evidlist <- popFreqQ <- Reflist <- list()
   for(loc in locs) { #for each marker
+  #  loc=locs[6]
     Reflist[[loc]] <- list()
-
+    
     #prepare allele frequencies (names)    
     popFreqQ[[loc]] = popFreq[[loc]]
     names(popFreqQ[[loc]]) <- 1:length(popFreq[[loc]])
-    popA = names(popFreq[[loc]]) #obtain population alleles
+    popA = names(popFreq[[loc]]) #obtain population alleles (BEFORE ENCODING!)
+    refNames = names(refData[[loc]])
     
-    for(ref in names(refData[[loc]])) { #for each replicate
+    nCondRefs = 0
+    for(r in seq_along(refNames)) { #for each reference
+      ref = refNames[r]
       #loc=locs[1]
       #ref=names(refData[[loc]])[1]
-      adata <- refData[[loc]][[ref]]#obtain ref data
+      adata <- unlist(refData[[loc]][[ref]]) #obtain ref data
       if(length(adata)==0) {
-        adata=NULL #is empty
+        adata=as.character() #is empty
       } else {
+        if(condOrder[r]>0) nCondRefs = nCondRefs + 1 #
         adata = match(adata,popA) #obtain index
       }
       Reflist[[loc]][[ref]] <-adata #reference to store (index of popA)
     }
-  
+    
+    #Obtain number of non-empty references in condOrder 
+    nUnknown[loc] = nC - nCondRefs
+      
     adataSamples = NULL #store alleles across all samples
     for(s in 1:length(sampleNames)) { #for each replicate
       sample = sampleNames[s]
@@ -125,9 +136,10 @@ qualLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
     for(loc in locs) {
       fst0 = fstv[loc] #obtain marker specific setting (if set)
       pC0 = pCv[loc] #obtain marker specific setting (if set)
-      condRefs = unlist(Reflist[[loc]][which(condOrder>0)]) #known contr
-      knownNonCond = unlist(Reflist[[loc]][knownRef]) #known non-contr
-      likval[which(loc==locs)] <- forensim::likEvid( Evidlist[[loc]],T=condRefs,V=knownNonCond,x=nUnknown,theta=fst0, prDHet=pDeachContr, prDHom=pDeachContr^2, prC=pC0, freq=popFreqQ[[loc]])
+      condRefs <- knownNonCond <- NULL
+      if(nCond>0) condRefs = unlist(Reflist[[loc]][condRefsIdx]) #known contr
+      if(length(knownRef)>0) knownNonCond = unlist(Reflist[[loc]][knownRef]) #known non-contr
+      likval[which(loc==locs)] <- calcQual( Evidlist[[loc]], condRefs, knownNonCond, nUnknown[loc], fst0, pDeachContr, pC0, popFreqQ[[loc]])
     }
     if(returnLogLikPerMarkers) {
       return( log(likval) )
@@ -195,7 +207,6 @@ qualLikMLE = function(nC,samples,popFreq,refData=NULL,condOrder=NULL,knownRef=NU
   opt$pDhatContr = pDeachContr #store dropout per contributors
   opt$model <- list(nC=nC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condOrder,knownRef=knownRef,prC=pCv,fst=fstv,prDcontr=prDcontr,prDcommon=prDcommon)
   opt$steptol=steptol
-  opt$maxIter=maxIter
   opt$prDv0=prDv0
   
   return(opt)

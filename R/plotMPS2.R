@@ -14,30 +14,23 @@
 
 plotMPS2 = function(mixData,refData=NULL,AT=NULL,ST=NULL,grpsymbol="_",locYmax=TRUE,options=NULL) {
   if(is.null(options$h0)) { h0 = 300 } else { h0 = options$h0 } # 5500/nrows #standard height for each dye (depends on number of rows? No)
- if(is.null(options$w0)) { w0 = 1800 } else { w0 = options$w0 } # standard witdh when printing plot
- if(is.null(options$marg0)) { marg0 = 0.015 } else { marg0 = options$marg0 } #Margin between subplots
- if(is.null(options$txtsize0)) { txtsize0 = 12 } else { txtsize0 = options$txtsize0 } #text size for alleles
- if(is.null(options$locsize0)) { locsize0 = 20 } else { locsize0 = options$locsize0 } #text size for loci
- if(is.null(options$minY)) { minY = 100 } else { minY = options$minY } #default minimum Y-axis length
- if(is.null(options$ymaxscale)) { ymaxscale = 1.06 } else { ymaxscale = options$ymaxscale } #y-axis scaling to the locus name positions
- if(is.null(options$grptype)) { grptype="group" } else { grptype = options$grptype }#,"stack" "group" is default 
+  if(is.null(options$w0)) { w0 = 1800 } else { w0 = options$w0 } # standard witdh when printing plot
+  if(is.null(options$marg0)) { marg0 = 0.015 } else { marg0 = options$marg0 } #Margin between subplots
+  if(is.null(options$txtsize0)) { txtsize0 = 12 } else { txtsize0 = options$txtsize0 } #text size for alleles
+  if(is.null(options$locsize0)) { locsize0 = 20 } else { locsize0 = options$locsize0 } #text size for loci
+  if(is.null(options$minY)) { minY = 100 } else { minY = options$minY } #default minimum Y-axis length
+  if(is.null(options$ymaxscale)) { ymaxscale = 1.06 } else { ymaxscale = options$ymaxscale } #y-axis scaling to the locus name positions
+  if(is.null(options$grptype)) { grptype="group" } else { grptype = options$grptype }#,"stack" "group" is default 
 
  sn = names(mixData) #get samples names
  nS = length(sn) #number of replicates
  locs = names(mixData[[1]]) #get locus names
  nL = length(locs)
 
- locFirst = FALSE #boolean of refData[[loc]][[rr]] (or refData[[rr]][[loc]])
- nrefs = 0 
- if(!is.null(refData)) {
-  refn =  names(refData) #default structure (same as old) 
-  if(any(refn%in%locs)) { #convert data structure of reference
-    refn = names(refData[[1]])
-    locFirst = TRUE
-  }
-  nrefs = length(refn)
- }
-
+ refData = .getRefData(refData,locs) #ensure correct structure: refData[[rr]][[loc]]
+ refn = names(refData)
+ nrefs = length(refData)
+ 
  df = numeric() #store data: (sample,marker,allele,height)
  for(ss in sn) { #create a seperate EPG plot for each samples
   #locs = names(mixData[[ss]])
@@ -45,13 +38,8 @@ plotMPS2 = function(mixData,refData=NULL,AT=NULL,ST=NULL,grpsymbol="_",locYmax=T
    #loc=locs[1]
 
     edat = mixData[[ss]][[loc ]] #get evid data   
-    if(is.null(refData)) {
-      rdat = NULL
-    } else {
-      if(locFirst) rdat = refData[[loc]] #get ref data (list) #get ref data (list)      
-      if(!locFirst) rdat = lapply(refData,function(x) x[[loc]]) #get ref data (list)      
-    }
-
+    rdat = NULL
+    if(nrefs>0) rdat = lapply(refData,function(x) x[[loc]]) #get ref data (list)      
     if(is.null(edat) && is.null(rdat)  ) next #skip if no data (evid or ref)
 
     av = edat$adata
@@ -86,15 +74,13 @@ plotMPS2 = function(mixData,refData=NULL,AT=NULL,ST=NULL,grpsymbol="_",locYmax=T
 
     #ref text under each allele (follow original av)
     reftxt <- rep("",length(av))
-    if(nrefs>0) {
-     for(rr in 1:nrefs) { #for each ref
+    for(rr in seq_len(nrefs)) { #for each ref
       indadd = which(av%in%unlist(rdat[[rr]])) #index of alleles to add to text
       hasprevval = indadd[nchar(reftxt[indadd])>0] #indice to add backslash (sharing alleles)
       reftxt[ hasprevval ] = paste0(reftxt[ hasprevval ],"/")      
       reftxt[indadd] = paste0( reftxt[indadd], rr)
-     }
     }
-  df = rbind(df, cbind(ss,loc,av,hv,reftxt,av1,av2) )
+    df = rbind(df, cbind(ss,loc,av,hv,reftxt,av1,av2) )
   } #end for each loci
  } #end for each samples
 df = data.frame(Sample=df[,1],Marker=df[,2],Allele=df[,3],Height=as.numeric(df[,4]),reftxt=df[,5],Allele1=df[,6], Allele2=df[,7],stringsAsFactors=FALSE)

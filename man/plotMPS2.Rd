@@ -4,8 +4,15 @@
 \alias{plotMPS2}
 \title{plotMPS2}
 \usage{
-plotMPS2(mixData, refData = NULL, AT = NULL, ST = NULL,
-  grpsymbol = "_", locYmax = TRUE, options = NULL)
+plotMPS2(
+  mixData,
+  refData = NULL,
+  AT = NULL,
+  ST = NULL,
+  grpsymbol = "_",
+  locYmax = TRUE,
+  options = NULL
+)
 }
 \arguments{
 \item{mixData}{List of mixData[[ss]][[loc]] =list(adata,hdata), with samplenames ss, loci names loc, allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric)}

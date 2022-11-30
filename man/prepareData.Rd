@@ -4,9 +4,16 @@
 \alias{prepareData}
 \title{prepareData}
 \usage{
-prepareData(mixData, refData = NULL, popFreq = NULL, minF = NULL,
-  normalize = FALSE, threshT = NULL, fillHomGen = TRUE,
-  verbose = TRUE)
+prepareData(
+  mixData,
+  refData = NULL,
+  popFreq = NULL,
+  minF = NULL,
+  normalize = FALSE,
+  threshT = NULL,
+  fillHomGen = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{mixData}{A list with evidence profiles [[sample]][[locus]]$adata/hdata}
@@ -32,6 +39,7 @@ Restructured data in list used as input for functions evaluating the liklihood f
 Reorganasing data for calculation preparations
 }
 \details{
+Optionally to use beforehand (still required for Qual. calcs)
 Helpfunction to reorganising data which are input for further calculations (includes Qassignation). 
 Also takes detection thresholds as argument to remove possible alleles below the thresholds.
 }

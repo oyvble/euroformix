@@ -35,7 +35,7 @@ combineRank <- function(dlist,loghdval=Inf,alpha=0.99,maxsearch=1000) {
  while(cc<=maxsearch) {
   step <- rep(1,nL)
   deadend <- nD<(Rankmat[cc-1,] + step) #check if we have reached the dead end for some nodes (they are excluded as possible paths)
-  if(all(deadend)) break; #stop if no more paths to go!
+  if(all(deadend)) break #stop if no more paths to go!
 
   nextpaths <-  matrix(rep(Rankmat[cc-1,],nL),nrow=nL,byrow=TRUE) + diag(step) #see forward paths
   nextpaths <- nextpaths[!deadend,] #remove dead ends
@@ -54,7 +54,7 @@ combineRank <- function(dlist,loghdval=Inf,alpha=0.99,maxsearch=1000) {
   Rankmat <- rbind(Rankmat, trackmap[pathsel,]) #select path
   sumdvec <- c(sumdvec,trackval[pathsel]) #store corresponding value
 
-  if(sum(exp(sumdvec-loghdval))>=alpha) break; #searching criterion met!
+  if(sum(exp(sumdvec-loghdval))>=alpha) break #searching criterion met!
 
   #remove selected path from map:
   trackmap <- trackmap[-pathsel,] #remove selected path from map

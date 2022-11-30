@@ -4,13 +4,29 @@
 \alias{runexample}
 \title{runexample}
 \usage{
-runexample(NOC, popfn, evidfn, reffn, POIind = 1, condInd = NULL,
-  kit = NULL, modelDegrad = FALSE, modelBWstutt = FALSE,
-  modelFWstutt = FALSE, findOptimalModel = TRUE, fst = 0.01,
-  lambda = 0.01, prC = 0.05, threshT = 50, alpha = 0.01,
-  minF = NULL, seed = 1, nDone = 2, mcmcIter = 500,
-  mcmcDelta = 2, intRelTol = 0.1, intMaxEval = 1000,
-  verbose = TRUE, maxThreads = 32)
+runexample(
+  NOC,
+  popfn,
+  evidfn,
+  reffn,
+  POIind = 1,
+  condInd = NULL,
+  kit = NULL,
+  modelDegrad = FALSE,
+  modelBWstutt = FALSE,
+  modelFWstutt = FALSE,
+  findOptimalModel = TRUE,
+  fst = 0.01,
+  lambda = 0.01,
+  prC = 0.05,
+  threshT = 50,
+  alpha = 0.01,
+  seed = 1,
+  nDone = 2,
+  mcmcIter = 500,
+  mcmcDelta = 2,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{NOC}{Number of contributors}
@@ -45,8 +61,6 @@ runexample(NOC, popfn, evidfn, reffn, POIind = 1, condInd = NULL,
 
 \item{alpha}{The significance level used for the envelope test (validMLEmodel). Default is 0.01}
 
-\item{minF}{Minimum frequency used in the analysis (can be specified, otherwise minimum observed is used by default)}
-
 \item{seed}{Seed used in contLikMLE/contLikMCMC)}
 
 \item{nDone}{Number of required optimizations in contLikMLE}
@@ -55,13 +69,7 @@ runexample(NOC, popfn, evidfn, reffn, POIind = 1, condInd = NULL,
 
 \item{mcmcDelta}{Scaling of variance used for proposal in contLikMCMC (calibrated based on mcmc$accrat object)}
 
-\item{intRelTol}{relative tolerance for integration  (contLikINT)}
-
-\item{intMaxEval}{max number of evalutions in integration (contLikINT)}
-
 \item{verbose}{Boolean whether printing data (EPG) and progress}
-
-\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 }
 \value{
 A list with calculated result elements

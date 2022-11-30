@@ -4,8 +4,7 @@
 \alias{getKit}
 \title{getKit}
 \usage{
-getKit(kit = NULL, what = NA, fileName = "kit.txt",
-  folderName = NULL)
+getKit(kit = NULL, what = NA, fileName = "kit.txt", folderName = NULL)
 }
 \arguments{
 \item{kit}{Short name of kit: See supported kits with getKit()}

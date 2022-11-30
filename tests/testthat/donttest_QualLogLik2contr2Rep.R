@@ -2,6 +2,8 @@
 #Different kinds of models are tested
 
 #rm(list=ls());library(euroformix);library(testthat)
+#source("C:/Users/oyvbl/Dropbox/Forensic/MixtureProj/myDev/euroformix/tests/helpfunctions.R")
+
 kit0 = "testkit" #name of selected kit
 s0 = 3 #signif
 #Helpfunction for checking model after model fit
@@ -153,7 +155,6 @@ ATdye = c(50,70)
 pCdye = c(0.0133 , 0.0097)
 lamdye = c(0.025, 0.034)
 fstdye = c(0.01,0.02)
-maxiter=5 #max number of iter
 
 #Allign settings wrt color-marker info  
 kitdyes = getKit(kit0,"COLOR") #get kitinfo from selected kit
@@ -171,7 +172,7 @@ test_that("Hyp 1: R1+R2 (common drop-out parameter):", {
   NOC = 2
   cond = c(1,2)
   #steptol=1e-6; prDv0=c(0.1,0.35,0.7); knownRef=NULL; nC=NOC;samples=dat$samples;popFreq=dat$popFreq;refData=dat$refData;condOrder=cond;prC=pCv;fst=fstv;maxIter=maxiter;prDcontr = c(0,NA);prDcommon = NULL
-  mle = qualLikMLE(nC=2,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,maxIter=maxiter)
+  mle = calcQualMLE(nC=2,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv)
 
   expect(round(mle$loglik,s0),c( -95.117) ) #compare with manual derived
   expect(round(mle$pDhatContr,s0),c( 0.073, 0.073) ) #compare with manual derived
@@ -184,7 +185,7 @@ test_that("Hyp 2: R1+R2 (cond zero drop-out prob for R1):", {
   NOC = 2
   cond = c(1,2)
 #steptol=1e-6; prDv0=c(0.1,0.35,0.7); knownRef=NULL; nC=NOC;samples=dat$samples;popFreq=dat$popFreq;refData=dat$refData;condOrder=cond;prC=pCv;fst=fstv;maxIter=maxiter;prDcontr = c(0,NA);prDcommon = NULL
-  mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,maxIter=maxiter,prDcontr = c(0,NA),prDcommon = NULL)
+  mle = calcQualMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,prDcontr = c(0,NA),prDcommon = NULL)#,maxIter=maxiter)
 
   expect(round(mle$pDhatContr,s0),c( 0.000, 0.146) ) #compare with manual derived
   expect(round(mle$loglik,s0),c( -92.916) ) #compare with manual derived
@@ -195,7 +196,7 @@ test_that("Hyp 2: R1+R2 (cond zero drop-out prob for R1):", {
 test_that("Hyp 3: R1+R2 (two drop-out prob params):", {
   NOC = 2
   cond = c(1,2)
-  mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,maxIter=100,prDcommon = c(1,2))
+  mle = calcQualMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,prC=pCv,fst=fstv,prDcommon = c(1,2))#,maxIter=100)
   
   expect(round(mle$pDhatContr,s0),c( 0.000, 0.146) ) #compare with manual derived
   expect(round(mle$loglik,s0),c( -92.916) ) #compare with manual derived
@@ -207,7 +208,7 @@ test_that("Hyp 3: R1+R2 (two drop-out prob params):", {
 test_that("Hyp 4: R1+1U (common drop-out parameter):", {
   NOC = 2
   cond = c(1,0)
-  mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=maxiter)
+  mle = calcQualMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv)#,maxIter=maxiter)
   
   expect(round(mle$loglik,s0),c( -77.659) ) #compare with manual derived
   expect(round(mle$pDhatContr,s0) ,c(   0.038, 0.038) ) #compare with manual derived
@@ -218,7 +219,7 @@ test_that("Hyp 4: R1+1U (common drop-out parameter):", {
 test_that("Hyp 5: R1+1U (cond zero drop-out prob for R1):", {
   NOC = 2
   cond = c(1,0)
-  mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=maxiter,prDcontr = c(0,NA))
+  mle = calcQualMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=maxiter,prDcontr = c(0,NA))
   
   expect(round(mle$loglik,s0),c( -76.45) ) #compare with manual derived
   expect(round(mle$pDhatContr,s0) ,c(   0, 0.075) ) #compare with manual derived
@@ -228,7 +229,7 @@ test_that("Hyp 5: R1+1U (cond zero drop-out prob for R1):", {
 test_that("Hyp 6: R1+1U (two drop-out prob params):", {
   NOC = 2
   cond = c(1,0)
-  mle = qualLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=100,prDcommon = c(1,2))
+  mle = calcQualMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=2,prC=pCv,fst=fstv,maxIter=100,prDcommon = c(1,2))
   
   expect(round(mle$loglik,s0),c( -76.45) ) #compare with manual derived
   expect(round(mle$pDhatContr,s0) ,c(  0, 0.075) ) #compare with manual derived

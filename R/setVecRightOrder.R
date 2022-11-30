@@ -11,7 +11,7 @@
 setVecRightOrder = function(vec,orderedNames) { 
   if(is.null(names(vec))) stop("The setting vector must must contain locus names (any order)!") #stop if locus names not given
   vec = vec[toupper(names(vec))%in%toupper(orderedNames)] #keep only names specified in orderedNames
-  if(length(vec)!=length(orderedNames)) stop("The setting vector was not same length as the number of markers (mismatch)!")
+  if(length(vec)!=length(orderedNames)) stop("The setting vector was not same length as the number of markers (mismatch)!\n Please remember to save new settings: File->Settings. And re-do interpretation...")
   ord = match(toupper(orderedNames),toupper(names(vec)))
   if(any(is.na(ord))) stop("The setting vector was missing locus name. Please check!")
   return( vec[ord]) #get vector with correct order

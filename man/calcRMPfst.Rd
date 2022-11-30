@@ -16,7 +16,7 @@ calcRMPfst(dat, POIind = 1, condInd = NULL, fst = 0)
 \item{fst}{The co-ancestry coefficient (theta-correction). Can be a vector (must contain the marker names)}
 }
 \value{
-ret A vector with random match probabilities for each markers
+ret A vector with random match probabilities for each marker
 }
 \description{
 A helpfunction for calculating the random match probability for a person of interest (given fst)

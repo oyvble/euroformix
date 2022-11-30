@@ -18,15 +18,11 @@
 #' @param prC Allele drop-in probability. Can be a vector (must be number of marker long)
 #' @param threshT The analytical/detection threshold given. Can be a vector (must be number of marker long, and named with marker names to plot)
 #' @param alpha The significance level used for the envelope test (validMLEmodel). Default is 0.01
-#' @param minF Minimum frequency used in the analysis (can be specified, otherwise minimum observed is used by default)
 #' @param seed Seed used in contLikMLE/contLikMCMC)
 #' @param nDone Number of required optimizations in contLikMLE 
 #' @param mcmcIter Number of iterations used in contLikMCMC
 #' @param mcmcDelta Scaling of variance used for proposal in contLikMCMC (calibrated based on mcmc$accrat object)
-#' @param intMaxEval max number of evalutions in integration (contLikINT)
-#' @param intRelTol relative tolerance for integration  (contLikINT)
 #' @param verbose Boolean whether printing data (EPG) and progress
-#' @param maxThreads Maximum number of threads to be executed by the parallelization
 #' @return A list with calculated result elements
 #' @examples
 #' \dontrun{
@@ -41,32 +37,26 @@
 #'  modelDegrad=TRUE,modelBWstutt=TRUE,verbose=TRUE)
 #' }
 #' @export
-runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE,findOptimalModel=TRUE,fst=0.01,lambda=0.01,prC=0.05,threshT=50,alpha=0.01,minF=NULL,seed=1,nDone=2,mcmcIter=500,mcmcDelta=2,intRelTol=0.1,intMaxEval=1000,verbose=TRUE,maxThreads=32) { 
+#library(euroformix);NOC=2;POIind=1;condInd=2;modelDegrad=TRUE;modelBWstutt=TRUE;modelFWstutt=FALSE;verbose=FALSE
+#kit = "ESX17";popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=.Platform$file.sep);evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=.Platform$file.sep);reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=.Platform$file.sep);
+#fst=0.01;lambda=0.01;prC=0.05;threshT=50;alpha=0.01;minF=NULL;normalize=TRUE;seed=1;nDone=2;mcmcIter=500;mcmcDelta=2;intRelTol=0.1;intMaxEval=1000;findOptimalModel=FALSE
+runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE,findOptimalModel=TRUE,fst=0.01,lambda=0.01,prC=0.05,threshT=50,alpha=0.01,seed=1,nDone=2,mcmcIter=500,mcmcDelta=2,verbose=TRUE) { 
   LUSsymbol = "_" #LUS symbold
-  
   if(modelDegrad && is.null(kit)) stop("Please specify a valid kit to model degradation")  
-  
-  #Specify optional model setup:
-  kit0 = kit #store kit input
-  if(!modelDegrad) kit = NULL #degradation model turned off when kit=NULL
-  xi <- xiFW <- 0 #default is no stutters
-  if(modelBWstutt) xi = NULL
-  if(modelFWstutt) xiFW = NULL
   
   #Obtain data:
   popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
   samples = sample_tableToList(tableReader(evidfn))#,threshT)
-  refs = sample_tableToList(tableReader(reffn))
-  numRefs = length(refs) #get number of refs
+  refData = sample_tableToList(tableReader(reffn))
+  numRefs = length(refData) #get number of refData
   if( numRefs==0 ) stop("No references provided. Please specify a valid reference file.")
 
   #Determine data type:
   isMPS = FALSE
   isLUS = all(unlist(sapply(samples,function(x)  sapply(x,function(y) all(grepl(LUSsymbol,y$adata),na.rm=TRUE)) )))  
   if(!isLUS) isMPS = all(unlist(sapply(samples,function(x)  sapply(x,function(y) all( is.numeric(y$adata) )))))
-  if(is.null(kit0)) isMPS = TRUE    #print("Please specify kit in order to show EPG. Otherwise default MPS format is shown!")
+  if(is.null(kit)) isMPS = TRUE    #print("Please specify kit in order to show EPG. Otherwise default MPS format is shown!")
   isEPG = !isMPS && !isLUS  #is EPG if not LUS OR MPS
-  
   
   #Set up hypothesis (contributors)
   cond = rep(0,numRefs) #init condition vector (used to decide which to condition on)
@@ -76,21 +66,24 @@ runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, mod
   knownRefhd = POIind #known reference under Hd
 
   if( sum(condhp>0) > NOC ) stop("The number of contributors were less than the number of conditionals. Please increase the number of contributors.")
-    
+#  mlefitHp = calcMLE(NOC,samples,popFreq,refData,condhp,NULL,       kit,modelDegrad,modelBWstutt,modelFWstutt,threshT,prC,lambda,fst,nDone=nDone,seed=seed,verbose=verbose)
+#  mlefitHd = calcMLE(NOC,samples,popFreq,refData,condhd,knownRefhd, kit,modelDegrad,modelBWstutt,modelFWstutt,threshT,prC,lambda,fst,nDone=nDone,seed=seed,verbose=verbose)
+#calcLRmcmc(mlefitHp,mlefitHd,niter = 20000,  quantile=0.1)
+
   #Show data:
   if(verbose) {
     if(isEPG) {
-      plotEPG2(samples,kit0,refs, AT=threshT) 
+      plotEPG2(samples,kit,refData, AT=threshT) 
     } else {
-      plotMPS2(samples,refs, AT=threshT) 
+      plotMPS2(samples,refData, AT=threshT) 
     }
   }
-  dat = prepareData(samples,refs,popFreq,threshT=threshT,minF=minF, normalize = FALSE) #obtain data to use for analysis
- 
-  #obtain random match probability for each markeres
-  rmp = calcRMPfst(dat,POIind,condInd,fst=fst ) #non-scaled values
-  LRupper = -sum(log10(rmp)) #maximum attainable LR (log10 scale)
+  #dat = prepareData(samples,refData,popFreq,threshT=threshT,minF=minF, normalize = normalize) #obtain data to use for analysis
+  #rmp = calcRMPfst(dat,POIind,condInd,fst=fst ) #non-scaled values
+  #LRupper = -sum(log10(rmp)) #maximum attainable LR (log10 scale)
 
+  #Interpretations:
+  #A: Model search:
   modelSelTable = NULL
   if(findOptimalModel) {
     
@@ -99,7 +92,9 @@ runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, mod
     modelBWstutt = unique(c(FALSE,modelBWstutt))
     modelFWstutt = unique(c(FALSE,modelFWstutt))
     minNOC = sum(condhp>0)
-    searchList = contLikSearch( NOC= minNOC:NOC, modelDegrad,modelBWstutt,modelFWstutt,samples=samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=condhd,knownRefPOI=POIind, prC=prC,threshT=threshT,fst=fst,lambda=lambda,kit=kit,nDone=nDone,seed=seed,verbose=verbose,maxThreads=maxThreads,alpha=alpha)
+    #condOrder=condhd;knownRefPOI=POIind;knownRel=NULL;ibd=c(1,0,0);
+    
+    searchList = contLikSearch( NOC= minNOC:NOC, modelDegrad,modelBWstutt,modelFWstutt,samples=samples,popFreq=popFreq,refData=refData,condOrder=condhd,knownRefPOI=POIind, prC=prC,threshT=threshT,fst=fst,lambda=lambda,kit=kit,nDone=nDone,seed=seed,verbose=verbose,alpha=alpha)
     adjAIC = searchList$outtable[,2] #obtain crietion
     optimInd = which.max(adjAIC)[1] #get index of optimal model. Use simpler model if "Tie"
       #set to optimal model:
@@ -109,72 +104,60 @@ runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, mod
     
   } else { #otherwise use current model
     #if(verbose) print("Performing Maximum likelihood estimation (optimize)...")
-    mlehp = contLikMLE(nC=NOC,samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=condhp,xi=xi,prC=prC,nDone=nDone,threshT=threshT,fst=fst,lambda=lambda,kit=kit,xiFW=xiFW,seed=seed,verbose=verbose,maxThreads=maxThreads)
-    mlehd = contLikMLE(nC=NOC,samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=condhd,xi=xi,prC=prC,nDone=nDone,threshT=threshT,fst=fst,lambda=lambda,kit=kit,xiFW=xiFW,seed=seed,verbose=verbose,maxThreads=maxThreads,knownRef = knownRefhd)
-    }
-  #MLE VALIDATION:
-  if(verbose) print("Performing MLE validations...")
-  validhp = validMLEmodel(mlehp,kit0,plottitle = "Hp",maxThreads=maxThreads,alpha=alpha)
-  validhd = validMLEmodel(mlehd,kit0,plottitle = "Hd",maxThreads=maxThreads,alpha=alpha)
+    #DEG<-BWS<-FWS <- FALSE
+    mlehp = calcMLE(NOC,samples,popFreq,refData,condhp,NULL,       kit,modelDegrad,modelBWstutt,modelFWstutt,threshT,prC,lambda,fst,nDone=nDone,seed=seed,verbose=verbose)
+    mlehd = calcMLE(NOC,samples,popFreq,refData,condhd,knownRefhd, kit,modelDegrad,modelBWstutt,modelFWstutt,threshT,prC,lambda,fst,nDone=nDone,seed=seed,verbose=verbose)
+  }
   
-  #calculate logLik per markers:
-  if(verbose) print("Calculating logLik per markers...")
-  hpv = logLiki(mlefit=mlehp,verbose=verbose,maxThreads=maxThreads)
-  hdv = logLiki(mlefit=mlehd,verbose=verbose,maxThreads=maxThreads)
-  all.equal(sum(hpv),mlehp$fit$loglik) #check that its same as joint loglik
-  all.equal(sum(hdv),mlehd$fit$loglik) #check that its same as joint loglik
-  LRmle = (mlehp$fit$loglik - mlehd$fit$loglik)/log(10) #obtain LR based on mle (log10 scale)
-  LRmarker = (hpv - hdv)/log(10) #obtain LR per marker  (log10 scale)
-      
-  #Perform DC:
+  #Obtain caclulated LR:
+  LRmleObj = calcLRmle(mlehp,mlehd)
+  LRupper = LRmleObj$log10LRupper #get upper LR
+  LRmle = LRmleObj$log10LR
+  LRmarker = LRmleObj$log10LRmarker
+    
+  #B: MLE VALIDATION:
+  if(verbose) print("Performing MLE validations...")
+  validhp = validMLEmodel(mlehp,plottitle = "Hp",alpha=alpha,createplot = verbose, verbose = verbose)
+  validhd = validMLEmodel(mlehd,plottitle = "Hd",alpha=alpha,createplot = verbose, verbose = verbose)
+  
+  #C: Deconvolution:
   if(verbose) print("Performing Deconvolution...")
-  DChp = deconvolve(mlefit=mlehp,verbose=verbose)
-  DChd = deconvolve(mlefit=mlehd,verbose=verbose)
+  DChp = deconvolve(mlefit=mlehp)
+  DChd = deconvolve(mlefit=mlehd)
 #  DChd$table2
   
-  #Show expected PHs with data:
+  #D: Show expected PHs with data:
   if(verbose) {
     if(isEPG) {
-      plotTopEPG2(mlehp,DChp,kit0) #show fitted PH under Hp
-      plotTopEPG2(mlehd,DChd,kit0) #show fitted PH under Hd
+      plotTopEPG2(mlehp,DChp) #show fitted PH under Hp
+      plotTopEPG2(mlehd,DChd) #show fitted PH under Hd
     } else {
       plotTopMPS2(mlehp,DChp) #MLEobj=mlehp;DCobj=DChp;grpsymbol="_";locYmax=TRUE;options=NULL
       plotTopMPS2(mlehd,DChd) #show fitted PH under Hd
     }
   }
   
-  #Perform MCMC:
-  if(verbose) print("Performing MCMC simulations...")
-  mcmchp = contLikMCMC(mlehp,niter=mcmcIter,delta=mcmcDelta,seed=seed,verbose=verbose,maxThreads=maxThreads)
-  if(verbose) print(paste0("Acceptance rate under Hp=",mcmchp$accrat," (should be around 0.2)"))
-  mcmchd = contLikMCMC(mlehd,niter=mcmcIter,delta=mcmcDelta,seed=seed + 999,verbose=verbose,maxThreads=maxThreads)
-  if(verbose) print(paste0("Acceptance rate under Hd=",mcmchd$accrat," (should be around 0.2)"))
+  #E: Perform MCMC based inference:
+  mcmcobj = calcLRmcmc(mlehp,mlehd,niter = 1000)
+  LRmcmcBayes = mcmcobj$log10LRbayes
+  LRcons = mcmcobj$log10LRcons
   
+  #F: Perform Integral based inference:
+  #mlefitHp=mlehp;mlefitHd=mlehd;
+  LRintBayes = calcLRint(mlehp,mlehd,reltol=0.01,dev = 2,verbose = TRUE)
+  
+  #LRintBayes$calcHp
+  #LRintBayes$calcHd
+  LRint = LRintBayes$log10LR #obtain integration based LR
+  
+  #G: Perform MCMC on model params under Hp:
+  mcmchp = contLikMCMC(mlehp, delta=mcmcobj$delta,niter=1000)
   validMCMC(mcmchp) #diagnostic of mcmc 
-  validMCMC(mcmchd) #diagnostic of mccm
-  LRdistr = (mcmchp$postlogL - mcmchd$postlogL)/log(10) #get LR distirbution
-  LRmarg = log10(mcmchp$margL/mcmchd$margL) #estimated marginalised
-  #plot(density(LRdistr));abline(v=LRmle,lty=2)
-  LRcons = quantile(LRdistr,0.05) #extract 5% quantile  (conservative LR)
-  
-  #Marginalised likelihood estimation (optimize)
-  LRlaplace = (mlehp$fit$logmargL - mlehd$fit$logmargL)/log(10) #obtain LR estimate based on Laplace approx
 
-  if(verbose) print("Performing Numerical integrations...")
-  #Under Hp:
-  rng = apply(mcmchp$posttheta,2,range) #get range of parameters (under Hp)
-  scale= -mlehp$fit$loglik  #scale to adjust loglikelihood
-  intHp = contLikINT(lower=rng[1,],upper=rng[2,], nC=NOC,samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=condhp,xi=xi,prC=prC,threshT=threshT,fst=fst,lambda=lambda,kit=kit,reltol=intRelTol,scale=scale,xiFW=xiFW,maxEval=intMaxEval,verbose=verbose,maxThreads=maxThreads)
-  loglikINThp = log(intHp$margL)-scale #obtain integral
+  #Calculate non-contributors (CAREFUL WITH NUMBER)
+  nTippets = 10
+  tippets = calcTippet(POIind,mlehp,mlehd,nTippets) #MLE is default
 
-  #Under Hd:
-  rng = apply(mcmchd$posttheta,2,range) #get range of parameters (under Hp)
-  scale= -mlehd$fit$loglik  #scale to adjust loglikelihood
-  intHd = contLikINT(lower=rng[1,],upper=rng[2,], nC=NOC,samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=condhd,xi=xi,prC=prC,threshT=threshT,fst=fst,lambda=lambda,kit=kit,reltol=intRelTol,scale=scale,xiFW=xiFW,maxEval=intMaxEval,verbose=verbose,maxThreads=maxThreads,knownRef = knownRefhd)
-  loglikINThd = log(intHd$margL)-scale #obtain integral
-  
-  LRint = (loglikINThp - loglikINThd)/log(10)
-  
-  return( list(LRupper=LRupper,LRmle=LRmle,LRcons=LRcons,LRint=LRint,LRlaplace=LRlaplace,LRmarg=LRmarg,DChp=DChp$table2,DChd=DChd$table2,validhp=validhp,validhd=validhd,LRmarker = LRmarker,modelSelTable=modelSelTable) )
+  return( list(LRmle=LRmle,LRcons=LRcons,LRint=LRint,LRmarg=LRmcmcBayes,DChp=DChp$table2,DChd=DChd$table2,validhp=validhp,validhd=validhd,LRmarker = LRmarker,modelSelTable=modelSelTable) )
     
 }

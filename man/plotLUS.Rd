@@ -4,8 +4,7 @@
 \alias{plotLUS}
 \title{plotLUS}
 \usage{
-plotLUS(mixData, sn = "", refData = NULL, threshT = 0,
-  LUSsymbol = "_")
+plotLUS(mixData, sn = "", refData = NULL, threshT = 0, LUSsymbol = "_")
 }
 \arguments{
 \item{mixData}{List of adata- and hdata-elements. adata must be separated with LUSsymbol}

@@ -4,55 +4,42 @@
 \alias{contLikMCMC}
 \title{contLikMCMC}
 \usage{
-contLikMCMC(mlefit, niter = 10000, delta = 2, maxxi = 1,
-  maxxiFW = 1, verbose = TRUE, seed = NULL, maxThreads = 32)
+contLikMCMC(
+  mlefit,
+  niter = 10000,
+  delta = 2,
+  verbose = TRUE,
+  seed = NULL,
+  usePhi = FALSE,
+  mcmcObj = NULL
+)
 }
 \arguments{
-\item{mlefit}{Fitted object using contLikMLE}
+\item{mlefit}{Fitted object using calcMLE}
 
 \item{niter}{Number of samples in the MCMC-sampling.}
 
 \item{delta}{A numerical parameter to scale with the covariance function Sigma. Default is 2. Should be higher to obtain lower acception rate.}
 
-\item{maxxi}{Upper boundary of the xi-parameters}
-
-\item{maxxiFW}{Upper boundary of the xiFW-parameters}
-
 \item{verbose}{Whether printing simulation progress. Default is TRUE}
 
 \item{seed}{The user can set seed if wanted}
 
-\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
+\item{usePhi}{Whether the transformed domain of the parameters (phi) should be used instead. This affects the priors!}
+
+\item{mcmcObj}{An object from contLikMCMC output}
 }
 \value{
-ret A list (logmargL,posttheta,postlogL,logpX,accrat,Ubound ) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, posttheta is the posterior samples from a MC routine, postlogL is sampled log-likelihood values, accrat is ratio of accepted samples. Ubound is upper boundary of parameters.
+ret A list (logmargL,posttheta,postlogL,logpX,accrat) where logmargL is Marginalized likelihood, posttheta is the posterior samples, postlogL is log-likelihood values
 }
 \description{
-contLikMCMC provides samples from the posterior distribution for the model.
+calcMCMC provides samples from the posterior distribution for the model.
 }
 \details{
 The procedure are doing MCMC to approximate the marginal probability over model parameters. 
 
 The Metropolis Hastings routine uses following proposal: Multivariate Normal distribution with mean 0 and covariance as delta multiplied with the inverse negative hessian with MLE inserted.
 Marginalized likelihood (Bayesian) is estimated using Metropolis Hastings with the "GD-method, Gelfand and Dey (1994).
-}
-\examples{
-\dontrun{
-kit = "ESX17"
-sep0 = .Platform$file.sep
-AT0 = 50
-popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=sep0)
-evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=sep0)
-reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=sep0)
-popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
-samples = sample_tableToList(tableReader(evidfn))
-refData = sample_tableToList(tableReader(reffn))
-dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) 
-plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
-mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,
-	kit=kit,xi=NULL,prC=0.05,lambda=0.01,seed=1)
-mcmcfit = contLikMCMC(mlefit,niter=5000,delta=1,seed=1) #mcmcfit$acc
-}
 }
 \author{
 Oyvind Bleka

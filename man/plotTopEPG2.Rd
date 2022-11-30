@@ -4,8 +4,15 @@
 \alias{plotTopEPG2}
 \title{plotTopEPG2}
 \usage{
-plotTopEPG2(MLEobj, DCobj = NULL, kit = NULL, dyeYmax = TRUE,
-  plotRepsOnly = TRUE, options = NULL)
+plotTopEPG2(
+  MLEobj,
+  DCobj = NULL,
+  kit = NULL,
+  dyeYmax = TRUE,
+  plotRepsOnly = TRUE,
+  options = NULL,
+  withStutterModel = TRUE
+)
 }
 \arguments{
 \item{MLEobj}{An object returned from contLikMLE}
@@ -19,6 +26,8 @@ plotTopEPG2(MLEobj, DCobj = NULL, kit = NULL, dyeYmax = TRUE,
 \item{plotRepsOnly}{Whether only replicates are plotted}
 
 \item{options}{Layout options can be provided: w0 (layout width),marg0 (margin), txtsize0 (text size), locsize0 (locus name size), minY (minimum Y-axis height), ymaxscale (Scaling maximum Y-axis height), transdeg (transparanct of bars 0=max, 1=min)}
+
+\item{withStutterModel}{Whether taking the stutter model into account when visualizing}
 }
 \value{
 sub A plotly widget

@@ -4,8 +4,14 @@
 \alias{plotTopMPS2}
 \title{plotTopMPS2}
 \usage{
-plotTopMPS2(MLEobj, DCobj = NULL, grpsymbol = "_", locYmax = TRUE,
-  options = NULL)
+plotTopMPS2(
+  MLEobj,
+  DCobj = NULL,
+  grpsymbol = "_",
+  locYmax = TRUE,
+  options = NULL,
+  withStutterModel = TRUE
+)
 }
 \arguments{
 \item{MLEobj}{An object returned from contLikMLE}
@@ -17,6 +23,8 @@ plotTopMPS2(MLEobj, DCobj = NULL, grpsymbol = "_", locYmax = TRUE,
 \item{locYmax}{Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)}
 
 \item{options}{A list of possible plot configurations. See comments below}
+
+\item{withStutterModel}{Whether taking the stutter model into account when visualizing}
 }
 \value{
 sub A plotly widget

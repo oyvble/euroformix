@@ -13,6 +13,7 @@
 #' @param scale The scaling of shifted bp in degradation model
 #' @param restrictDeg Whether to restrict degradation param to be less than 1
 #' @return Estimated parameters (mean,coefVar,slopePara)
+#' @export
 #' @examples
 #'\dontrun{
 #' th = c(1000,0.8,0.6)
@@ -20,14 +21,12 @@
 #' x = seq(10,300,l=n)
 #' y = rgamma(n,shape=2/th[2]^2*th[3]^((x-125)/100),scale=th[1]*th[2]^2)
 #' fitgammamodel(y,x,plott=TRUE,alpha=0.05)
-#' fitgammamodel(y,x,plott=TRUE,alpha=0.05)
 #'}
-#' @export
 
 #x=NULL;niter=10;delta=1;plott=FALSE;alpha=0.05;offset=125;scale=100;restrictDeg=FALSE
 fitgammamodel <- function(y,x=NULL,niter=10,delta=1,plott=FALSE,alpha=0.05,offset=125,scale=100, restrictDeg=TRUE) {
    DEG = TRUE #degradation used by default
-   if(is.null(x)) DEG=FALSE #degradation set to FALSE if x not given
+   if(is.null(x) || any(is.na(x))) DEG=FALSE #degradation set to FALSE if x not given or any is NA
    isOK = !is.na(y) #get non-NA values
    y = y[isOK] #remove NAs
    if(DEG) x = x[isOK] #remove NAs

@@ -4,9 +4,23 @@
 \alias{genDataset}
 \title{genDataset}
 \usage{
-genDataset(nC, popFreq, mu = 1000, sigma = 0.1, sorted = FALSE,
-  threshT = 50, refData = NULL, mx = NULL, nrep = 1, stutt = 0,
-  prC = 0, lambda = 0, beta = 1, kit = NULL, stuttFW = 0)
+genDataset(
+  nC,
+  popFreq,
+  mu = 1000,
+  sigma = 0.1,
+  sorted = FALSE,
+  threshT = 50,
+  refData = NULL,
+  mx = NULL,
+  nrep = 1,
+  stutt = 0,
+  prC = 0,
+  lambda = 0,
+  beta = 1,
+  kit = NULL,
+  stuttFW = 0
+)
 }
 \arguments{
 \item{nC}{Number of contributors in model.}

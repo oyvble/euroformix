@@ -4,8 +4,16 @@
 \alias{simDOdistr}
 \title{simDOdistr}
 \usage{
-simDOdistr(totA, nC, popFreq, refData = NULL, M = 1000, minS = 2000,
-  prC = 0, pDknown = rep(NA, nC))
+simDOdistr(
+  totA,
+  nC,
+  popFreq,
+  refData = NULL,
+  M = 1000,
+  minS = 2000,
+  prC = 0,
+  pDknown = rep(NA, nC)
+)
 }
 \arguments{
 \item{totA}{Total number of allele-observations in evidence.}
@@ -35,14 +43,12 @@ simDOdistr samples from the drop-out distribution based on total number of allel
 }
 \examples{
 \dontrun{
-popFreq <- list()
+popFreq <- list() #create population frequencies
 for(i in 1:3) {
- popFreq[[i]] <- rgamma(rpois(1,10),1,1)
- popFreq[[i]] <- popFreq[[i]]/sum(popFreq[[i]])
- names(popFreq[[i]]) <- 1:length(popFreq[[i]])
+ freqs <- rgamma(rpois(1,10),1,1)
+ popFreq[[paste0("loc",i)]] <- stats::setNames(freqs/sum(freqs),1:length(freqs))
 }
-names(popFreq) <- paste0("loc",1:length(popFreq))
-simDOdistr(4,2,popFreq)
+simDOdistr(6,2,popFreq)
 }
 }
 \author{

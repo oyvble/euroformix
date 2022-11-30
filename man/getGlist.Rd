@@ -4,8 +4,7 @@
 \alias{getGlist}
 \title{getGlist}
 \usage{
-getGlist(popFreq, fst = 0, refKlist = NULL, refRlist = NULL,
-  ibd = c(1, 0, 0))
+getGlist(popFreq, fst = 0, refKlist = NULL, refRlist = NULL, ibd = c(1, 0, 0))
 }
 \arguments{
 \item{popFreq}{A list of allele frequencies for a given population. Each named element in the list must be a allele-named vector with allele frequencies.}

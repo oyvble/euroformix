@@ -4,12 +4,32 @@
 \alias{contLikMLE}
 \title{contLikMLE}
 \usage{
-contLikMLE(nC, samples, popFreq, refData = NULL, condOrder = NULL,
-  knownRef = NULL, xi = 0, prC = 0, nDone = 2, threshT = 50,
-  fst = 0, lambda = 0, pXi = function(x) 1, delta = 1,
-  kit = NULL, verbose = TRUE, maxIter = 100, knownRel = NULL,
-  ibd = c(1, 0, 0), xiFW = 0, pXiFW = function(x) 1, seed = NULL,
-  maxThreads = 32, steptol = 0.001)
+contLikMLE(
+  nC,
+  samples,
+  popFreq,
+  refData = NULL,
+  condOrder = NULL,
+  knownRef = NULL,
+  xi = 0,
+  prC = 0,
+  nDone = 2,
+  threshT = 50,
+  fst = 0,
+  lambda = 0,
+  pXi = function(x) 1,
+  delta = 1,
+  kit = NULL,
+  verbose = TRUE,
+  difftol = 0.01,
+  knownRel = NULL,
+  ibd = c(1, 0, 0),
+  xiFW = 0,
+  pXiFW = function(x) 1,
+  seed = NULL,
+  maxThreads = 0,
+  steptol = 0.001
+)
 }
 \arguments{
 \item{nC}{Number of contributors in model. Must be a constant.}
@@ -44,7 +64,7 @@ contLikMLE(nC, samples, popFreq, refData = NULL, condOrder = NULL,
 
 \item{verbose}{Whether printing optimization progress. Default is TRUE.}
 
-\item{maxIter}{Maximum number of iterations for the optimization. Default is 100.}
+\item{difftol}{Tolerance for being exact in log-likelihood value (relevant when nDone>1)}
 
 \item{knownRel}{gives the index of the reference which the 1st unknown is related to.}
 
@@ -67,24 +87,7 @@ ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihoo
 contLikMLE optimizes the likelihood function of the DNA mixture model
 }
 \details{
-Function calls the likelihood function implemented in C++ which uses OpenMP for parallelization
-}
-\examples{
-\dontrun{
-kit = "ESX17"
-sep0 = .Platform$file.sep
-AT0 = 50
-popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=sep0)
-evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=sep0)
-reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=sep0)
-popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
-samples = sample_tableToList(tableReader(evidfn))
-refData = sample_tableToList(tableReader(reffn))
-dat = prepareData(samples,refData=refData,popFreq=popFreq,threshT=AT) 
-plotEPG2(dat$samples,dat$refData,kit=kit,AT=AT0)
-mlefit = contLikMLE(3,dat$samples,dat$popFreq,dat$refData,1:3,kit=kit,
-	xi=NULL,prC=0.05,lambda=0.01,seed=1)
-}
+Replaced by new function calcMLE
 }
 \author{
 Oyvind Bleka

@@ -4,7 +4,7 @@
 \alias{logLiki}
 \title{logLiki}
 \usage{
-logLiki(mlefit, verbose = FALSE, maxThreads = 32)
+logLiki(mlefit, verbose = FALSE, maxThreads = 0)
 }
 \arguments{
 \item{mlefit}{Fitted object using contLikMLE}

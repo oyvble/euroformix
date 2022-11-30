@@ -4,8 +4,15 @@
 \alias{calcGjoint}
 \title{calcGjoint}
 \usage{
-calcGjoint(freq, nU = 1, fst = 0, refK = NULL, refR = NULL,
-  ibd = c(1, 0, 0), sortComb = FALSE)
+calcGjoint(
+  freq,
+  nU = 1,
+  fst = 0,
+  refK = NULL,
+  refR = NULL,
+  ibd = c(1, 0, 0),
+  sortComb = FALSE
+)
 }
 \arguments{
 \item{freq}{A vector of allele frequencies for a given population.}
@@ -33,14 +40,11 @@ The function returns the list of all possible genotypes, with corresponding prob
 If a related unknown is provided that will always be the first one
 }
 \examples{
-\dontrun{
 freq = rgamma(8,1,1)
-freq = freq/sum(freq) 
-names(freq) <- 1:length(freq)
-foo1 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),sortComb=TRUE)
-foo2 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
+freq = stats::setNames(freq/sum(freq),1:length(freq))
+foo1 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),sortComb=TRUE)
+foo2 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),
  refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
-}
 }
 \author{
 Oyvind Bleka

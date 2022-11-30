@@ -4,58 +4,72 @@
 \alias{prepareC}
 \title{prepareC}
 \usage{
-prepareC(nC, samples, popFreq, refData = NULL, condOrder = NULL,
-  knownRef = NULL, kit = NULL, knownRel = NULL, ibd = NULL,
-  fst = 0, incS = FALSE, incFS = FALSE)
+prepareC(
+  nC,
+  samples,
+  popFreq,
+  refData,
+  condOrder,
+  knownRef,
+  kit,
+  DEG,
+  BWS,
+  FWS,
+  AT,
+  pC,
+  lambda,
+  fst,
+  knownRel,
+  ibd,
+  minF,
+  normalize,
+  adjFragQallele
+)
 }
 \arguments{
 \item{nC}{Number of contributors in model.}
 
 \item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
 
-\item{popFreq}{A list of allele frequencies for a given population (possibly including "99" Q-alleles).}
+\item{popFreq}{A list of allele frequencies for a given population.}
 
-\item{refData}{Reference objects with list element [[s]][[i]]. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.}
+\item{refData}{Reference objects has locus-list element [[i]] with a list element 'r' which contains a 2 long vector with alleles for each references.}
 
 \item{condOrder}{Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model.}
 
-\item{knownRef}{Specify known non-contributing references from refData (indices). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.}
+\item{knownRef}{Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.}
 
 \item{kit}{shortname of kit: Obtained from getKit()}
 
-\item{knownRel}{Specify the index of the related contributing reference from refData (one index). For instance knownRel=2 means that unknown1 is related to reference 2 with ibd specified relationship.}
+\item{DEG}{Boolean of whether Degradation model should be used}
 
-\item{ibd}{the identical by decent coefficients list of the relationship for each unknowns (specifies the type of relationship). Default is NULL, meaning no related inds}
+\item{BWS}{Boolean of whether back-stutter model should be used}
 
-\item{fst}{The co-ancestry coefficient. Default is 0. Can be a vector following markers.}
+\item{FWS}{Boolean of whether for-stutter model should be used}
 
-\item{incS}{Whether potential BW stutters are included}
+\item{AT}{The analytical threshold given. Used when considering probability of allele drop-outs.}
 
-\item{incFS}{Whether potential FW stutters are included}
+\item{pC}{A numeric for allele drop-in probability. Default is 0.}
+
+\item{lambda}{Parameter in modeled peak height shifted exponential model. Default is 0.}
+
+\item{fst}{is the coancestry coeffecient. Default is 0.}
+
+\item{knownRel}{gives the index of the reference which the 1st unknown is related to.}
+
+\item{ibd}{the identical by decent coefficients of the relationship (specifies the type of relationship)}
+
+\item{minF}{The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.}
+
+\item{normalize}{Whether normalization should be applied or not. Default is FALSE.}
+
+\item{adjFragQallele}{Indicate whether fragmenth length of Q-allele is based on averaged weighted with frequencies}
 }
 \value{
-ret A list of data input to call the C-code with
+ret A list of data input to call the C++ code with
 }
 \description{
-prepareC is used in the functions contLikMLE,contLikMarg and contLikMCMC to prepare input to C++ call
-}
-\details{
-Assumes that all PH below threshold are removed. The function builds the data input to the C++ code
-}
-\examples{
-\dontrun{
-kit = "ESX17"
-popfn = paste(path.package("euroformix"),"FreqDatabases",
- paste0(kit,"_Norway.csv"),sep=.Platform$file.sep)
-evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),
- sep=.Platform$file.sep)
-reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),
- sep=.Platform$file.sep)
-popFreq = freqImport(popfn)[[1]] #obtain list with population frequencies
-samples = sample_tableToList(tableReader(evidfn))
-dat = prepareData(samples,popFreq=popFreq) #obtain data to use for analysis
-prepCobj = prepareC(nC=2,samples=dat$samples,popFreq= dat$popFreq,kit=kit)
-}
+Used for preparing C++ calls
 }
 \author{
 Oyvind Bleka

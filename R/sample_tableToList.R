@@ -24,7 +24,7 @@ sample_tableToList = function(table) {
       
       alleles <- heights <- numeric() #init vector with data
       for(rowind in rowinds) { #for each row indices
-		av <- table[rowind,A_ind] #obtain raw alleles
+		    av <- table[rowind,A_ind] #obtain raw alleles
         keep <- !is.na(av) & !(av%in%c(""," ")) #get boolean vector of alleles to keep
         alleles <- c(alleles, table[rowind,A_ind[keep]] ) #extract allele(s), be be levels
         if(length(H_ind)>0) {

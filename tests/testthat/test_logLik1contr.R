@@ -1,7 +1,7 @@
 #Testing that the numerical calculation of loglik is correct
-#rm(list=ls());library(euroformix);library(testthat)
+#library(euroformix);library(testthat)
 seed0 = 1 #important to get reproducible results
-nDone0=4
+nDone0=3
 steptol0=1e-6
 s0 = 3 #signif of checking
 
@@ -108,7 +108,7 @@ test_that("check maximum likelihood Hp:", {
   #CHECK Cumulative probs    
   #paste0(round(valid$ProbObs,s0),collapse = ",")
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
-  expect(round(valid$ProbObs,s0),c(0.717,0.975,0.667,0.387,0.579,0.611,0.114,0.298,0.085,0.381,0.434,0.045,0.087,0.204,0.272,0.09,0.441,0.953,0.163,0.781,0.218,0.029,0.644,0.989,0.297))
+  compareValid(valid$ProbObs,c(0.717,0.975,0.667,0.387,0.579,0.611,0.114,0.298,0.085,0.381,0.434,0.045,0.087,0.204,0.272,0.09,0.441,0.953,0.163,0.781,0.218,0.029,0.644,0.989,0.297))
 })
 
 test_that("check maximum likelihood Hd (unrelated):", {
@@ -132,10 +132,10 @@ test_that("check maximum likelihood Hd (unrelated):", {
   #CHECK Cumulative probs    
   #paste0(round(valid$ProbObs,s0),collapse = ",")
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
-  expect(round(valid$ProbObs,s0),c(0.717,0.975,0.667,0.387,0.579,0.611,0.114,0.298,0.085,0.381,0.434,0.045,0.087,0.204,0.272,0.09,0.441,0.953,0.163,0.781,0.218,0.029,0.644,0.989,0.297))
+  compareValid(valid$ProbObs,c(0.717,0.975,0.667,0.387,0.579,0.611,0.114,0.298,0.085,0.381,0.434,0.045,0.087,0.204,0.272,0.09,0.441,0.953,0.163,0.781,0.218,0.029,0.644,0.989,0.297))
   
   #Calculate deconvolution (DC):
-  DC = deconvolve(mle,verbose=FALSE)
+  DC = deconvolve(mle)
   expect_equal(as.numeric(DC$table2[,2]),c(1,1,1,1,1,1,1))
 })
 
@@ -144,8 +144,11 @@ test_that("check maximum likelihood Hd (sibling):", {
   ibd0 = c(1/4,1/2,1/4) #assuming the unknown is a sibling of poi
   refRel = 1
   cond=0
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = 1, xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL,knownRel = refRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond, xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL,knownRel = refRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
+  
+  #mle$prepareC$relGind
+  #mle$prepareC$ibd
   
   #COMPARE PER MARKER RESULTS
   logLikv = logLiki(mle) #obtain per marker resutls
@@ -163,10 +166,10 @@ test_that("check maximum likelihood Hd (sibling):", {
   #CHECK Cumulative probs    
   #paste0(round(valid$ProbObs,s0),collapse = ",")
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
-  expect(round(valid$ProbObs,s0),c(0.717,0.975,0.667,0.387,0.579,0.611,0.114,0.298,0.085,0.381,0.434,0.045,0.087,0.204,0.272,0.09,0.441,0.953,0.163,0.781,0.218,0.029,0.644,0.989,0.297))
+  compareValid(round(valid$ProbObs,s0),c(0.717,0.975,0.667,0.387,0.579,0.611,0.114,0.298,0.085,0.381,0.434,0.045,0.087,0.204,0.272,0.09,0.441,0.953,0.163,0.781,0.218,0.029,0.644,0.989,0.297))
   
   #Calculate deconvolution (DC):
-  DC = deconvolve(mle,verbose=FALSE)
+  DC = deconvolve(mle)
   expect_equal(as.numeric(DC$table2[,2]),c(1,1,1,1,1,1,1))
 })
 

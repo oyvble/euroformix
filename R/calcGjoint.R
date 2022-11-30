@@ -13,14 +13,11 @@
 #' @return Glist A list with genotypes and genotype probabilities 
 #' @export 
 #' @examples
-#' \dontrun{
 #' freq = rgamma(8,1,1)
-#' freq = freq/sum(freq) 
-#' names(freq) <- 1:length(freq)
-#' foo1 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),sortComb=TRUE)
-#' foo2 = calcGjoint(freq,nU=3,fst=0.1,refK=c("2","3","1","1"),
+#' freq = stats::setNames(freq/sum(freq),1:length(freq))
+#' foo1 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),sortComb=TRUE)
+#' foo2 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),
 #'  refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
-#' }
 
 calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=FALSE) {
  if(length(fst)!=1) stop("Wrong input length for fst")

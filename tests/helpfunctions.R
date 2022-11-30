@@ -4,7 +4,7 @@ expect = function(x,y,tol=testthat_tolerance()) {
   expect_equal(as.numeric(x),as.numeric(y),tolerance = tol)
 }
 
-
+compareValid = function(x,y,s0=3)  expect(sort(round(x,s0)),sort(round(y,s0)))
 
 #Helpfunction to get likelihood per genotypes (cal in R)
 #locs=NULL;modelDEG=TRUE;modelStutt=FALSE
@@ -131,6 +131,101 @@ getLogLiki = function(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0=NULL, ibd0=N
   } #end for each locus
   return(logLikv)
 } 
+
+#Helpfunction for checking qualitative model after model fit (iterating over 1 genotype set)
+checkQualModel = function(mle) {
+  
+  #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
+  logLikv = mle$logliki
+  expect_equal(sum(logLikv),mle$loglik) #checking joint loglik
+  
+  thhat = mle$pDhatContr #obtain drop-out probs per contributor
+  cond = mle$model$condOrder
+  NOC = mle$model$nC
+  pCv = mle$model$prC
+  fstv = mle$model$fst
+  
+  #Obtain data  
+  popFreq = mle$model$popFreq
+  refData = mle$model$refData
+  samples = mle$model$samples
+  
+  #exctract params:  
+  locsCheck = names(logLikv) #loci to check values for
+  locsVal = setNames(rep(NA,length(locsCheck)),locsCheck)
+  for(loc in locsCheck) {
+    #loc=locsCheck[1]
+    freq = popFreq[[loc]]
+    Aset = names(freq) #get allele outcome 
+    
+    #Assuming a given number of known contribtions
+    condUseIdx = which(cond>0)
+    nAG = matrix(0,nrow=length(Aset),ncol=NOC,dimnames = list(Aset)) #create allele counting matrix for unknown contributors
+    for(ind in condUseIdx) nAG[,cond[ind]] = table(factor(refData[[loc]][[ind]],level=Aset)) #insert contribution
+    
+    #Obtain all combinations for unknown
+    unknownIdx = which(colSums(nAG>0)==0) #get index of unknowns
+    nU = length(unknownIdx)
+    nG = 1
+    if(nU>0) {
+      Glist = calcGjoint(freq=freq,nU=nU,fst=fstv[loc],refK=unlist(refData[[loc]])) #don't use [which(cond>0)] since we include all
+      Gset = Glist$G #get allele out come of unknowns
+      gProb = log(Glist$Gprob)
+      nG1 = nrow(Gset) #number of genotypes (1p) 
+      nG = length(gProb) #number of joint genotypes (Up)
+    }
+    #Traversing all combinations for unknown
+    pEvid = 0 #obtain probabiliity of evidence (sum over all genotypes)
+    pGeno = 0
+    nAG0 = nAG #temporary store
+    for(gind in seq_len(nG) ) { #traverse all genorypes
+      nAG = nAG0
+      if(nU>0) {
+        GsetInd = rep(0,nU)
+        genoPower = 1
+        for(u in unknownIdx) {
+          #u = 1
+          GsetInd[which(unknownIdx==u)] <- g1ind <- as.integer( ((gind-1)/genoPower) %% nG1) + 1
+          genoPower = genoPower*nG1
+          nAG[,u] = nAG[,u] + table(factor(Gset[g1ind,],level=Aset)) #insert contribution
+        }
+        pGeno = gProb[rbind(GsetInd)]
+      }
+      
+      #temporary caluclation
+      pDprodTmp = 1 #calculte temporary
+      for(k in 1:NOC) { #traverse each contributor
+        pDprodTmp = pDprodTmp*thhat[k]^nAG[,k]
+      } 
+      mui = 1-pDprodTmp #rowSums(nAG) #obtain per-allele contribution
+      
+      #calculate likelihood for observations
+      vali = 0 
+      for(sample in names(samples)) { #for each replicates
+        #Divide set into dropin, contr and dropout
+        #      sample=names(samples)[1]
+        yvec = rep(0,length(Aset))  #preparing PHs after extending allele vector
+        yvec[match(samples[[sample]][[loc]]$adata,Aset)] = samples[[sample]][[loc]]$hdata  #insert PHs
+        
+        psiDI <- which( yvec>0 & mui==0 ) #drop-in (not a stutter). ANY DROPIN?
+        psiYmu <- which( yvec>0 & mui>0 )  #contributing to model and observed PH
+        psiDO <- which( yvec==0 & mui>0 )  #dropout elem
+        
+        if(length(psiYmu)>0) vali =  vali + sum(log(1-pDprodTmp[psiYmu]))   # CONTRIBUTION TO PH
+        if(length(psiDO)>0) vali = vali + sum(log(pDprodTmp[psiDO])) #CONTR TO DROPOUT
+        if(length(psiDI)>0) {
+          vali = vali + sum(log(pCv[loc]*freq[psiDI])) #CONTR TO DROPIN: Scaled for each dropin. THIS IS OK
+        } else {
+          vali = vali + log(1-pCv[loc]) #in case of no dropin
+        }
+      } #end for each sample
+      pEvid = pEvid + exp( vali + pGeno) #sum up
+    } #end for each genotype
+    locsVal[loc] = log(pEvid) #return()
+    expect_equal(as.numeric(logLikv[loc]),as.numeric(log(pEvid)))
+  }
+  return(locsVal)
+}
 
 
 

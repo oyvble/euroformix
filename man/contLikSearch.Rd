@@ -4,13 +4,37 @@
 \alias{contLikSearch}
 \title{contLikSearch}
 \usage{
-contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
-  modelFWstutt = FALSE, samples = NULL, popFreq = NULL,
-  refData = NULL, condOrder = NULL, knownRefPOI = NULL, prC = 0,
-  nDone = 2, threshT = 50, fst = 0, lambda = 0, pXi = function(x)
-  1, delta = 1, kit = NULL, verbose = TRUE, maxIter = 100,
-  knownRel = NULL, ibd = c(1, 0, 0), pXiFW = function(x) 1,
-  seed = NULL, maxThreads = 32, alpha = 0.01, steptol = 0.001)
+contLikSearch(
+  NOC = 2:3,
+  modelDegrad = FALSE,
+  modelBWstutt = FALSE,
+  modelFWstutt = FALSE,
+  samples = NULL,
+  popFreq = NULL,
+  refData = NULL,
+  condOrder = NULL,
+  knownRefPOI = NULL,
+  prC = 0,
+  nDone = 2,
+  threshT = 50,
+  fst = 0,
+  lambda = 0,
+  delta = 1,
+  kit = NULL,
+  verbose = TRUE,
+  difftol = 0.01,
+  knownRel = NULL,
+  ibd = c(1, 0, 0),
+  minF = NULL,
+  normalize = TRUE,
+  priorBWS = NULL,
+  priorFWS = NULL,
+  seed = NULL,
+  maxThreads = 0,
+  alpha = 0.01,
+  steptol = 0.001,
+  adjQbp = FALSE
+)
 }
 \arguments{
 \item{NOC}{#The vector of number of contributors to search}
@@ -27,9 +51,9 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
 
 \item{refData}{Reference objects with (2-size) allele-vector given in list element [[i]][[s]].}
 
-\item{condOrder}{Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model.}
+\item{condOrder}{condOrder under Hd. See calcMLE function for more details.}
 
-\item{knownRefPOI}{Specify known POI under Hp, under non-contributing references (under Hd) from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.}
+\item{knownRefPOI}{Specify index of known POI under Hp (can only be one number)}
 
 \item{prC}{A numeric for allele drop-in probability. Default is 0.}
 
@@ -41,21 +65,25 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
 
 \item{lambda}{Parameter in modeled peak height shifted exponential model. Default is 0.}
 
-\item{pXi}{Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.}
-
 \item{delta}{Scaling of variation of normal distribution when drawing random startpoints. Default is 1.}
 
 \item{kit}{Used to model degradation. Must be one of the shortnames of kit: check getKit()}
 
 \item{verbose}{Whether printing optimization progress. Default is TRUE.}
 
-\item{maxIter}{Maximum number of iterations for the optimization. Default is 100.}
+\item{difftol}{Tolerance for being exact in log-likelihood value (relevant when nDone>1)}
 
 \item{knownRel}{gives the index of the reference which the 1st unknown is related to.}
 
 \item{ibd}{the identical by decent coefficients of the relationship (specifies the type of relationship)}
 
-\item{pXiFW}{Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.}
+\item{minF}{The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.}
+
+\item{normalize}{Whether normalization should be applied or not. Default is FALSE.}
+
+\item{priorBWS}{Prior function for BWS-parameter. Flat prior on [0,1] is default.}
+
+\item{priorFWS}{Prior function for FWS-parameter. Flat prior on [0,1] is default.}
 
 \item{seed}{The user can set seed if wanted}
 
@@ -64,9 +92,11 @@ contLikSearch(NOC = 2:3, modelDegrad = FALSE, modelBWstutt = FALSE,
 \item{alpha}{The significance level used for the envelope test (validMLEmodel). Default is 0.01}
 
 \item{steptol}{Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).}
+
+\item{adjQbp}{Indicate whether fragmenth length of Q-allele is based on averaged weighted with frequencies}
 }
 \value{
-ret A list(fit,model,nDone,delta,seed,prepareC) where fit is Maximixed likelihood elements for given model.
+A list with fitted models, and table results for the defined model outcome
 }
 \description{
 contLikSearch search through the models which optimizes the likelihood function

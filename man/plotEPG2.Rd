@@ -4,8 +4,16 @@
 \alias{plotEPG2}
 \title{plotEPG2}
 \usage{
-plotEPG2(mixData, kit, refData = NULL, AT = NULL, ST = NULL,
-  dyeYmax = TRUE, plotRepsOnly = TRUE, options = NULL)
+plotEPG2(
+  mixData,
+  kit,
+  refData = NULL,
+  AT = NULL,
+  ST = NULL,
+  dyeYmax = TRUE,
+  plotRepsOnly = TRUE,
+  options = NULL
+)
 }
 \arguments{
 \item{mixData}{List of mixData[[ss]][[loc]] =list(adata,hdata), with samplenames ss, loci names loc, allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric)}
