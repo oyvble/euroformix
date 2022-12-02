@@ -11,7 +11,6 @@
 #' @return A plotly widget
 #' @export
 
-#DCobj=NULL;locYmax=TRUE;options=NULL;withStutterModel=TRUE;grpsymbol="_"
 plotTopMPS2 = function(MLEobj,DCobj=NULL,grpsymbol="_",locYmax=TRUE,options=NULL,withStutterModel=TRUE) {
   #MLEobj<<- MLEobj
   if(is.null(options$h0)) { h0 = 300 } else { h0 = options$h0 } # 5500/nrows #standard height for each dye (depends on number of rows? No)

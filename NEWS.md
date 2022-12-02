@@ -6,6 +6,13 @@ SUGGESTIONS:
    Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies. ??
  - Include ordinary scale of LR (at least for qualitative model)?
 
+
+EuroForMix v4.0.1 (Release date: 2022-12-02)
+=============================================
+ - Fixed bug causing non-contributor panel in GUI to vanish.
+ - Fixed issue causing R versions earlier than 4.0 to compile:
+ -> Removing shared variables for OpenMP operation (EFMfastengine-L220): 
+
 EuroForMix v4.0.0 (Release date: 2022-11-28)
 =============================================
  Special thanks to: Victor Saragoni (tester), Damir Tesanovic (tester) and Jerry Hoogenboom (algorithm).

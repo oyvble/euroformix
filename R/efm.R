@@ -5,7 +5,6 @@
 #' @param envirfile A Rdata file including a saved environment of a project
 #' @export
 
-#library(euroformix);envirfile=NULL#;efm()
 efm = function(envirfile=NULL) {
  LUSsymbol = "_" #Added in version 1.11.0 defined as constant. Used for showing MPS based STRs in RU_LUS format (LUS must be numeric)
  MPSsymbol = ":" #Added in version 2.2.0 defined as constant. Used for showing MPS based SNPs/STRs in RU:something format (both can be strings)
@@ -2431,7 +2430,6 @@ suppressWarnings({
     #tabMLEmeta[1,1] = gWidgets2::gcombobox(1:3,container = tabMLESEL)
     
     #Provide meta info about samples and hypotheses (NOC:
-    mod = set$model
     txtSamples = paste0("Sample(s): ",paste0(names(set$samples),collapse="/"))
     refNames = names(set$refData[[1]])
     condHp = refNames[which(set$condOrder_hp>0)]
@@ -2527,7 +2525,7 @@ suppressWarnings({
      
      #postanalysis
      tabmleF = gWidgets2::glayout(spacing=3,container=(tabmleC[2,1] <-gWidgets2::gframe("Non-contributor analysis",container=tabmleC))) 
-     tippets <- setdiff(set$model$knownref_hd,set$model$knownref_hp)  #known non-contributors under Hd but not Hp (index)
+     tippets <- setdiff(set$knownref_hd,set$knownref_hp)  #known non-contributors under Hd but not Hp (index)
      if(!is.null(tippets)) {
        tN <- names(set$refData[[1]][tippets]) #tippet names
        tabmleF[1,1] <- gWidgets2::glabel( "Select reference to\nreplace with non-contributor:",container=tabmleF)

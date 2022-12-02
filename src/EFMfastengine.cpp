@@ -217,7 +217,7 @@ class EFMmarker { //Each marker is treated separately
 		//Traverse all genotypes and use calculated lookup matrix:
 		double bigsum = 0.0;  //total sum over all genotypes		
 		//return log(bigsum); //return logged value
-		#pragma omp parallel for reduction(+:bigsum) default(none) shared(m_NumAllelesTot,EvidWeights,m_pGvec,m_NOU,m_outG1allele,m_QalleleIndex,m_NumStutterModels,m_NumPotStutters,m_BWto,m_FWto,m_NumGenos1p,m_contributionIndicesConditionedKnowns,m_unknownContributorPower) 
+		#pragma omp parallel for reduction(+:bigsum) //default(none) shared(m_NumAllelesTot,EvidWeights,m_pGvec,m_NOU,m_outG1allele,m_QalleleIndex,m_NumStutterModels,m_NumPotStutters,m_BWto,m_FWto,m_NumGenos1p,m_contributionIndicesConditionedKnowns,m_unknownContributorPower) 
 		for(int gind=0; gind < m_nJointCombFULL; gind++) { //traverse all genoypes	
 			double logevidProb = m_pGvec[gind]; //includes prG and drop-in prob							
 			//obtaining outcome indices directly for each allele		

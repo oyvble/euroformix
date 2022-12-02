@@ -49,10 +49,6 @@
 #' plotTopEPG2(mlefit)
 #' }
 
-#?euroformix::calcMLE
-#library(euroformix);efm()
-#nC=3;knownRef = NULL;DEG=TRUE;BWS=TRUE;FWS=FALSE;AT=50;pC=0;lambda=0.01;fst=0;knownRel=NULL;ibd=NULL;minF=NULL;normalize=TRUE;steptol = 1e-4;nDone=3;delta=1;difftol=0.01;seed=NULL;verbose=FALSE;priorBWS=NULL;priorFWS=NULL; maxThreads=0;
-#maxThreads=0;verbose=TRUE;
 calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef = NULL, kit=NULL,DEG=TRUE,BWS=TRUE,FWS=TRUE,
   AT=50,pC=0.05,lambda=0.01,fst=0,knownRel=NULL,ibd=NULL,minF=NULL,normalize=TRUE,steptol = 1e-4,nDone=3,delta=1,difftol=0.01,
   seed=NULL,verbose=FALSE,priorBWS=NULL,priorFWS=NULL, maxThreads=0, adjQbp = FALSE) {
