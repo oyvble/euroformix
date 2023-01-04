@@ -5,6 +5,7 @@
 #' @param envirfile A Rdata file including a saved environment of a project
 #' @export
 
+#library(euroformix);envirfile=NULL#;efm()
 efm = function(envirfile=NULL) {
  LUSsymbol = "_" #Added in version 1.11.0 defined as constant. Used for showing MPS based STRs in RU_LUS format (LUS must be numeric)
  MPSsymbol = ":" #Added in version 2.2.0 defined as constant. Used for showing MPS based SNPs/STRs in RU:something format (both can be strings)
@@ -2689,14 +2690,12 @@ suppressWarnings({
   
     #helpfunction for calculating LR for each given dropout pD (takes a numeric): REQUIRE DATA TO BE PREPARED!
     doLR = function(pD) {
-      pDhp <- rep(pD,set$nC_hp)
-      pDhd <- rep(pD,set$nC_hd)
       hpvec <- hdvec <- rep(1,length(locs))
       for(loc in locs) {
         fst0 = getMarkerVal(set$fst,loc) #extract per marker based fst
         pC0 = getMarkerVal(set$prC,loc) #extract per marker based drop-in prob 
-        hpvec[which(loc==locs)] <- calcQual( evidList[[loc]], refList_hp[[loc]]$Ri, refList_hp[[loc]]$Ki, set$nC_hp-refList_hp[[loc]]$nRefs, fst0,  pDhp, pC0, popFreqList[[loc]])
-        hdvec[which(loc==locs)] <- calcQual( evidList[[loc]], refList_hd[[loc]]$Ri, refList_hd[[loc]]$Ki, set$nC_hd-refList_hd[[loc]]$nRefs, fst0,  pDhd, pC0, popFreqList[[loc]])
+        hpvec[which(loc==locs)] <- calcQual( evidList[[loc]], refList_hp[[loc]]$Ri, refList_hp[[loc]]$Ki, set$nC_hp-refList_hp[[loc]]$nRefs, fst0,  pD, pC0, popFreqList[[loc]])
+        hdvec[which(loc==locs)] <- calcQual( evidList[[loc]], refList_hd[[loc]]$Ri, refList_hd[[loc]]$Ki, set$nC_hd-refList_hd[[loc]]$nRefs, fst0,  pD, pC0, popFreqList[[loc]])
       }
       LRi <- hpvec/hdvec
       names(LRi) <- locs
@@ -2794,14 +2793,12 @@ suppressWarnings({
     #Helpfunction for calculating non-contributor LR:
     calcNonContr = function(tipsel,pD) {
       #First step: calculating LR for all genotypes in original popFreq.
-      Glist <- getGlist(set$popFreqQ) #get random man-Glist 
+      Glist <- getGlist(popFreqList) #get random man-Glist (use encoded values)
       print("Precalculating for non-contributor plot...")
   
       #calculate LRs directly here: 
       tipind <- set$knownref_hd[tipsel] #get tip-ind in refData
       modtipind <- set$condOrder_hp[tipind] #get position in system of tippet. Necessary for QUAL model
-      pDhp <- rep(pD,set$nC_hp)
-      pDhd <- rep(pD,set$nC_hd)
       for(loc in locs) { #Calcualte for each locus:
         fst0 = getMarkerVal(set$fst,loc) #extract per marker based fst
         pC0 = getMarkerVal(set$prC,loc) #extract per marker based drop-in prob 
@@ -2812,8 +2809,10 @@ suppressWarnings({
         for(j in 1:nG) { #for each genotypes
           refhptmp[ 2*modtipind -c(1,0) ] <- Glist[[loc]]$G[j,] #insert genotype to reference
           nrefhdtmp[ 2*tipsel-c(1,0) ] <- Glist[[loc]]$G[j,] #insert genotype to reference (noncontributor)
-          hp0 <- calcQual( evidList[[loc]], refhptmp,            refList_hp[[loc]]$Ki,set$nC_hp-length(refhptmp)/2,  fst0, pDhp,pC0, popFreqList[[loc]])  #updated line in v1.9 
-          hd0 <- calcQual( evidList[[loc]], refList_hd[[loc]]$Ri,nrefhdtmp,           set$nC_hd-refList_hd[[loc]]$nRefs,fst0, pDhd, pC0, popFreqList[[loc]])
+          nUhp = set$nC_hp-length(refhptmp)/2
+          nUhd = set$nC_hd-refList_hd[[loc]]$nRefs
+          hp0 <- calcQual( evidList[[loc]], refhptmp,            refList_hp[[loc]]$Ki, nUhp ,fst0,pD,pC0,popFreqList[[loc]])
+          hd0 <- calcQual( evidList[[loc]], refList_hd[[loc]]$Ri,nrefhdtmp,            nUhd ,fst0,pD,pC0,popFreqList[[loc]])
           Glist[[loc]]$LR[j] <- hp0/hd0 #store LR
         }
       } #end for each locus

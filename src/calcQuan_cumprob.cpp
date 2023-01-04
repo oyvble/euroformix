@@ -65,7 +65,7 @@ void loglikGamma_cumprob(double *pvalVEC, double *maxY, int *nJointGenos, int *N
 		double fst0 = fst[locind]; //theta-correction param	(marker specific)
 		double dropinProb0 = dropinProb[locind]; //obtain dropin prob (marker specific, but same for all replicates)
 		double AT0 = AT[locind]; //obtain AT (marker specific, but same for all replicates)
-				
+		
 		//Prepare dimensions and data vectors
 		int NOK0 = nKnowns[locind]; //obtain number of contributors (may be different for different markers)
 		int NOU = *NOC - NOK0; //number of unknowns (may be different for markers)
@@ -75,6 +75,7 @@ void loglikGamma_cumprob(double *pvalVEC, double *maxY, int *nJointGenos, int *N
 		int nAlleles = nAllelesVEC[locind]; //number of alleles
 		int nPS = NumPotStutters[locind]; //number of potential stutters
 		int nAlleles2 = nPS + nAlleles; //number of alleles (including potential stutters)
+		
 		//Create contribution matrix (1 genotype):
 		int numGenos1p = int(nAlleles*(nAlleles + 1) / 2); //get Genotype outcome
 		vector<double> outG1contr(nAlleles*numGenos1p, 0); //init nG1xnA matrix (contribution matrix). Indicating what alleles that are contributoed
@@ -102,7 +103,7 @@ void loglikGamma_cumprob(double *pvalVEC, double *maxY, int *nJointGenos, int *N
 		//Prepare vector for known contributors (and also unknown): Need to know positions!
 		vector<int> GindKnown(NOK0,0); //genotype index in vector 
 		vector<int> kindKnown(NOK0,0); //contributor index in vector
-		vector<int> kindUnknown(NOU,0); //contributor index in vector			
+		vector<int> kindUnknown(NOU,0); //contributor index in vector
 		int kindRel = relGind[locind]; //Put last in unknown traversion (-1 means no related)
 	
 		cc = 0; //counters for known
@@ -138,7 +139,7 @@ void loglikGamma_cumprob(double *pvalVEC, double *maxY, int *nJointGenos, int *N
 			//Sum up contribution for each alleles (Taking into account mix proportions): ONLY CALCULATED FOR KNOWN CONTRIBUTORS INITIALLY
 			for (kk = 0; kk < NOK0; kk++) { //for each known contributors 	
 				//mixPropContrInd = kindKnown[kk] + repIDmarker*(*NOC); //obtain correct index of mixture proportion (vectorized across replicates)
-				shapevK[aa] += outG1contr[  nAlleles*GindKnown[kk] + aa] * mixProp[ kindKnown[kk] ]; //contr from contr k to allele aa: NOTE SI_outG1contr0 removed
+				shapevK[aa] += outG1contr[nAlleles*GindKnown[kk] + aa] * mixProp[ kindKnown[kk] ]; //contr from contr k to allele aa: NOTE SI_outG1contr0 removed
 			} //end for each known contributor
 		}
 		
@@ -300,9 +301,7 @@ void loglikGamma_cumprob(double *pvalVEC, double *maxY, int *nJointGenos, int *N
 					
 					//FINAL INSERTION OF VALUES:
 				   double val = exp(logevidProb)*genoProd; //calculate P(E|gj)P(gj)			   
-				   
-				   //Calculate inner sum:
-				   bigsum += val;
+				   bigsum += val; //Calculate inner sum:
 				   //bigsumVEC[SI_nJointGenos0 + iter] = val; //insert element
 				} //end for each combination iterations (bigsum)
 				

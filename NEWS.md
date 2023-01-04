@@ -2,10 +2,22 @@
 SUGGESTIONS:
  - Also perform model search under Hp.
  - Include progressbar for Model validation when time consuming (check time for 1 allele and use this)
- - Adding new functionality: EFM remembers last used settings when closed. 
+ - Adding new functionality: EFM remembers all used settings when closed (as for CaseSolver). 
    Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies. ??
  - Include ordinary scale of LR (at least for qualitative model)?
 
+KNOWN ISSUES (TROUBLESHOOT):
+ - Upgrade to latest Rcpp package (1.0.9) to fix issue "function 'Rcpp_precious_remove' not provided by package 'Rcpp'"
+ 
+
+EuroForMix v4.0.2 (Release date: 2023-01-04)
+=============================================
+ - Slight speed improvement by modifying the EFMfastengine code:
+   -> Precalculation of weights are now parallelized on both allele and outcome traversion.
+   -> Removed unused arguments in getContributionIndices C++ function (doesn't affect speed).   
+ - Fixed bug when calculating non-contributor LRs for qualitative model (efm:L2796).
+ - Fixed bug when calculating model validation for R v3.6.x and earlier (data.frame in validMLEmodel.R caused wrong format)
+ - Fixed crash issue with earlier R-versions (v3.5.x) which used earlier versions of RcppArmadillo (uvec vectors not initiated as zeros)
 
 EuroForMix v4.0.1 (Release date: 2022-12-02)
 =============================================

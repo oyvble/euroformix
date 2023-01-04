@@ -5,8 +5,7 @@
 using namespace arma;
 
 uvec getContributionIndices(int genotypeCombinationIndex, int numberOfContributorIterations,  Mat<uword> outG1allele, int alleleIndexOfDropouts, 
-	int numStutterModels,int nPotentialStutter, int *BWto, int *FWto, int numberOfGenotypes, int possibleContributionsPerContributor, 
-	uvec contributionIndices, Col<int> contributorPower ) {
+	int numStutterModels, int *BWto, int *FWto, int numberOfGenotypes, uvec contributionIndices, Col<int> contributorPower ) {
 	
 	//Rcpp::Rcout << outG1allele << "-----------\n";  
 	int genoIdx; //used to indicate genotype index
@@ -40,7 +39,6 @@ uvec getContributionIndices(int genotypeCombinationIndex, int numberOfContributo
 			}
 		  }
 		} //END INNER FUNCTION
-		//contributorPower *= possibleContributionsPerContributor;
 		genotypePower *= numberOfGenotypes;
 	 }
   

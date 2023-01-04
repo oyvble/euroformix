@@ -44,13 +44,13 @@ test_that("Calculating quantitative model (1 rep):", {
 
   likhp2 = calcMLE(nC=NOC,samples=samples1,popFreq=popFreq,refData=refData,condOrder=condhp,AT=ATv,pC=pCv,fst=fstv,lambda = lamv ,kit=kit0, DEG = TRUE,BWS = FALSE, FWS=FALSE)$fit$loglik
   likhd2 = calcMLE(nC=NOC,samples=samples1,popFreq=popFreq,refData=refData,condOrder=condhd,AT=ATv,pC=pCv,fst=fstv,lambda = lamv ,kit=kit0, DEG = TRUE,BWS = FALSE, FWS=FALSE, knownRef = knownRef)$fit$loglik
-  expect(likhp,likhp2)
-  expect(likhd,likhd2)
+  expect(round(likhp,s0),round(likhp2,s0))
+  expect(round(likhd,s0),round(likhd2,s0))
   
   likhp3 = contLikMLE(nC=NOC,samples=dat1$samples,popFreq=dat1$popFreq,refData=dat1$refData,condOrder=condhp,threshT=ATv,prC=pCv,fst=fstv,lambda = lamv ,kit=kit0,xi=0,xiFW=0)$fit$loglik
   likhd3 = contLikMLE(nC=NOC,samples=dat1$samples,popFreq=dat1$popFreq,refData=dat1$refData,condOrder=condhd,threshT=ATv,prC=pCv,fst=fstv,lambda = lamv ,kit=kit0,xi=0,xiFW=0, knownRef = knownRef)$fit$loglik
-  expect(likhp,likhp3)
-  expect(likhd,likhd3)
+  expect(round(likhp,s0),round(likhp3,s0))
+  expect(round(likhd,s0),round(likhd3,s0))
 })
 
 
@@ -64,13 +64,13 @@ test_that("Calculating quantitative model (3 reps):", {
   
   likhp2 = calcMLE(nC=NOC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condhp,AT=ATv,pC=pCv,fst=fstv,lambda = lamv ,kit=kit0, DEG = TRUE,BWS = FALSE, FWS=FALSE)$fit$loglik
   likhd2 = calcMLE(nC=NOC,samples=samples,popFreq=popFreq,refData=refData,condOrder=condhd,AT=ATv,pC=pCv,fst=fstv,lambda = lamv ,kit=kit0, DEG = TRUE,BWS = FALSE, FWS=FALSE, knownRef = knownRef)$fit$loglik
-  expect(likhp,likhp2)
-  expect(likhd,likhd2)
+  expect(round(likhp,s0),round(likhp2,s0))
+  expect(round(likhd,s0),round(likhd2,s0))
   
   likhp3 = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=condhp,threshT=ATv,prC=pCv,fst=fstv,lambda = lamv ,kit=kit0,xi=0,xiFW=0)$fit$loglik
   likhd3 = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=condhd,threshT=ATv,prC=pCv,fst=fstv,lambda = lamv ,kit=kit0,xi=0,xiFW=0, knownRef = knownRef)$fit$loglik
-  expect(likhp,likhp3)
-  expect(likhd,likhd3)
+  expect(round(likhp,s0),round(likhp3,s0))
+  expect(round(likhd,s0),round(likhd3,s0))
 })
 
 

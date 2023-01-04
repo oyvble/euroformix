@@ -30,12 +30,12 @@ deconvolve = function(mlefit,alpha=0.95,maxlist=1000,signif=4,checkCalcs=FALSE){
   #Step 1) Calculate L(E|g,thetahat) for each marker: THIS IS DONE TROUGH SCRIPT
   #nrow(combGind)==c$nJointCombs[m] #must be the same
   loglikVEC = rep(0,sum(c$nJointGenos)) #init big calculation vector (likelihood for all outcome)
-  loglikVEC = .C("loglikGamma_allcomb2", loglikVEC,c$startIndMarker_nJointGenos, c$nJointGenos, c$nC, c$NOK, c$nKnowns,
+  loglikVEC = .C("loglikGamma_allcomb2", as.numeric(loglikVEC),c$startIndMarker_nJointGenos, c$nJointGenos, c$nC, c$NOK, c$nKnowns,
             as.numeric(par$mixProp),  as.numeric(par$PHexp), as.numeric(par$PHvar), as.numeric(par$DEG), as.numeric(par$stutt), 
             c$AT,c$fst,c$dropinProb,c$dropinWeight, c$nMarkers, c$nRepMarkers, c$nAlleles, c$nPotStutters,
             c$startIndMarker_nAlleles, c$startIndMarker_nAllelesReps, c$peaks, c$freqs, c$nTyped, c$maTyped, c$basepairs, 
             c$nStutters, c$stuttFromInd, c$stuttToInd, c$stuttParamInd , c$startIndMarker_nStutters,
-            c$knownGind, c$relGind, c$ibd, mlefit$maxThreads )[[1]] #obtain likelihood of all outcome
+            c$knownGind, c$relGind, c$ibd, as.integer(mlefit$maxThreads) )[[1]] #obtain likelihood of all outcome
   
   #length(loglikVEC)
   #CHECK THAT SAME LIKELIHOODs ARE OBTAINED:

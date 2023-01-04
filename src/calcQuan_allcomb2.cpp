@@ -62,7 +62,7 @@ void loglikGamma_allcomb2( double *loglikVEC, int *startIndMarker_nJointGenos, i
 		double fst0 = fst[locind]; //theta-correction param	(marker specific)
 		double dropinProb0 = dropinProb[locind]; //obtain dropin prob (marker specific, but same for all replicates)
 		double AT0 = AT[locind]; //obtain AT (marker specific, but same for all replicates)
-			
+
 		//Prepare dimensions and data vectors
 		int NOK0 = nKnowns[locind]; //obtain number of contributors (may be different for different markers)
 		int NOU = *NOC - NOK0; //number of unknowns (may be different for markers)
@@ -100,7 +100,7 @@ void loglikGamma_allcomb2( double *loglikVEC, int *startIndMarker_nJointGenos, i
 		//Prepare vector for known contributors (and also unknown): Need to know positions!
 		vector<int> GindKnown(NOK0,0); //genotype index in vector 
 		vector<int> kindKnown(NOK0,0); //contributor index in vector
-		vector<int> kindUnknown(NOU,0); //contributor index in vector		
+		vector<int> kindUnknown(NOU,0); //contributor index in vector
 		int kindRel = relGind[locind]; //Put last in unknown traversion (-1 means no related)
 	
 		cc = 0; //counters for known
@@ -130,13 +130,13 @@ void loglikGamma_allcomb2( double *loglikVEC, int *startIndMarker_nJointGenos, i
 		//int mixPropContrInd; //used to indicate correct mixture proportion vector (of particular replicate)
 		for (aa = 0; aa < nAlleles; aa++) { //traverse each observed alleles (indices), also the Q-allele. Potential not necessary!
 			maTypedvec[aa] = maTypedLong[ SI_nAlleles0 + aa ]; //copy previously typed alleles
-			//aaind = aa; //get index vectorized vector which includes (allele,rep) indices as [(1,1), (1,2), (1,3), (2,1), (2,2) etc]
-			shapev0[aa] = exp( log( shape0[repIDmarker] ) + basepairLong[SI_nAlleles0 + aa ]*log( DEG[repIDmarker] ) ); //scaling with degradation model (assumed already scaled)
+			//repIDmarker = repIDvec[ SI_nRepMarkers0 + rr ]; //obtain correct repID for marker
+			shapev0[aa] = exp( log( shape0[repIDmarker] ) + basepairLong[ SI_nAlleles0 + aa ]*log( DEG[repIDmarker] ) ); //scaling with degradation model (assumed already scaled)
 			
 			//Sum up contribution for each alleles (Taking into account mix proportions): ONLY CALCULATED FOR KNOWN CONTRIBUTORS INITIALLY
 			for (kk = 0; kk < NOK0; kk++) { //for each known contributors 	
 				//mixPropContrInd = kindKnown[kk] + repIDmarker*(*NOC); //obtain correct index of mixture proportion (vectorized across replicates)
-				shapevK[aa] += outG1contr[ nAlleles*GindKnown[kk] + aa] * mixProp[ kindKnown[kk] ]; //contr from contr k to allele aa
+				shapevK[aa] += outG1contr[nAlleles*GindKnown[kk] + aa] * mixProp[ kindKnown[kk] ]; //contr from contr k to allele aa
 			} //end for each known contributor
 		}
 		

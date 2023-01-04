@@ -64,8 +64,8 @@ validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createp
 	   }
     }
   }
-  dropinWeight1[is.infinite(dropinWeight1)] = -1e+100 ##insert large negative number
-  dropinWeight2[is.infinite(dropinWeight2)] = -1e+100 ##insert large negative number
+  dropinWeight1[is.infinite(dropinWeight1)] = -1e+10 ##insert large negative number
+  dropinWeight2[is.infinite(dropinWeight2)] = -1e+10 ##insert large negative number
   
   #obtain cumulative vals int_0^y 
   if(verbose) print("Calculating cumulative probabilities (1/2)...")
@@ -74,8 +74,8 @@ validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createp
                  as.numeric(par$mixProp),  as.numeric(par$PHexp), as.numeric(par$PHvar), as.numeric(par$DEG), as.numeric(par$stutt), 
                  c$AT,c$fst,c$dropinProb, c$dropinWeight, as.numeric(dropinWeight1),c$nMarkers, c$nRepMarkers, c$nAlleles, c$nPotStutters,
             c$startIndMarker_nAlleles, c$startIndMarker_nAllelesReps, c$peaks, c$freqs, c$nTyped, c$maTyped, c$basepairs, 
-            c$nStutters, c$stuttFromInd, c$stuttToInd, c$stuttParamInd , c$startIndMarker_nStutters, c$knownGind, c$relGind, c$ibd, mlefit$maxThreads )[[1]] #obtain 
-  #print(UaPH)
+            c$nStutters, c$stuttFromInd, c$stuttToInd, c$stuttParamInd , c$startIndMarker_nStutters, c$knownGind, c$relGind, c$ibd, as.integer(mlefit$maxThreads) )[[1]] #obtain 
+#  print(UaPH)
   
   #PArt 2/2: Consider evaluation at PH-levels  
   #obtain cumulative vals int_0^inf 
@@ -85,8 +85,8 @@ validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createp
                 as.numeric(par$mixProp),  as.numeric(par$PHexp), as.numeric(par$PHvar), as.numeric(par$DEG), as.numeric(par$stutt), 
                 c$AT,c$fst,c$dropinProb, c$dropinWeight, as.numeric(dropinWeight2), c$nMarkers, c$nRepMarkers, c$nAlleles, c$nPotStutters,
              c$startIndMarker_nAlleles, c$startIndMarker_nAllelesReps, c$peaks, c$freqs, c$nTyped, c$maTyped, c$basepairs, 
-             c$nStutters, c$stuttFromInd, c$stuttToInd, c$stuttParamInd , c$startIndMarker_nStutters,  c$knownGind, c$relGind, c$ibd, mlefit$maxThreads )[[1]] #obtain 
-  #print(UaMAX)
+             c$nStutters, c$stuttFromInd, c$stuttToInd, c$stuttParamInd , c$startIndMarker_nStutters,  c$knownGind, c$relGind, c$ibd, as.integer(mlefit$maxThreads) )[[1]] #obtain 
+#  print(UaMAX)
   #Combing the product from the two parts:  
   cumprobi = UaPH/UaMAX #obtaining cumulative probs
   #print(cumprobi)
@@ -106,17 +106,12 @@ validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createp
         if(peak==0) next 
         rep0 =  repNames[ rind ] #obtain replicate name
         allele0  = alleleNames[aind + c$startIndMarker_nAlleles[locind]] #obtain allele name
-        new = c( loc0, rep0, allele0, peak, cumprobi[cind])
-        tab = rbind(tab, new)
+        newrow = data.frame( Marker=loc0, Sample=rep0, Allele=allele0, Height=peak, ProbObs=as.numeric(cumprobi[cind]))
+        tab = rbind(tab, newrow)
       }
     }
   }
-  colnames(tab) = c("Marker","Sample","Allele","Height","ProbObs")
-  #nrow(tab)==sum(!is.nan(cumprobi))
-  tab = as.data.frame(tab)
-  tab$ProbObs = as.numeric(tab$ProbObs)
-  
-  cumprobi = as.numeric(tab[,ncol(tab)]) #obtain values again
+  cumprobi = tab$ProbObs #as.numeric(tab[,ncol(tab)]) #obtain values again
   N <- nrow(tab) #length(cumprobi) #number of peak heights
   alpha2 <- alpha/N #0.05 significanse level with bonferroni correction
   cumunif <- ((1:N)-0.5)/N #=punif((1:N)-0.5,0,N)

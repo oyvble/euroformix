@@ -141,8 +141,8 @@ class EFMmarker { //Each marker is treated separately
 		for (int k = 0; k < NOC; k++) {  //traverse all contributors 		
 			//Informing the known contributors (update allele lookup indices for these)		
 			if( k < m_NOK && m_knownContributorGenotypes[k] > -1) { //obtain value ("-1" means missing marker)
-				m_contributionIndicesConditionedKnowns = getContributionIndices(m_knownContributorGenotypes[k], 1,m_outG1allele,m_QalleleIndex,m_NumStutterModels,m_NumPotStutters, &(m_BWto[0]),&(m_FWto[0]), 
-															m_NumGenos1p,m_possibleContributionsPerContributor, m_contributionIndicesConditionedKnowns, contributorPower);				
+				m_contributionIndicesConditionedKnowns = getContributionIndices(m_knownContributorGenotypes[k], 1,m_outG1allele,m_QalleleIndex,m_NumStutterModels, &(m_BWto[0]),&(m_FWto[0]), 
+															m_NumGenos1p, m_contributionIndicesConditionedKnowns, contributorPower);				
 				knownsCounter++; //count if non-missing
 			} else {				
 				m_unknownContributorPower[unknownsCounter] = pow(m_possibleContributionsPerContributor,k); //aligning position of unknown here
@@ -192,11 +192,11 @@ class EFMmarker { //Each marker is treated separately
 			m_pGvec[gind] = log(genoProd); //store genotype-prob outcome
 			
 			//get contribution indices for each allele: stored as vector: Known contributors are taken into account through "m_contributionIndicesConditionedKnowns"
-			uvec indiceAlleles = getContributionIndices(gind, m_NOU, m_outG1allele,m_QalleleIndex,m_NumStutterModels,m_NumPotStutters,  &(m_BWto[0]),&(m_FWto[0]), 
-							m_NumGenos1p,m_possibleContributionsPerContributor, m_contributionIndicesConditionedKnowns, m_unknownContributorPower);
+			uvec indiceAlleles = getContributionIndices(gind, m_NOU, m_outG1allele,m_QalleleIndex,m_NumStutterModels,  &(m_BWto[0]),&(m_FWto[0]), 
+									m_NumGenos1p, m_contributionIndicesConditionedKnowns, m_unknownContributorPower);
+
+			//Obtain info about drop-in alleles: indiceAlleles with value zero means no contribution			
 			uvec noContribution = find(indiceAlleles==0); //positions with no contribution
-			
-			//Obtain info about drop-in alleles:
 			for(int r=0; r < m_NumReps; r++) { 
 				rowvec dropinweight = m_dropinweight.row(r); //obtain row
 				uvec dropinInd = intersect(hasPosY_list[r],noContribution); //obtain drop-in allele positions (assume nRep=1)
@@ -213,21 +213,21 @@ class EFMmarker { //Each marker is treated separately
 
 	
 	//Engine to calculate the log-likelihood function
-	double calcLogLikMarker(Mat <double> EvidWeights) {
+	double calcLogLikMarker(mat EvidWeightsSub) {
 		//Traverse all genotypes and use calculated lookup matrix:
 		double bigsum = 0.0;  //total sum over all genotypes		
 		//return log(bigsum); //return logged value
-		#pragma omp parallel for reduction(+:bigsum) //default(none) shared(m_NumAllelesTot,EvidWeights,m_pGvec,m_NOU,m_outG1allele,m_QalleleIndex,m_NumStutterModels,m_NumPotStutters,m_BWto,m_FWto,m_NumGenos1p,m_contributionIndicesConditionedKnowns,m_unknownContributorPower) 
+		#pragma omp parallel for reduction(+:bigsum) //default(none) shared(m_NumAllelesTot,EvidWeightsSub,m_pGvec,m_NOU,m_outG1allele,m_QalleleIndex,m_NumStutterModels,m_NumPotStutters,m_BWto,m_FWto,m_NumGenos1p,m_contributionIndicesConditionedKnowns,m_unknownContributorPower) 
 		for(int gind=0; gind < m_nJointCombFULL; gind++) { //traverse all genoypes	
 			double logevidProb = m_pGvec[gind]; //includes prG and drop-in prob							
 			//obtaining outcome indices directly for each allele		
-			uvec indiceAlleles = getContributionIndices(gind, m_NOU, m_outG1allele,m_QalleleIndex,m_NumStutterModels,m_NumPotStutters, &(m_BWto[0]),&(m_FWto[0]),
-							m_NumGenos1p,m_possibleContributionsPerContributor, m_contributionIndicesConditionedKnowns, m_unknownContributorPower);//, m_unknownGenotypePower);
+			uvec indiceAlleles = getContributionIndices(gind, m_NOU, m_outG1allele,m_QalleleIndex,m_NumStutterModels, &(m_BWto[0]),&(m_FWto[0]),
+							m_NumGenos1p, m_contributionIndicesConditionedKnowns, m_unknownContributorPower);
 			
 			//look up evidence values for each allele (replicates already accounted for per allele)
 			for(int aa=0; aa < m_NumAllelesTot; aa++) { //traverse each allele (allele outcome)
 				if(indiceAlleles[aa]==0) continue; //note that this could be avoided to use? Using skip is a bit faster than not using it.			
-				logevidProb += EvidWeights(indiceAlleles[aa],aa); //look up evidence weight based on index
+				logevidProb += EvidWeightsSub(indiceAlleles[aa],aa); //look up evidence weight based on index
 			} //end for each allele	
 			//Rprintf("gind=%i, loglik=%f\n",gind,logevidProb);			
 			//Rprintf( "Thread %d works with idx %d\n", omp_get_thread_num(), gind);
@@ -238,7 +238,7 @@ class EFMmarker { //Each marker is treated separately
 	}
 	
 	/*Calculating the log-likelihood function per genotype (return large vector). NOT USED
-	Col<float> calcLogLikGenos(Mat <double> EvidWeights) {
+	Col<float> calcLogLikGenos(mat EvidWeightsSub) {
 		//Traverse all genotypes and use calculated lookup matrix:		
 		Col<float> logLikGeno(m_nJointCombFULL); //init full vector
 		for(int gind=0; gind < m_nJointCombFULL; gind++) { //traverse all genoypes	
@@ -284,7 +284,7 @@ class EFMclass {
 	Mat<uword> m_lookUpMat; //lookup index BETWEEN STUTTER OUTCOME AND non-stutter outcome
 	int m_NumStutterModelsMAX; //model type (0=Only DEG, 1=BW, 2=BWFW)	
 	vector<int> m_NumStutterModels; //vector to take into account possible none-stutter loci (AMEL)
-	Mat <double> EvidWeights; //Evidence weight can be stored globally here:
+	mat m_EvidWeights; //Evidence weight is stored globally here: Also used as a cache to indicate which outcomes to calc (values>0)
 	
 	public: 
 	Col<double> m_loglikMarkers; //stored for later access (directly to R)	
@@ -310,71 +310,63 @@ class EFMclass {
 		//Step 1: Prepare contribution matrix without stutters (Mix-prop and degradation)		
 		Col<double> contrWithMx = m_contrMat0*Mx; //get Mx contribution (no degrad)		
 		Row <double> degScale = shape0 * exp(m_basepairLong * loggedBeta); //vectorized ARMA scale with shape0
-		Mat <double> contrMatPerAllele = contrWithMx * degScale; //degScale; //an outer matrix product (gives matrix). Contribution per allele (column-wise)
+		mat contrMatPerAllele = contrWithMx * degScale; //degScale; //an outer matrix product (gives matrix). Contribution per allele (column-wise)
 		//Note: contrMatPerAllele is a (out0 x m_NumAllelesTot) matrix (inclues Q-allele but not potential stutters)
 		//Rcpp::Rcout << m_basepairLong << "\n";
 		//Rcpp::Rcout << contrWithMx << "\n";
-		//Rcpp::Rcout << contrMatPerAllele << "\n";
-
+		
 		//Step 2: Modify contribution matrix wrt stutters (produce contrMat1 using m_lookUpMat): In same step: Calculate weight-of-evidence matrix
 		//Parallelize over all alleles in total (utilizing many threads)		
-		#pragma omp parallel for //default(none) shared(EvidWeights,m_TotalNumAllelesPS, m_contrMat0,m_lookUpMat, xiB, xiF,m_NumStutterModels, BWfrom,FWfrom,m_NumCombOut1,m_AT,scale0,const1,const2 ) 
-		for(int aindLong=0; aindLong < m_TotalNumAllelesPS; aindLong++) { //Traversing all alllees (also potential stutters)
-			//Rcpp::Rcout << "allele=" << aindLong << "\n";
-			Col <double> colVEC; //help variable	
-			Col <double> contrVEC(m_NumCombOut1);//help variable, init as zero (contribution vector for all outcome)
-			
-			//look up alleles (not including potentialstutters) and marker index
-			int cumAlleleIdx = m_lookupCumulativeAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutte	
-			int alleleIdx = m_lookupAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutte	
-			int markerIdx = m_lookupMarkerIdx[aindLong]; //obtain marker index
-			int NumReps = m_NumRepsMarkers[markerIdx]; //number of replicates for given marker			
-			int startIndMarker_nAllelesReps = m_startIndMarker_nAllelesReps[markerIdx]; //obtain start index of marker
-			double AT = m_AT[markerIdx]; //obtain assumed analytical threshold
-			if(cumAlleleIdx > -1) { //Traverse the set of alleles within possible genotypes (also Q-allele)
-				colVEC = contrMatPerAllele.col( cumAlleleIdx ); 
-				contrVEC += colVEC( m_lookUpMat.col(0) ); //contributor alleles
-				if( m_BWtoLong[cumAlleleIdx] > -1 ) { //If giving away stutter (better check than using Q-allele index)
-					contrVEC *= (1-xiB-xiF); //then loose stutter products (scaling)
-				}			
-			}
-			//Continue and check where to add stutter products
-			if( m_BWfromLong[aindLong] > -1 ) {
-				colVEC = contrMatPerAllele.col( m_startIndMarker_nAlleles[markerIdx] + m_BWfromLong[aindLong]); //obtain allele which contrAllele get BW stutter from. Remember SHIFT
-				contrVEC += xiB*colVEC( m_lookUpMat.col(1) ); //modify based on stutter products
-			}
-			if( m_FWfromLong[aindLong] > -1) {
-				colVEC = contrMatPerAllele.col( m_startIndMarker_nAlleles[markerIdx] + m_FWfromLong[aindLong]); //obtain allele which contrAllele get BW stutter from. Remember SHIFT
-				contrVEC += xiF*colVEC( m_lookUpMat.col(2) ); //modify based on stutter products							
-			}
-			
-			//PREPARE WEIGHT EVIDENCE: 
-			//Note:Obtaining the unique shape1 values is SLOW (hence removed)
-			double weight; //Calculated weight for a given allele in allele set
-			double peak; //temporary peak heigt 
-			double shapeConst; //temporary variable for shape constnat
-			int r; //replicate variable
-			Col <double> colVECcalc(m_NumCombOut1); //help variable (for calculation)
-			for(int b=0; b < m_NumCombOut1; b++) { //traverse each unique shape param
-				double shape1 = contrVEC[b]; //get unique shape param
-				weight = 0; //reset weight again				
-				if( cumAlleleIdx < 0) { //Assuming dropout for all replicates
-					weight+= NumReps *(R::pgamma(AT, shape1,scale0, 1, 1)); //calculate for all replicates (identical)
-				} else { //Peak heights are expected (but perhaps not for all replicates
-					shapeConst = -lgamma(shape1) - shape1*const2; //calculate shape constant only one time
-					for(r=0; r < NumReps; r++) {	//Traverse all replicates (for given allele)
-						peak = m_PeaksLong[startIndMarker_nAllelesReps + alleleIdx*NumReps + r]; //obtain peak height wrt long-vector (takes into account replicates)
-						if(peak < AT) {
-							weight += R::pgamma(AT, shape1,scale0, 1, 1); //calculate for certain replicates
-						} else {
-							weight += shapeConst + (shape1-1)*log(peak) - peak * const1; //Note: lgamma is from std							
+		#pragma omp parallel for collapse(2) //default(none) shared(m_EvidWeights,m_TotalNumAllelesPS, m_contrMat0,m_lookUpMat, xiB, xiF,m_NumStutterModels, BWfrom,FWfrom,m_NumCombOut1,m_AT,scale0,const1,const2 ) 		
+		for(int combOutIdx=0; combOutIdx < m_NumCombOut1; combOutIdx++) { //traverse each outcome (typically larger than number of allels)			
+			for(int aindLong=0; aindLong < m_TotalNumAllelesPS; aindLong++) { //Traversing all alleels (also potential stutters)			
+					int cumAlleleIdx = m_lookupCumulativeAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutter	
+					int alleleIdx = m_lookupAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutte	
+					int markerIdx = m_lookupMarkerIdx[aindLong]; //obtain marker index
+					int NumReps = m_NumRepsMarkers[markerIdx]; //number of replicates for given marker			
+					int startIndMarker_nAllelesReps = m_startIndMarker_nAllelesReps[markerIdx]; //obtain start index of marker
+					double AT = m_AT[markerIdx]; //obtain assumed analytical threshold
+
+					double shape1Allele = 0.0; //init shape argument
+					if(cumAlleleIdx > -1) { //If allele is expected to be contributed (not part of potential stutters)
+						//shape1Allele = contrWithMx[ m_lookUpMat.at(combOutIdx,0) ]; //get shape argument for outcome (same for all alleles)
+						shape1Allele = contrMatPerAllele( m_lookUpMat(combOutIdx,0),cumAlleleIdx ); //get shape argument for outcome (same for all alleles)
+						if( m_BWtoLong[cumAlleleIdx] > -1 ) { //If giving away stutter (better check than using Q-allele index)
+							shape1Allele *= (1-xiB-xiF); //then loose stutter products (scaling)
 						}
-					} //end for each replicate					
-				} //end if expecting peak heights
-				colVECcalc[b] = weight;
-			}
-			EvidWeights.col(aindLong) = colVECcalc; //insert calculcated vector			
-		} //END CALC		
+					}
+				
+					//Continue and check where to add stutter products
+					if( m_BWfromLong[aindLong] > -1 ) {
+						//shape1Allele += xiB * degScale[m_startIndMarker_nAlleles[markerIdx] + m_BWfromLong[aindLong]] * contrWithMx[m_lookUpMat.at(combOutIdx,1)];
+						shape1Allele += xiB * contrMatPerAllele( m_lookUpMat(combOutIdx,1), m_startIndMarker_nAlleles[markerIdx] + m_BWfromLong[aindLong] );
+					}
+					if( m_FWfromLong[aindLong] > -1) {
+						//shape1Allele += xiF * degScale[m_startIndMarker_nAlleles[markerIdx] + m_FWfromLong[aindLong]] * contrWithMx[m_lookUpMat.at(combOutIdx,2)];
+						shape1Allele += xiF * contrMatPerAllele( m_lookUpMat(combOutIdx,2), m_startIndMarker_nAlleles[markerIdx] + m_FWfromLong[aindLong] );
+					}
+				
+					//NEXT: pdf weights are calculated
+					double peak; //temporary peak heigt 
+					int repIdx; //replicate variable
+					double shapeConst; //temporary variable for shape constant
+					double weight = 0; //obtain likelihood weight
+					if( cumAlleleIdx < 0) { //Assuming dropout for all replicates
+						weight += NumReps *(R::pgamma(AT, shape1Allele,scale0, 1, 1)); //calculate for all replicates (identical)
+					} else { //Peak heights are expected (but perhaps not for all replicates
+						shapeConst = -lgamma(shape1Allele) - shape1Allele*const2; //calculate shape constant only one time
+						for(repIdx=0; repIdx < NumReps; repIdx++) {	//Traverse all replicates (for given allele)
+							peak = m_PeaksLong[startIndMarker_nAllelesReps + alleleIdx*NumReps + repIdx]; //obtain peak height wrt long-vector (takes into account replicates)
+							if(peak < AT) {
+								weight += R::pgamma(AT, shape1Allele,scale0, 1, 1); //calculate for certain replicates
+							} else {
+								weight += shapeConst + (shape1Allele-1)*log(peak) - peak * const1; //Note: lgamma is from std							
+							}
+						} //end for each replicate					
+					} //end if expecting peak heights
+					m_EvidWeights.at(combOutIdx, aindLong) = weight; //finally insert calculcated weight value
+			} //end traverse each allelel
+		} //end traverse each outcome
 		
 		//Finally calculate per marker
 		m_loglikMarkers.set_size(m_NumMarkers); 		
@@ -383,9 +375,9 @@ class EFMclass {
 			int fromCol = m_startIndMarker_nAllelesTot[m];
 			int toCol = m_startIndMarker_nAllelesTot[m+1] - 1;
 			//Rcpp::Rcout << "from=" << fromCol << " to=" << toCol << "\n";			
-			m_loglikMarkers[m] = (EFMmarkerv[m]).calcLogLikMarker(EvidWeights.cols(fromCol,toCol) ) ; //insert marker information to vector			
+			m_loglikMarkers[m] = (EFMmarkerv[m]).calcLogLikMarker(m_EvidWeights.cols(fromCol,toCol) ) ; //insert marker information to vector			
 			jointloglik += m_loglikMarkers[m];
-		}		
+		}
 		return jointloglik; //return joint result
 	}
 	
@@ -394,13 +386,13 @@ class EFMclass {
 	//A contribution lookup-matrix is created to link unstuttered (contrMat0) and stuttered relation (i.e., contrMat1 which is not needed since "getContributionIndices" function already gives index)
 	void prepare(int NOC) {
 		m_NOC = NOC;
-		Col<uword> out0 = { 0, 1, 2 }; //defined outcomes for key0		
+		uvec out0 = { 0, 1, 2 }; //defined outcomes for key0		
 		int nOut0 = 3; //size of outcome (no stutter)
 		int nOut1; //size of outcome (with possible stutters)
 		int nCols; //number of columns used for additional stutters (1 + BW + FW)
 		Mat<uword> out1; //nCols x nOutcome (transposed)
 		if(m_NumStutterModelsMAX==0) {
-			out1 = {0,1,2}; //defined outcomes for key1 (given per column)	
+			out1 = {{0,1,2}}; //defined outcomes for key1 (given per column)	
 		} else if(m_NumStutterModelsMAX==1) {
 			out1 = { {0,1,2,0,1,0},		   {0,0,0,1,1,2}}; //defined outcomes for key1 (given per row)			
 		} else { //(numStutterModels0==2) {
@@ -415,67 +407,66 @@ class EFMclass {
 		
 		//Expaning outcome wrt number of contributors
 		m_NumCombOut0 = (int) pow(nOut0,NOC); //number of outcomes (no stutter effect)
-		m_NumCombOut1 = (int) pow(nOut1,NOC); //number of outcomes (with BW+FW stutter effects)	
-		Col<uword> contrMat0_key(m_NumCombOut0);  //Key vector (no stutter)		
+		m_NumCombOut1 = (int) pow(nOut1,NOC); //number of outcomes (with BW+FW stutter effects)			
 		m_contrMat0.zeros(m_NumCombOut0,NOC);  //contribution matrix
 		m_lookUpMat.zeros(m_NumCombOut1,nCols); //lookup matrix (used to connect non-stutter outcome and stuttered outcome)		
+		Col<uword> contrMat0_key(m_NumCombOut0,fill::zeros);  //Key vector (no stutter)		
 		
 		//INIT BIG EvidWeight matrix (globally for all markers)
-		EvidWeights.zeros(m_NumCombOut1 , m_TotalNumAllelesPS); //Weight of evidence calculations	
-		
+		m_EvidWeights.zeros(m_NumCombOut1 , m_TotalNumAllelesPS); //Init Weight of evidence matrix (important with init different from zero)
+
 		//CONSTRUCTION OF lookUpMat (same for all markers).
 		//CONSTRUCT Key0: No STUTTER
 		int contrPower; //used to loop combinations
 		int combind; //combination index outcome
 		int base10;//used to indicate which 10-base letter (used to create key)
-		for(int gind=0; gind < m_NumCombOut0; gind++) { //traverse all combinations	
+		for(int ind=0; ind < m_NumCombOut0; ind++) { //traverse all combinations	
 			base10 = 1; 
 			contrPower = 1;
 			for(int k=0; k<NOC; k++) {
-				combind =  (gind/contrPower) % nOut0; // get outcome index
-				uword contr = out0[combind]; //get contribution
-				
-				m_contrMat0(gind,k) = contr; //notice change of order (and index -1 to start from 0)
-				contrMat0_key[gind] += contr*base10; //notice the base here (add to number)
+				combind =  (ind/contrPower) % nOut0; // get outcome index
+				uword contr = out0[combind]; //get contribution				
+				m_contrMat0(ind,k) = contr; //notice change of order (and index -1 to start from 0)
+				contrMat0_key[ind] += contr*base10; //notice the base here (add to number)
 				base10 *= 10; 
 				contrPower *= nOut0; //update for combination traversion
-
 			}	
 		} //end for all combinations
 		//Rcpp::Rcout << m_contrMat0 << "\n";
-		//Rcpp::Rcout << contrMat0_key << "\n";
-		
+		//Rcpp::Rcout << contrMat0_key << "\n";	
+
 		//DEFINED lookUpMat BY CONSTRUCTING Key1(With STUTTER) on the go
 		//Must build up a key across all stutter types (nCols)
-		for(int gind=0; gind < m_NumCombOut1; gind++) { //traverse all combinations	
+		for(int ind=0; ind < m_NumCombOut1; ind++) { //traverse all combinations	
 			base10 = 1; 
 			contrPower = 1;
-
-			Col<uword> keyVec(nCols); //init key-vector as zero (numStutter models + 1)
+			Col<uword> keyVec(nCols,fill::zeros); //init key-vector as zero (numStutter models + 1)
 			//IDEA IS TO FILL keyVec UP (all 3 values for all outcomes), STEP 1
 			//AND MAP THE KEY TO contrMat_key index, STEP 2
 			for(int k=0; k<NOC; k++) {
-				combind =  (gind/contrPower) % nOut1; // get outcome index			
-				Col<uword> contrs = out1.col(combind); //get specific column (contribution)
+				combind =  (ind/contrPower) % nOut1; // get outcome index			
+				uvec contrs = out1.col(combind); //get specific column (contribution)
 				keyVec += contrs*base10; //notice the base here (add to number)
 				base10 *= 10; //update base afterwards
 				contrPower *= nOut1; //update for combination traversion
-			}
-			
+			}			
 			//Rcpp::Rcout << keyVec.t() << "\n";
 					
 			//LAST: LOOK UP CORRESPONDING INDEX OF contrMat0_key
 			for(int j=0; j<nCols; j++) {
 				uvec indVec = find( contrMat0_key==keyVec[j]); //store index (starts from 0)
-				m_lookUpMat(gind,j) = indVec[0]; //store index 				
-			}			
+				m_lookUpMat(ind,j) = indVec[0]; //store index 				
+			}		
 		} //end for all combinations
+
 		//Rcpp::Rcout << m_lookUpMat << "\n";
-	
+		
 		//EXECUTES PRE-CALCULATIONS FOR EACH MARKER (this is data specific)
 		for(int m=0; m<m_NumMarkers; m++) { 
-			(EFMmarkerv[m]).prepareMarker(NOC, m_NumStutterModels[m]); //send marker specific 'number of stutter-model'
+			//send marker specific 'number of stutter-model'
+			(EFMmarkerv[m]).prepareMarker(NOC, m_NumStutterModels[m]); 
 		}
+		//Rcpp::Rcout << m_EvidWeights << "\n";
 	}
 
 	//Constructor:
@@ -557,15 +548,13 @@ class ExposedClass {
 		}
 		
 		//exposed function to create indexing: Drop-in weights already calculated (but still need pC)
-		void prepare(int NOC) {			
+		void prepare(int NOC) {		
 			#ifdef _OPENMP
 				int numThreads = thread::hardware_concurrency();
 				if(m_maxThreads>0) numThreads = min(numThreads,m_maxThreads); 
 				omp_set_num_threads(numThreads); //preparing CPU parallelization	
-			#endif					
-			if(efmStorage) {		
-				efmStorage->prepare(NOC); //EXECUTES TIME CONSUMING INDEXING FOR EACH MARKER
-			}
+			#endif
+			if(efmStorage) efmStorage->prepare(NOC); 
 		}
 		
 		//exposed function to caclulate the likelihood func
@@ -574,7 +563,7 @@ class ExposedClass {
 				int numThreads = thread::hardware_concurrency();
 				if(m_maxThreads>0) numThreads = min(numThreads,m_maxThreads); 
 				omp_set_num_threads(numThreads); //preparing CPU parallelization	
-			#endif					
+			#endif
 			if(efmStorage) {
 				return efmStorage->calcLogLik(theta); //calculate and return likelihood function			
 			} else {
@@ -592,7 +581,7 @@ class ExposedClass {
 		}
 		
 		//exposed function to remove storage
-		void close() { 
+		void close() {
 			if(efmStorage) {
 				delete efmStorage; //free memory		
 				efmStorage = NULL;
