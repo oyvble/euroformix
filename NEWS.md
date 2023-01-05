@@ -8,7 +8,10 @@ SUGGESTIONS:
 
 KNOWN ISSUES (TROUBLESHOOT):
  - Upgrade to latest Rcpp package (1.0.9) to fix issue "function 'Rcpp_precious_remove' not provided by package 'Rcpp'"
- 
+
+EuroForMix v4.0.3 (Release date: 2023-01-05)
+=============================================
+ - The modification of the EFMfastengine code in previous version (v4.0.2) led to worse speed: The implementation is reversed.
 
 EuroForMix v4.0.2 (Release date: 2023-01-04)
 =============================================

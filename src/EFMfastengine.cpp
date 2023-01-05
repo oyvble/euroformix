@@ -317,57 +317,64 @@ class EFMclass {
 		
 		//Step 2: Modify contribution matrix wrt stutters (produce contrMat1 using m_lookUpMat): In same step: Calculate weight-of-evidence matrix
 		//Parallelize over all alleles in total (utilizing many threads)		
-		#pragma omp parallel for collapse(2) //default(none) shared(m_EvidWeights,m_TotalNumAllelesPS, m_contrMat0,m_lookUpMat, xiB, xiF,m_NumStutterModels, BWfrom,FWfrom,m_NumCombOut1,m_AT,scale0,const1,const2 ) 		
-		for(int combOutIdx=0; combOutIdx < m_NumCombOut1; combOutIdx++) { //traverse each outcome (typically larger than number of allels)			
-			for(int aindLong=0; aindLong < m_TotalNumAllelesPS; aindLong++) { //Traversing all alleels (also potential stutters)			
-					int cumAlleleIdx = m_lookupCumulativeAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutter	
-					int alleleIdx = m_lookupAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutte	
-					int markerIdx = m_lookupMarkerIdx[aindLong]; //obtain marker index
-					int NumReps = m_NumRepsMarkers[markerIdx]; //number of replicates for given marker			
-					int startIndMarker_nAllelesReps = m_startIndMarker_nAllelesReps[markerIdx]; //obtain start index of marker
-					double AT = m_AT[markerIdx]; //obtain assumed analytical threshold
-
-					double shape1Allele = 0.0; //init shape argument
-					if(cumAlleleIdx > -1) { //If allele is expected to be contributed (not part of potential stutters)
-						//shape1Allele = contrWithMx[ m_lookUpMat.at(combOutIdx,0) ]; //get shape argument for outcome (same for all alleles)
-						shape1Allele = contrMatPerAllele( m_lookUpMat(combOutIdx,0),cumAlleleIdx ); //get shape argument for outcome (same for all alleles)
-						if( m_BWtoLong[cumAlleleIdx] > -1 ) { //If giving away stutter (better check than using Q-allele index)
-							shape1Allele *= (1-xiB-xiF); //then loose stutter products (scaling)
+		#pragma omp parallel for //default(none) shared(EvidWeights,m_TotalNumAllelesPS, m_contrMat0,m_lookUpMat, xiB, xiF,m_NumStutterModels, BWfrom,FWfrom,m_NumCombOut1,m_AT,scale0,const1,const2 ) 
+		for(int aindLong=0; aindLong < m_TotalNumAllelesPS; aindLong++) { //Traversing all alllees (also potential stutters)
+			//Rcpp::Rcout << "allele=" << aindLong << "\n";
+			Col <double> colVEC; //help variable	
+			Col <double> contrVEC(m_NumCombOut1,fill::zeros);//help variable, init as zero (contribution vector for all outcome)
+			
+			//look up alleles (not including potentialstutters) and marker index
+			int cumAlleleIdx = m_lookupCumulativeAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutte	
+			int alleleIdx = m_lookupAlleleIdx[aindLong]; //obtain allele to consider: -1 if part of "potential stutte	
+			int markerIdx = m_lookupMarkerIdx[aindLong]; //obtain marker index
+			int NumReps = m_NumRepsMarkers[markerIdx]; //number of replicates for given marker			
+			int startIndMarker_nAllelesReps = m_startIndMarker_nAllelesReps[markerIdx]; //obtain start index of marker
+			double AT = m_AT[markerIdx]; //obtain assumed analytical threshold
+			if(cumAlleleIdx > -1) { //Traverse the set of alleles within possible genotypes (also Q-allele)
+				colVEC = contrMatPerAllele.col( cumAlleleIdx ); 
+				contrVEC += colVEC( m_lookUpMat.col(0) ); //contributor alleles
+				if( m_BWtoLong[cumAlleleIdx] > -1 ) { //If giving away stutter (better check than using Q-allele index)
+					contrVEC *= (1-xiB-xiF); //then loose stutter products (scaling)
+				}			
+			}
+			//Continue and check where to add stutter products
+			if( m_BWfromLong[aindLong] > -1 ) {
+				colVEC = contrMatPerAllele.col( m_startIndMarker_nAlleles[markerIdx] + m_BWfromLong[aindLong]); //obtain allele which contrAllele get BW stutter from. Remember SHIFT
+				contrVEC += xiB*colVEC( m_lookUpMat.col(1) ); //modify based on stutter products
+			}
+			if( m_FWfromLong[aindLong] > -1) {
+				colVEC = contrMatPerAllele.col( m_startIndMarker_nAlleles[markerIdx] + m_FWfromLong[aindLong]); //obtain allele which contrAllele get BW stutter from. Remember SHIFT
+				contrVEC += xiF*colVEC( m_lookUpMat.col(2) ); //modify based on stutter products							
+			}
+			
+			//PREPARE WEIGHT EVIDENCE: 
+			//Note:Obtaining the unique shape1 values is SLOW (hence removed)
+			double weight; //Calculated weight for a given allele in allele set
+			double peak; //temporary peak heigt 
+			double shapeConst; //temporary variable for shape constnat
+			int repIdx; //replicate variable
+			Col <double> colVECcalc(m_NumCombOut1); //help variable (for calculation)
+			for(int combOutIdx=0; combOutIdx < m_NumCombOut1; combOutIdx++) { //traverse each unique shape param
+				double shape1 = contrVEC[combOutIdx]; //get unique shape param
+				weight = 0; //reset weight again				
+				if( cumAlleleIdx < 0) { //Assuming dropout for all replicates
+					weight+= NumReps *(R::pgamma(AT, shape1,scale0, 1, 1)); //calculate for all replicates (identical)
+				} else { //Peak heights are expected (but perhaps not for all replicates
+					shapeConst = -lgamma(shape1) - shape1*const2; //calculate shape constant only one time
+					for(repIdx=0; repIdx < NumReps; repIdx++) {	//Traverse all replicates (for given allele)
+						peak = m_PeaksLong[startIndMarker_nAllelesReps + alleleIdx*NumReps + repIdx]; //obtain peak height wrt long-vector (takes into account replicates)
+						if(peak < AT) {
+							weight += R::pgamma(AT, shape1,scale0, 1, 1); //calculate for certain replicates
+						} else {
+							weight += shapeConst + (shape1-1)*log(peak) - peak * const1; //Note: lgamma is from std							
 						}
-					}
-				
-					//Continue and check where to add stutter products
-					if( m_BWfromLong[aindLong] > -1 ) {
-						//shape1Allele += xiB * degScale[m_startIndMarker_nAlleles[markerIdx] + m_BWfromLong[aindLong]] * contrWithMx[m_lookUpMat.at(combOutIdx,1)];
-						shape1Allele += xiB * contrMatPerAllele( m_lookUpMat(combOutIdx,1), m_startIndMarker_nAlleles[markerIdx] + m_BWfromLong[aindLong] );
-					}
-					if( m_FWfromLong[aindLong] > -1) {
-						//shape1Allele += xiF * degScale[m_startIndMarker_nAlleles[markerIdx] + m_FWfromLong[aindLong]] * contrWithMx[m_lookUpMat.at(combOutIdx,2)];
-						shape1Allele += xiF * contrMatPerAllele( m_lookUpMat(combOutIdx,2), m_startIndMarker_nAlleles[markerIdx] + m_FWfromLong[aindLong] );
-					}
-				
-					//NEXT: pdf weights are calculated
-					double peak; //temporary peak heigt 
-					int repIdx; //replicate variable
-					double shapeConst; //temporary variable for shape constant
-					double weight = 0; //obtain likelihood weight
-					if( cumAlleleIdx < 0) { //Assuming dropout for all replicates
-						weight += NumReps *(R::pgamma(AT, shape1Allele,scale0, 1, 1)); //calculate for all replicates (identical)
-					} else { //Peak heights are expected (but perhaps not for all replicates
-						shapeConst = -lgamma(shape1Allele) - shape1Allele*const2; //calculate shape constant only one time
-						for(repIdx=0; repIdx < NumReps; repIdx++) {	//Traverse all replicates (for given allele)
-							peak = m_PeaksLong[startIndMarker_nAllelesReps + alleleIdx*NumReps + repIdx]; //obtain peak height wrt long-vector (takes into account replicates)
-							if(peak < AT) {
-								weight += R::pgamma(AT, shape1Allele,scale0, 1, 1); //calculate for certain replicates
-							} else {
-								weight += shapeConst + (shape1Allele-1)*log(peak) - peak * const1; //Note: lgamma is from std							
-							}
-						} //end for each replicate					
-					} //end if expecting peak heights
-					m_EvidWeights.at(combOutIdx, aindLong) = weight; //finally insert calculcated weight value
-			} //end traverse each allelel
-		} //end traverse each outcome
-		
+					} //end for each replicate					
+				} //end if expecting peak heights
+				colVECcalc[combOutIdx] = weight;
+			}
+			m_EvidWeights.col(aindLong) = colVECcalc; //insert calculcated vector			
+		} //END CALC		
+
 		//Finally calculate per marker
 		m_loglikMarkers.set_size(m_NumMarkers); 		
 		double jointloglik = 0.0;				
