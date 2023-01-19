@@ -1921,7 +1921,7 @@ suppressWarnings({
       rel_ibd <- relatednessIBD[relname==rel_type,] #get selected ibd
       names(rel_ibd) <- rel_type
       rel_refName <- gWidgets2::svalue( tabmodelMODhd[nRefs+5,1]) #get name of related individual
-      if(rel_type==relname[1] || rel_refName==refSelItems[1] || length(refSel)==0) { #refSel has lenght zero if not selected
+      if(rel_type==relname[1] || length(rel_refName)==0 || rel_refName==refSelItems[1] || length(refSel)==0) { #refSel has lenght zero if not selected
         rel_ref = NULL
       } else {
         rel_ref <-  which(refSel==rel_refName) #get index

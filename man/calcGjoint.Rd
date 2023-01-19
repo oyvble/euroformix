@@ -4,15 +4,7 @@
 \alias{calcGjoint}
 \title{calcGjoint}
 \usage{
-calcGjoint(
-  freq,
-  nU = 1,
-  fst = 0,
-  refK = NULL,
-  refR = NULL,
-  ibd = c(1, 0, 0),
-  sortComb = FALSE
-)
+calcGjoint(freq, nU = 1, fst = 0, refK = NULL, refR = NULL, ibd = c(1, 0, 0))
 }
 \arguments{
 \item{freq}{A vector of allele frequencies for a given population.}
@@ -26,8 +18,6 @@ calcGjoint(
 \item{refR}{contains a vector of alleles for a related reference profile (a,b)}
 
 \item{ibd}{the identical by decent coefficients of the relationship denotation}
-
-\item{sortComb}{Whether only the outcome G1,G2>=G3>=...>=GnU should be calculated (the Gprobs are symmetrical for k=2,..,U)}
 }
 \value{
 Glist A list with genotypes and genotype probabilities
@@ -42,9 +32,9 @@ If a related unknown is provided that will always be the first one
 \examples{
 freq = rgamma(8,1,1)
 freq = stats::setNames(freq/sum(freq),1:length(freq))
-foo1 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),sortComb=TRUE)
+foo1 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"))
 foo2 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),
- refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
+ refR=c("2","3"),ibd=c(1/4,1/2,1/4))
 }
 \author{
 Oyvind Bleka

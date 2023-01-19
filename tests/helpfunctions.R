@@ -8,8 +8,8 @@ compareValid = function(x,y,s0=3)  expect(sort(round(x,s0)),sort(round(y,s0)))
 
 #Helpfunction to get likelihood per genotypes (cal in R)
 #locs=NULL;modelDEG=TRUE;modelStutt=FALSE
-#ibd0=NULL; refRel=NULL
-getLogLiki = function(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0=NULL, ibd0=NULL, refRel=NULL, locs=NULL, modelDEG=TRUE,modelStutt=TRUE) {
+#ibd0=NULL; knownRel=NULL
+getLogLiki = function(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0=NULL, ibd0=NULL, knownRel=NULL, locs=NULL, modelDEG=TRUE,modelStutt=TRUE,knownRef=NULL) {
   Qallele = "99"
   
   #exctract params:  
@@ -72,9 +72,11 @@ getLogLiki = function(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0=NULL, ibd0=N
     
     nAG0 = nAG #temporary store
     refR = NULL
-    if(!is.null(refRel))  refR = unlist( dat$refData[[loc]][refRel] ) #allleles of releated
+    if(!is.null(knownRel))  refR = unlist( dat$refData[[loc]][knownRel] ) #allleles of releated
 #    nU=max(1,nUnknowns);fst=fstv[loc];refK=unlist( dat$refData[[loc]] );ibd = ibd0;sortComb = FALSE
-    Glist = calcGjoint(freq=freq,nU=max(1,nUnknowns),fst=fstv[loc],refK=unlist( dat$refData[[loc]] ),refR=refR,ibd = ibd0,sortComb = FALSE) #include all typed refs here
+    typedRefsIdx = unique(c(which(cond>0),knownRef)) #obtain typed refs
+    Glist = calcGjoint(freq=freq,nU=max(1,nUnknowns),fst=fstv[loc],refK=unlist(dat$refData[[loc]][typedRefsIdx]),refR=refR,ibd = ibd0) #include all typed refs here
+    #Glist = calcGjoint(freq=freq,nU=max(1,nUnknowns),fst=fstv[loc],refK=unlist(dat$refData[[loc]]),refR=refR,ibd = ibd0) #include all typed refs here
     Gset = Glist$G #get allele out come of unknowns
     
     pEvid = 0 #obtain probabiliity of evidence (sum over all genotypes)
@@ -85,8 +87,8 @@ getLogLiki = function(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0=NULL, ibd0=N
         if(nUnknowns==1) {
           nAG[,unknownContrs] = table(factor(Gset[gind1,],level=Aset)) #insert unknown contribution
         } else if(nUnknowns==2) {
-          nAG[,unknownContrs[1]] = table(factor(Gset[gind1,],level=Aset)) #insert unknown contribution
-          nAG[,unknownContrs[2]] = table(factor(Gset[gind2,],level=Aset)) #insert unknown contribution
+          nAG[,unknownContrs[1]] = table(factor(Gset[gind1,],level=Aset)) 
+          nAG[,unknownContrs[2]] = table(factor(Gset[gind2,],level=Aset)) 
         } else if(nUnknowns>2) {
           stop("Script not supporting more than 2 unknown")
         } 
@@ -120,7 +122,7 @@ getLogLiki = function(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0=NULL, ibd0=N
         }
         genProb = 1 #INSERT Prob genotypes
         if(nUnknowns==1) genProb = Glist$Gprob[gind1]
-        if(nUnknowns==2) genProb = Glist$Gprob[gind1,gind2] #related is last
+        if(nUnknowns==2) genProb = Glist$Gprob[gind1,gind2] #related is last element
         
         pEvid = pEvid + exp( vali + log(genProb)) #sum up
         if(nUnknowns==0) break #stop loop if no unknowns

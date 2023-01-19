@@ -9,23 +9,21 @@
 #' @param refK contains a vector of alleles for the known typed reference profiles (a,b,c,d...)
 #' @param refR contains a vector of alleles for a related reference profile (a,b)
 #' @param ibd the identical by decent coefficients of the relationship denotation
-#' @param sortComb Whether only the outcome G1,G2>=G3>=...>=GnU should be calculated (the Gprobs are symmetrical for k=2,..,U)
 #' @return Glist A list with genotypes and genotype probabilities 
 #' @export 
 #' @examples
 #' freq = rgamma(8,1,1)
 #' freq = stats::setNames(freq/sum(freq),1:length(freq))
-#' foo1 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),sortComb=TRUE)
+#' foo1 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"))
 #' foo2 = calcGjoint(freq,nU=2,fst=0.1,refK=c("2","3","1","1"),
-#'  refR=c("2","3"),ibd=c(1/4,1/2,1/4),sortComb=FALSE)
+#'  refR=c("2","3"),ibd=c(1/4,1/2,1/4))
 
-calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0),sortComb=FALSE) {
+calcGjoint = function(freq,nU=1,fst=0,refK=NULL,refR=NULL,ibd=c(1,0,0)) {
  if(length(fst)!=1) stop("Wrong input length for fst")
  if(length(nU)!=1) stop("Wrong input length for number of unknowns (nU)")
  if(nU==0) stop("You must specify at least one unknown to use this function!")
  if(!is.numeric(freq))  stop("freq argument must be numeric!") 
- if(sortComb && !is.null(refR)) stop("Sorted restriction not possible since the related unknown must be the last contributor.")
-  
+ 
  sumsToOne = all.equal(1,sum(freq)) #checking if freqs sums to one (this must always be the case for EFM)
  if(is.character(sumsToOne)) warning("freq argument must sum to one!")
  

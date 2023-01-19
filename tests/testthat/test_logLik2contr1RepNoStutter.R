@@ -70,8 +70,8 @@ test_that("check maximum likelihood Hp: Ref1 + Ref2", {
 
 test_that("check maximum likelihood Hd: 2 unknown (unrelated):", {
   cond = c(0,0)
-  knownRefs = c(1,2) #known non-contributors
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond, knownRef = knownRefs, xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  knownRef = 1:2 #known non-contributors
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond, knownRef = knownRef, xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS
@@ -79,7 +79,7 @@ test_that("check maximum likelihood Hd: 2 unknown (unrelated):", {
   expect(sum(logLikv),mle$fit$loglik)
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond, pCv,ATv,fstv,lamv, kit0, modelStutt=FALSE)
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond, pCv,ATv,fstv,lamv, kit0, modelStutt=FALSE, knownRef=knownRef)
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:
@@ -104,11 +104,11 @@ test_that("check maximum likelihood Hd: 2 unknown (unrelated):", {
 
 test_that("check maximum likelihood Hd (sibling):", {
   ibd0 = c(0.25,0.5,0.25) #Sibling
-  knownRefs = 1:2  #typed non-contributor
-  refRel = 2 #ref index of related individual
+  knownRef= 1:2  #typed non-contributor
+  knownRel = 2 #ref index of related individual
   cond = c(0,0)
   
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = knownRefs, xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0, xiFW=0, knownRel = refRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef, xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0, xiFW=0, knownRel=knownRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
 
   #COMPARE PER MARKER RESULTS
@@ -117,7 +117,7 @@ test_that("check maximum likelihood Hd (sibling):", {
   expect(round(mle$fit$loglik,2), -226.54)   
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd=ibd0, refRel = refRel, modelStutt=FALSE )
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd=ibd0, knownRel=knownRel, modelStutt=FALSE,knownRef=knownRef)
   expect(logLikv,logLikv2)
   
   #Calculate deconvolution (DC):
@@ -128,10 +128,10 @@ test_that("check maximum likelihood Hd (sibling):", {
 
 test_that("check maximum likelihood Hd (parent/child):", {
   ibd0 = c(0,1,0) #assuming the unknown is a child of Ref1
-  knownRefs = 1:2
-  refRel = 2 #ref index of related individual
+  knownRef = 1:2
+  knownRel = 2 #ref index of related individual
   cond = c(0,0)
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = knownRefs,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0,knownRel = refRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0,knownRel=knownRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS
@@ -140,7 +140,7 @@ test_that("check maximum likelihood Hd (parent/child):", {
   expect(round(mle$fit$loglik,2), -227.44) #32-bit compatible   
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd=ibd0, refRel = refRel, modelStutt=FALSE )
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd=ibd0, knownRel=knownRel, modelStutt=FALSE,knownRef=knownRef)
   expect(logLikv,logLikv2)
   
   #Calculate deconvolution (DC):

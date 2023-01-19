@@ -331,7 +331,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,DEG,BW
     nGenos[m] = round( nAlleles[m]*(nAlleles[m]+1)/2) #number of genotypes (one contributor)
     nJointGenos[m] = nGenos[m]^nUnknowns[m] #get number of joint combinations
     
-    #KINSHIP MODULE::
+    #KINSHIP MODULE
     if(!is.null(knownRel) && ibd0[1]<1 ) {
        av = unlist(refData[[loc]][[knownRel]])
        if(length(av)==0) next 
@@ -379,6 +379,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,DEG,BW
    c$useDEG=useDEG #check of whether to use DEG
    c$genoList=genoList #add genotype list
    c$refNamesCond = refNamesCond #add reference names that are conditoned on (correct order)
+   c$hasKinship = any(relGind>=0) #check if kinship were defined
    
    #Additional objects required for non-fast version (calcloglik_allcomb/calcloglik_cumprob)
    #Stutters: Only required stutter shifts are stored (in simlar from/to vectors)

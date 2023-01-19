@@ -27,7 +27,7 @@ plotTopMPS2(
 \item{withStutterModel}{Whether taking the stutter model into account when visualizing}
 }
 \value{
-sub A plotly widget
+A plotly widget
 }
 \description{
 MPS data visualizer (interactive)

@@ -56,7 +56,8 @@ test_that("check maximum likelihood Hp: No Stutter", {
 
 test_that("check maximum likelihood Hd (unrelated): No Stutter", {
   cond = c(1,0,2,0)
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = 2,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  knownRef = 2
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
@@ -106,7 +107,8 @@ test_that("check maximum likelihood Hp: BWS", {
 
 test_that("check maximum likelihood Hd (unrelated): BWS", {
   cond = c(1,0,2,0)
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = 2,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  knownRef = 2
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:

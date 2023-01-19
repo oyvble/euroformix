@@ -30,7 +30,7 @@ plotTopEPG2(
 \item{withStutterModel}{Whether taking the stutter model into account when visualizing}
 }
 \value{
-sub A plotly widget
+A plotly widget
 }
 \description{
 EPG data visualizer (interactive)

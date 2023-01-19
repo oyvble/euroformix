@@ -7,7 +7,22 @@ SUGGESTIONS:
  - Include ordinary scale of LR (at least for qualitative model)?
 
 KNOWN ISSUES (TROUBLESHOOT):
- - Upgrade to latest Rcpp package (1.0.9) to fix issue "function 'Rcpp_precious_remove' not provided by package 'Rcpp'"
+ - Upgrade to latest Rcpp package (1.0.9) to fix issue "function 'Rcpp_precious_remove' not provided by package 'Rcpp'". Notice that this package must be installed and loaded non-virtually (in order to work with Citrix)
+
+EuroForMix v4.0.4 (Release date: 2023-01-19)
+=============================================
+ - An issue was found when evaluating the relationship of the major of a clear major/minor profile (Thanks to Damir Tesanovic for highlighting this). 
+  -> The issue causes the optimizer to struggle in reaching global maximum (and causing wrong MCMC results). 
+     Modifying code in helpfunctions.R->.paramrandomizer: Including boolean whether last unknown is related (Mx for last unknown must vary freely).
+  -> The issue causes the BayesFactor integration to be wrong.
+	 Modifying integration limits in calcINT.R: The related now counts as a known contributor (Mx for last unknown must vary freely).
+  -> An extra variable from prepareC was included (hasKinship) which eases the recognizion.
+  -> Including additional test in test_logLik2contr2Rep: Unknown is sibling of major contributor.
+  
+ Minor changes:
+ - Avoids error in GUI when forgetting to select related individual: Added check at efm:L1924.
+ - sortComb argument in calcGjoint was removed (not used anymore).
+ - Error estimate for numerical integration does no longer scale with combination factor (calcINT:L192 is ignored).
 
 EuroForMix v4.0.3 (Release date: 2023-01-05)
 =============================================

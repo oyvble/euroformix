@@ -123,7 +123,7 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   suppressWarnings({
     while(nOK<nDone) {
       #Obtain random start values for parameters
-      p0 <- .paramrandomizer(th0,nC,modTypes,delta,ncond)#,T) #generate random start value on Real (don't need to)
+      p0 <- .paramrandomizer(th0,nC,modTypes,delta,ncond,c$hasKinship)#,T) #generate random start value on Real (don't need to)
       #prettyNum(convBack(p0,nC, modTypes))
       
       progcount  = 1 #progress counter for optimization (reset for each sucessful optimization)

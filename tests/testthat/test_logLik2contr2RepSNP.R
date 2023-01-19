@@ -60,7 +60,8 @@ test_that("check maximum likelihood Hp:", {
 
 test_that("check maximum likelihood Hd (unrelated):", {
   cond = c(1,0)
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = 2,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  knownRef = 2
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef,xi=0,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
@@ -68,7 +69,7 @@ test_that("check maximum likelihood Hd (unrelated):", {
   expect_equal(sum(logLikv),mle$fit$loglik)
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, modelStutt=FALSE,  modelDEG=FALSE)
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, modelStutt=FALSE,  modelDEG=FALSE, knownRef=knownRef)
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:

@@ -64,7 +64,8 @@ test_that("check maximum likelihood Hp:", {
 
 test_that("check maximum likelihood Hd (unrelated):", {
   cond = 0
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = 1,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL, seed=seed0,steptol=steptol0,nDone=nDone0)
+  knownRef = 1 #index of typed known non-contributor
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS
@@ -72,7 +73,7 @@ test_that("check maximum likelihood Hd (unrelated):", {
   expect(sum(logLikv),mle$fit$loglik)
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0)
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0,knownRef=knownRef)
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:
@@ -93,9 +94,9 @@ test_that("check maximum likelihood Hd (unrelated):", {
 
 test_that("check maximum likelihood Hd (sibling):", {
   ibd0 = c(1/4,1/2,1/4) #assuming the unknown is a sibling of poi
-  refRel = 1
+  knownRel = 1
   cond=0
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond, xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL,knownRel = refRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond, xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL,knownRel = knownRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #mle$prepareC$relGind
@@ -106,7 +107,7 @@ test_that("check maximum likelihood Hd (sibling):", {
   expect(sum(logLikv),mle$fit$loglik)
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd0=ibd0, refRel=refRel)
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd0=ibd0, knownRel=knownRel, knownRef=knownRel)
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:

@@ -102,6 +102,9 @@ calcINT = function(nC,samples,popFreq, lower=NULL, upper=NULL, refData=NULL, con
  #DERIVED RESTRICTION FOR MIXTURE PROPORTIONS:
  nK = sum(condOrder>0) #number of conditionals
  nU <- nC-nK #number of unknowns
+ if(c$hasKinship && nU>1) nU=nU-1 #reduce number of unknowns by one if specified kinship
+ 
+ #Specify updated limits (takes symmetry of unknowns into account)
  if(nC==2 && nU==2) {
   lower[1] <- max(1/2,lower[1]) #restrict to 1/2-size
  }
@@ -186,7 +189,7 @@ calcINT = function(nC,samples,popFreq, lower=NULL, upper=NULL, refData=NULL, con
  
  #Take full integration into account (scales with comb)
  val <- comb*val
- err <- comb*err
+ #err <- comb*err #error does not scale with comb
  
  #Adjust with likelihood-scaling (done last)
  loglik = log(val)-scale #adjust to get loglik

@@ -64,8 +64,8 @@ validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createp
 	   }
     }
   }
-  dropinWeight1[is.infinite(dropinWeight1)] = -1e+10 ##insert large negative number
-  dropinWeight2[is.infinite(dropinWeight2)] = -1e+10 ##insert large negative number
+  dropinWeight1[is.infinite(dropinWeight1)] = -1e+30 ##insert large negative number
+  dropinWeight2[is.infinite(dropinWeight2)] = -1e+30 ##insert large negative number
   
   #obtain cumulative vals int_0^y 
   if(verbose) print("Calculating cumulative probabilities (1/2)...")

@@ -48,17 +48,16 @@
 }
 
 #Helpfunction to draw "good" randoms start points (good guess)
-.paramrandomizer = function(th0,NOC,modTypes,delta,ncond=0,verbose=FALSE) { 
+.paramrandomizer = function(th0,NOC,modTypes,delta,ncond=0,hasKinship=FALSE,verbose=FALSE) { 
   .logit = function(x) log(x/(1-x))
   mxrnd = rgamma(NOC,1) #Draw simplex (flat)
   mxrnd = mxrnd/sum(mxrnd)
   if( (NOC-ncond)>1) { #sort if more than 1 unknown
     ind = (ncond+1):NOC #sort Mix-prop for the unknowns 
-    mxrnd[ind] = sort(mxrnd[ind],decreasing = TRUE) #sort Mx in decreasing order
+    if(hasKinship) ind = ind[-length(ind)] #remove index of last unknown (last element)
+    if(length(ind)>1) mxrnd[ind] = sort(mxrnd[ind],decreasing = TRUE) #sort Mx in decreasing order if at least 2
   }
-  #mxrnd = mxrnd[-NOC] #don't use mixprop for last ind (not needed!)
-  randParam = mxrnd #obtain random params (used for printing)
-  
+
   #convert Mx values to real domain (nu:
   nurnd = numeric()
   if(NOC>1) {
@@ -74,7 +73,7 @@
   sdPH = delta*0.15*th1 #obtain considered SD of PH props 
   PHrnd = abs( rnorm(2,th1,sd=sdPH))
   logPHrnd = log(PHrnd)  #Obtain random start for mu/sigma, Note using the delta here (should be small)
-  randParam = c(randParam,PHrnd) #add random for PHprop
+  randParam = c(mxrnd,PHrnd) #add random for PHprop
   
   #CONSIDER other variables (degrad/BW/FW)
   otherrnd = numeric() #random for beta,xi etc

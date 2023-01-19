@@ -63,7 +63,7 @@ test_that("check maximum likelihood Hp:", {
 
 test_that("check maximum likelihood Hd (unrelated):", {
   cond = c(1,0)
-  knownRef = 2
+  knownRef = 2 #index of typed known non-contributor
   mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = knownRef,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
@@ -72,7 +72,7 @@ test_that("check maximum likelihood Hd (unrelated):", {
   expect(sum(logLikv),mle$fit$loglik)
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0)
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, knownRef=knownRef)
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:
@@ -92,12 +92,12 @@ test_that("check maximum likelihood Hd (unrelated):", {
 })
 
 
-test_that("check maximum likelihood Hd (sibling):", {
+test_that("check maximum likelihood Hd (sibling of minor):", {
   ibd0 = c(1/4,1/2,1/4) #assuming the unknown is a sibling of poi
-  knownRef = 2
-  refRel = 2 #ref index of related individual
+  knownRef = 2 #index of typed known non-contributor
+  knownRel = 2 #ref index of related individual
   cond = c(1,0)
-  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef = knownRef,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL,knownRel = refRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL,knownRel=knownRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
   thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
   
   #COMPARE PER MARKER RESULTS
@@ -105,7 +105,7 @@ test_that("check maximum likelihood Hd (sibling):", {
   expect(sum(logLikv),mle$fit$loglik)
   
   #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
-  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd=ibd0, refRel = refRel )
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd=ibd0, knownRel=knownRel, knownRef=knownRef )
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:
@@ -124,3 +124,40 @@ test_that("check maximum likelihood Hd (sibling):", {
   #paste0( round(as.numeric(DC$table2[,5]),s0) ,collapse = ",")
   expect( round(as.numeric(DC$table2[,5]),s0),c(0.976,0.955,0.967,1,1,0.978,0.553))
 })
+
+
+
+
+test_that("check maximum likelihood Hd (sibling of major):", {
+  ibd0 = c(1/4,1/2,1/4) #assuming the unknown is a sibling of poi
+  knownRef = 1
+  knownRel = 1 #ref index of related individual
+  cond = c(0,0)
+  mle = contLikMLE(nC=NOC,samples=dat$samples,popFreq=dat$popFreq,refData=dat$refData,condOrder=cond,knownRef=knownRef,xi=NULL,prC=pCv,threshT=ATv,fst=fstv,lambda=lamv,kit=kit0,xiFW=NULL,knownRel=knownRel,ibd=ibd0, seed=seed0,steptol=steptol0,nDone=nDone0)
+  thhat=mle$fit$thetahat2 #obtain maximum likelihood estimates
+  
+  #COMPARE PER MARKER RESULTS
+  logLikv = logLiki(mle) #obtain per marker resutls
+  expect(sum(logLikv),mle$fit$loglik)
+  
+  #COMPARE PER MARKER RESULTS WITH MANUAL DERIVED:
+  logLikv2 = getLogLiki(thhat, dat, NOC, cond,pCv,ATv,fstv,lamv, kit0, ibd=ibd0, knownRel=knownRel, knownRef=knownRef)
+  expect(logLikv,logLikv2)
+  
+  #Check param and loglik values:
+  #paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c(0.237,0.763,796.756,0.148,0.739,0.119,0.051) )
+  expect(round(mle$fit$loglik,s0),-358.273) 
+  
+  #CHECK Cumulative probs    
+  #paste0(round(valid$ProbObs,s0),collapse = ",")
+  valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
+  #valid2 = getValidProbs(mle)
+  compareValid(valid$ProbObs,c(0.878,0.215,0.695,0.311,0.906,0.766,0.286,0.121,0.042,0.165,0.158,0.015,0.583,0.348,0.989,0.916,0.65,0.956,0.342,0.104,0.815,0.555,0.102,0.395,0.13,0.873,0.897,0.21,0.284,0.679,0.388,0.91,0.416,0.043,0.108,0.538,0.642,0.023,0.975,0.507,0.456,0.696,0.88,0.617,0.219,0.311,0.907,0.991,0.707,0.691,0.526,0.777,0.526,0.531,0.559,0.415,0.645))
+  
+  #CHECK deconvolution (DC):
+  DC = deconvolve(mle)
+  #paste0( round(as.numeric(DC$table2[,5]),s0) ,collapse = ",")
+  expect( round(as.numeric(DC$table2[,5]),s0),c(1,1,1,1,1,1,1))
+})
+
