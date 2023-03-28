@@ -30,7 +30,7 @@ calcLogLik = function(mod,DEG=TRUE) {
   param = c(param, 1000,0.1,1,0.1,0.01)
   if(!BWS) param[nC+4] = 0
   if(!FWS) param[nC+5] = 0
-  c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,DEG,BWS,FWS,AT,pC,lambda,fst,NULL,NULL,NULL,TRUE, FALSE)
+  c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FWS,AT,pC,lambda,fst,NULL,NULL,NULL,TRUE, FALSE)
   mod = Rcpp::Module( "mod",PACKAGE="euroformix" ) #load module
   obj = methods::new(mod$ExposedClass) #create object of class
   obj$filldata(c$nStutterModels,c$nMarkers,c$nRepMarkers,c$nAlleles,c$startIndMarker_nAlleles,c$startIndMarker_nAllelesReps,c$peaks,c$freqs,c$dropinWeight, c$nTyped, c$maTyped, c$basepair,

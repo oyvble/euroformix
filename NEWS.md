@@ -9,6 +9,14 @@ SUGGESTIONS:
 KNOWN ISSUES (TROUBLESHOOT):
  - Upgrade to latest Rcpp package (1.0.9) to fix issue "function 'Rcpp_precious_remove' not provided by package 'Rcpp'". Notice that this package must be installed and loaded non-virtually (in order to work with Citrix)
 
+EuroForMix v4.0.5 (Release date: 2023-03-27)
+=============================================
+ - Fixed bug when having full marker dropout across all replicates (when evaluating at least two replicates):
+  -> In prepareC:L216. Drop-in model vector not correctly assigned for Q-allele of replicates. 
+  -> Consequence: Lead to exclusionary LR and model validation could trigger an error.
+ - Fixed "min" typo on fitgammamodel:L54. Also modify "min" to "minimum" at gammamodel:L90 to avoid issues.
+ - Removed "DEG" as argument to function prepareC, since not in use. Function calls are adjusted.
+
 EuroForMix v4.0.4 (Release date: 2023-01-19)
 =============================================
  - An issue was found when evaluating the relationship of the major of a clear major/minor profile (Thanks to Damir Tesanovic for highlighting this). 

@@ -8,7 +8,6 @@
 #' @param condOrder Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model. 
 #' @param knownRef Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.
 #' @param kit shortname of kit: Obtained from getKit()
-#' @param DEG Boolean of whether Degradation model should be used
 #' @param BWS Boolean of whether back-stutter model should be used
 #' @param FWS Boolean of whether for-stutter model should be used
 #' @param AT The analytical threshold given. Used when considering probability of allele drop-outs.
@@ -23,7 +22,7 @@
 #' @return ret A list of data input to call the C++ code with
 #' @export 
 
-prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,DEG,BWS,FWS,
+prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FWS,
                  AT,pC,lambda,fst,knownRel,ibd, minF,normalize, adjFragQallele) {
   Qallele = "99" #substitution name for Q-alleels (non observed alleles)
   LUSsymbol="_" #a character symbol used to separate repeatunit and LUS.
@@ -212,8 +211,9 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,DEG,BW
       FvecLong = c(FvecLong , Qfreq) #add freq for dropout
       
       #Add zero to last column (for Q-alleles)
-      yv = cbind(yv , 0 ) #add  zero PH as last column (Q-alleles)
-      dropinWeight = cbind(dropinWeight,0) #add  zero dropinweigt as last column (Q-alleles)
+      insZeros = rep(0,nRepMarkers[m]) #insert number of zeros
+      yv = cbind(yv , insZeros) #add  zero PH as last column (Q-alleles)
+      dropinWeight = cbind(dropinWeight,insZeros) #add  zero dropinweigt as last column (Q-alleles)
       nAlleles[m] = nAlleles[m] + 1 #number of alleles to traverse in genotypes (observed + dropout)
     } 
     DvecLong = c(DvecLong , as.numeric(dropinWeight)) #Add drop-in weights

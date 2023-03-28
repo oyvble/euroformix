@@ -51,7 +51,7 @@ calcINT = function(nC,samples,popFreq, lower=NULL, upper=NULL, refData=NULL, con
  }
 
  start_time <- Sys.time()
- c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,DEG,BWS,FWS,AT,pC,lambda,fst,knownRel,ibd,minF,normalize,adjQbp)
+ c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FWS,AT,pC,lambda,fst,knownRel,ibd,minF,normalize,adjQbp)
  #Other variables: basepairinfo, number of typed allelse  
  if(DEG && !c$useDEG) {
    print("Degradation had to be turned off since kitinfo was not found for selected kit.")
@@ -185,7 +185,7 @@ calcINT = function(nC,samples,popFreq, lower=NULL, upper=NULL, refData=NULL, con
  
  #Postvalues (need to scale values back)
  val <- foo$integral #estimated integral
- err <- foo$error #estimated relative error of integral
+ err <- foo$error #estimated absolute error of integral calculation (this is not relative)
  
  #Take full integration into account (scales with comb)
  val <- comb*val

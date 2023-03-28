@@ -18,7 +18,7 @@ test_that("Cpp code is OK", {
   param = c(param, 1000,0.1,1,0.1,0.01)
   if(!BWS) param[nC+4] = 0
   if(!FWS) param[nC+5] = 0
-  c = prepareC(nC,samples,popFreq, NULL, NULL, NULL, NULL,FALSE,BWS,FWS,AT,pC,lambda,fst,NULL,NULL,NULL,TRUE, FALSE)
+  c = prepareC(nC,samples,popFreq, NULL, NULL, NULL, NULL,BWS,FWS,AT,pC,lambda,fst,NULL,NULL,NULL,TRUE, FALSE)
 
   #PREPARE FEEDING DATA
   mod = Rcpp::Module( "mod",PACKAGE="euroformix" ) #load module

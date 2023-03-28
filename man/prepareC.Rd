@@ -12,7 +12,6 @@ prepareC(
   condOrder,
   knownRef,
   kit,
-  DEG,
   BWS,
   FWS,
   AT,
@@ -40,8 +39,6 @@ prepareC(
 \item{knownRef}{Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.}
 
 \item{kit}{shortname of kit: Obtained from getKit()}
-
-\item{DEG}{Boolean of whether Degradation model should be used}
 
 \item{BWS}{Boolean of whether back-stutter model should be used}
 

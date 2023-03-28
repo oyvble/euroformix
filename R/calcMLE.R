@@ -57,7 +57,7 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   if(!is.null(seed)) set.seed(seed) #set seed if provided
 
   #Preparing variables to fill into C++ structure
-  c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,DEG,BWS,FWS,AT,pC,lambda,fst,knownRel,ibd,minF,normalize, adjQbp)
+  c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FWS,AT,pC,lambda,fst,knownRel,ibd,minF,normalize, adjQbp)
   if(DEG && !c$useDEG) {
     print("Degradation had to be turned off since kitinfo was not found for selected kit.")
     DEG = FALSE
@@ -97,7 +97,8 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   np = (nC+1) + DEG + BWS + FWS  #obtain number of parameters
   
   if(!DEG) meanbp = NULL
-  th0 <- fitgammamodel(y=sumY,x=meanbp,niter=10,delta=delta,offset=0,scale=1)
+  #obtain expected startpoints of (PHexp,PHvar,DegSlope)
+  th0 <- fitgammamodel(y=sumY,x=meanbp,niter=10,delta=delta,offset=0,scale=1) 
 
   #function for calling on C-function: Must convert "real domain" values back to model params 
   negloglikYphi <- function(phi,progressbar=TRUE) { #assumed order: mixprop(1:C-1),mu,sigma,beta,xi
@@ -272,7 +273,7 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   logmargL <- 0.5*(np*log(2*pi)+determinant(Sigma)$mod[1]) + maxL #get log-marginalized likelihood
   #nU <- nC #number of contributors
   if(nU>1) { #if more than 1 unknown 
-    logmargL <- log(factorial(nU)) + logmargL #get correct ML adjusting for symmetry
+    logmargL <- lgamma(nU+1) + logmargL #log(factorial(nU)) + logmargL #get adjusting for symmetry of unknowns
   }
   time = ceiling(as.numeric(Sys.time() - start_time, units="secs")) #obtain time usage in seconds
   

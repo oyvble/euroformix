@@ -2,7 +2,6 @@
 #' @author Oyvind Bleka
 #' @description A function to fit sumPH of the observed peak heights to a gamma model 
 #' @details This function is used for fitting a gamma regression model
-#'
 #' @param y Vector with sum peak heights (per loci)
 #' @param x Vector with fragment lengths (base pair) (only provided for degradation)
 #' @param niter Number of random samples 
@@ -23,13 +22,15 @@
 #' fitgammamodel(y,x,plott=TRUE,alpha=0.05)
 #'}
 
-#x=NULL;niter=10;delta=1;plott=FALSE;alpha=0.05;offset=125;scale=100;restrictDeg=FALSE
 fitgammamodel <- function(y,x=NULL,niter=10,delta=1,plott=FALSE,alpha=0.05,offset=125,scale=100, restrictDeg=TRUE) {
    DEG = TRUE #degradation used by default
    if(is.null(x) || any(is.na(x))) DEG=FALSE #degradation set to FALSE if x not given or any is NA
    isOK = !is.na(y) #get non-NA values
    y = y[isOK] #remove NAs
-   if(DEG) x = x[isOK] #remove NAs
+   if(DEG) {
+     x = x[isOK] #remove NAs
+     if(length(x)==1) stop("Cannot fit Degradation with only one marker")
+   }
    
    #Impute small Y-vals for zero observations (more robust for low-template profiles)
    minY = min(y[y>0]) #get minimum observed (non-zero)
@@ -50,17 +51,18 @@ fitgammamodel <- function(y,x=NULL,niter=10,delta=1,plott=FALSE,alpha=0.05,offse
    
    #Helpfunction for optmization (may throw error)
    helpOptimize = function(th) {
-      opt = list(min=Inf)
-      suppressWarnings({
-         tryCatch({ opt = nlm(negloglik, th )}
-         , error = function(e) e )
-      })
-      return(opt)
+    opt = list(minimum=Inf) #nlm returns "minimum"
+    suppressWarnings({
+       tryCatch({ opt = nlm(negloglik, th )}
+       , error = function(e) e )
+    })
+    return(opt)
    }
    
    #Obtain good start values
    mu0 = mean(y/2)
-   omega0 = sd(y/2)/mu0 #0.4 #default start value for PHvar  
+   omega0 = sd(y/2)/mu0 
+   if(is.na(omega0)) omega0 = 0.4 #set default start value for PHvar  
    if(DEG) { #if degradation 
      coefs = exp(coef(lm(log(y)~x))) #prefit using logged values (convert params back)
      mu0 = coefs[1]/2 #heterozugout allele
@@ -85,12 +87,12 @@ fitgammamodel <- function(y,x=NULL,niter=10,delta=1,plott=FALSE,alpha=0.05,offse
      while(cc<niter) { #repeat until accepted fitted
       t1 <- rnorm(length(t0),mean=t0,sd=delta) #generate new
       foo <- helpOptimize(t1)
-      if(foo$min<bestFoo$min) bestFoo <- foo #if better    
+      if(foo$minimum<bestFoo$minimum) bestFoo <- foo #if better    
       cc <- cc + 1 #add
      }
-   if(bestFoo$minimum>largeVal) return(NULL) #return NULL if optimim failed
+  if(bestFoo$minimum>largeVal || is.null(bestFoo$estimate)) return(NULL) #return NULL if optimim failed
    
-  th = exp(bestFoo$est) #get estimated parameters
+  th = exp(bestFoo$estimate) #get estimated parameters from nlm
   if(restrictDeg && DEG && th[3]>1 ) th[3] = 0.999 #set start value of degrad close to 1 (IMPORTANT TO AVOID CRASH IN contLikMLE)
 
   if(plott) { #show plot
