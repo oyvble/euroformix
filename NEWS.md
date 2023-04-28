@@ -1,13 +1,25 @@
-
 SUGGESTIONS:
- - Also perform model search under Hp.
+ - Also perform model search under Hp (alternative choice).
  - Include progressbar for Model validation when time consuming (check time for 1 allele and use this)
  - Adding new functionality: EFM remembers all used settings when closed (as for CaseSolver). 
-   Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies. ??
+   Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies, more??
  - Include ordinary scale of LR (at least for qualitative model)?
+ - For PHexp plots (plotTopEPG2):
+	-> Add allele frequency to hover labels (easy to hightlight)
+	-> Add LR value of each marker as text label (under marker name, or after)
 
 KNOWN ISSUES (TROUBLESHOOT):
  - Upgrade to latest Rcpp package (1.0.9) to fix issue "function 'Rcpp_precious_remove' not provided by package 'Rcpp'". Notice that this package must be installed and loaded non-virtually (in order to work with Citrix)
+
+Future version:
+  - Add the possibility to define a prior for the PHvar param.
+
+
+EuroForMix v4.0.6 (Release date: 2023-04-28)
+=============================================
+ - Fixed bug when not having full reference profile of related individual (prepareC-L377). Caused program to crash.
+ - An error message is given to explain a crash when following is happening: 
+	-> Evidence profile covers all alleles in frequency database and a conditional reference has a rare allele (not in database).
 
 EuroForMix v4.0.5 (Release date: 2023-03-27)
 =============================================

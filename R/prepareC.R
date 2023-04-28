@@ -134,7 +134,6 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
   nJointGenos <- nGenos <- nUnknowns <- nKnowns <- rep(0L,nLocs) #number ofgenotypes (also joint) to traverse
   genoList = list() #store alleles in genotypes
   for(m in seq_len(nLocs)) { #m=2
-# m=1
     loc = locs[m] #extract locus
     freqAll = popFreq[[loc]] #get freqs
     
@@ -295,7 +294,6 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     tmp <- rep(0, nAlleles[m])
     typedRefs = unique( c(which(condOrder>0),knownRef,knownRel) ) #get unique of typed referneces
     for(k in typedRefs) { #for each typed refs
-      #k = 1
       av = unlist(refData[[loc]][[k]])
       if(length(av)==0) next #skip if not found
       av[!av%in%alleles] = Qallele #convert non-observed to Q-allele
@@ -314,7 +312,6 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     if(!is.null(condOrder) && any(condOrder>0) && MAXnRefs>0) {
       refDataLoc = refData[[loc]][refNamesAll] #obtain correct order of references
       for(k in seq_along(refNamesAll)) { #for each typed refs
-      # k = 1
         if(k>length(condOrder) || condOrder[k]==0) next
         av = unlist(refDataLoc[[k]])
         if(length(av)==0) next 
@@ -323,7 +320,10 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
         av[!av%in%alleles] = Qallele #convert non-observed to Q-allele
         Gind1 <- av[1]==Gmat[,1] & av[2]==Gmat[,2]
         Gind2 <- av[2]==Gmat[,1] & av[1]==Gmat[,2]
-        knownGind[condOrder[k],m] = which(Gind1 | Gind2) - 1 #subtract with one since we work from 0-indice
+        GindUse =  which(Gind1 | Gind2) #obtain genottype index to use
+        if(length(GindUse)==0) stop(paste0("At marker ",loc,": A reference profile was recorded with a rare allele not in evidence. 
+			This error occur when the evidence contains all alleles in the frequency database. Please improve frequency database to enable calculation."))
+        knownGind[condOrder[k],m] = GindUse - 1 #subtract with one since we work from 0-indice
       }
     }
     nKnowns[m] = sum(knownGind[,m] > -1)  #obtain number of known
@@ -334,13 +334,14 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     #KINSHIP MODULE
     if(!is.null(knownRel) && ibd0[1]<1 ) {
        av = unlist(refData[[loc]][[knownRel]])
-       if(length(av)==0) next 
-       if(length(av)==1) av = rep(av,2) #impute if exactly one allele
-       if(length(av)>2) stop("References can't have more than two alleles!") 
-       av[!av%in%alleles] = Qallele #convert non-observed to Q-allele
-       Gind1 <- av[1]==Gmat[,1] & av[2]==Gmat[,2]
-       Gind2 <- av[2]==Gmat[,1] & av[1]==Gmat[,2]
-       relGind[m] = which(Gind1 | Gind2) - 1 #subtract with one since we work from 0-indice
+       if(length(av)>0) {
+         if(length(av)==1) av = rep(av,2) #impute if exactly one allele
+         if(length(av)>2) stop("References can't have more than two alleles!") 
+         av[!av%in%alleles] = Qallele #convert non-observed to Q-allele
+         Gind1 <- av[1]==Gmat[,1] & av[2]==Gmat[,2]
+         Gind2 <- av[2]==Gmat[,1] & av[1]==Gmat[,2]
+         relGind[m] = which(Gind1 | Gind2) - 1 #subtract with one since we work from 0-indice
+       } 
     }
     ##############################################################
     
