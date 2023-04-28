@@ -17,7 +17,8 @@ Future version:
 
 EuroForMix v4.0.6 (Release date: 2023-04-28)
 =============================================
- - Fixed bug when not having full reference profile of related individual (prepareC-L377). Caused program to crash.
+ - Fixed bug when not having full reference profile of related individual (prepareC:L377). Caused program to crash.
+ - Fixed bug when calculating non-contributor tests for related individuals with partial profile (tidying up calcGjoint function).
  - An error message is given to explain a crash when following is happening: 
 	-> Evidence profile covers all alleles in frequency database and a conditional reference has a rare allele (not in database).
 
