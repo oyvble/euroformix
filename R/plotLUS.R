@@ -21,10 +21,12 @@ plotLUS <- function(mixData,sn="",refData=NULL,threshT=0,LUSsymbol="_") {
  tab <- cbind(locs,"","")
  for(l in 1:nL) {
   ind <- which(toupper(names(mixData))==locs[l])
-  tmp <- mixData[[ind]]$adata
-  keep <- !is.na(tmp) | length(tmp)>0 | tmp!=""
-  if(!any(keep)) next
- 
+  av <- mixData[[ind]]$adata
+  if(length(av)==0) next #skip if none
+  rmbool = is.na(tmp) | tmp=="" #indicate which to remove
+  if(all(rmbool)) next #skip if none after removal
+  keep <- !rmbool
+  
   av <- mixData[[ind]]$adata[keep] #alleles 
   hv <- as.numeric(mixData[[ind]]$hdata[keep]) #p.h. 
   if(!is.null(refData)) {

@@ -29,7 +29,7 @@ calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=N
     if(verbose) print("Calibrating MCMC simulator...")
     while(TRUE) {  #only run if no earlier results
       if(verbose) print(paste0("Check with delta=",delta))
-      hpmcmc <- contLikMCMC(mlefitHp,niter=niterTune,delta=delta)
+      hpmcmc <- contLikMCMC(mlefitHp,niter=niterTune,delta=delta, verbose=verbose)
       acc0 = hpmcmc$accrat #obtain acceptance rate
       if(verbose) print(paste0("Acceptance rate=",acc0))
       if( abs(acc0-accRate)<accRateTol) break
@@ -46,7 +46,7 @@ calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=N
   gfun = function(x) quantile(x,quantile) #this is function to obtain result from
 
   if(verbose) print("Sampling under Hp...")
-  hpmcmc <- contLikMCMC(mlefitHp,niter=niter,delta=delta,seed=seed,mcmcObj=mcmcObjList$hp)
+  hpmcmc <- contLikMCMC(mlefitHp,niter=niter,delta=delta,seed=seed,mcmcObj=mcmcObjList$hp, verbose=verbose)
   
   if(verbose) {
     print(paste0("Estimated integral: logLik=",hpmcmc$logmargL))
@@ -54,7 +54,7 @@ calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=N
   }
   seed2 = seed + diffSeed #same seed diff as in EFM
   if(length(seed2)==0) seed2 = NULL
-  hdmcmc <- contLikMCMC(mlefitHd,niter=niter,delta=delta,seed=seed2,mcmcObj=mcmcObjList$hd) 
+  hdmcmc <- contLikMCMC(mlefitHd,niter=niter,delta=delta,seed=seed2,mcmcObj=mcmcObjList$hd, verbose=verbose) 
   if(verbose) print(paste0("Estimated integral: logLik=",hdmcmc$logmargL))
   delta = hdmcmc$delta #be sure that latest delta is the one tuned.
   

@@ -5,14 +5,26 @@ SUGGESTIONS:
    Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies, more??
  - Include ordinary scale of LR (at least for qualitative model)?
  - For PHexp plots (plotTopEPG2):
-	-> Add allele frequency to hover labels (easy to hightlight)
-	-> Add LR value of each marker as text label (under marker name, or after)
+	- Add allele frequency to hover labels (easy to hightlight)
+	- Add LR value of each marker as text label (under marker name, or after)
 
 KNOWN ISSUES (TROUBLESHOOT):
  - Upgrade to latest Rcpp package (1.0.9) to fix issue "function 'Rcpp_precious_remove' not provided by package 'Rcpp'". Notice that this package must be installed and loaded non-virtually (in order to work with Citrix)
 
 Future version:
-  - Add the possibility to define a prior for the PHvar param.
+ - Add the possibility to define a prior for the PHvar param.
+
+
+EuroForMix v4.0.7 (Release date: 2023-05-30)
+=============================================
+ A major issue caused by new R-version (v4.3.0) was fixed (caused program to crash):
+ - Fixed bug when trying to specify marker specific settings. At efm:L325; "!is.na" was removed.
+ - Also modifying getSampleType:L15.
+
+ Minor changes:
+ - Removing printout when using calcLRmcmc with verbose=FALSE argument.
+ - Fixed small bug in plotLUS:L26. 
+ - Tidying up NEWS.
 
 
 EuroForMix v4.0.6 (Release date: 2023-04-28)
@@ -20,25 +32,25 @@ EuroForMix v4.0.6 (Release date: 2023-04-28)
  - Fixed bug when not having full reference profile of related individual (prepareC:L377). Caused program to crash.
  - Fixed bug when calculating non-contributor tests for related individuals with partial profile (tidying up calcGjoint function).
  - An error message is given to explain a crash when following is happening: 
-	-> Evidence profile covers all alleles in frequency database and a conditional reference has a rare allele (not in database).
+	- Evidence profile covers all alleles in frequency database and a conditional reference has a rare allele (not in database).
 
 EuroForMix v4.0.5 (Release date: 2023-03-27)
 =============================================
  - Fixed bug when having full marker dropout across all replicates (when evaluating at least two replicates):
-  -> In prepareC:L216. Drop-in model vector not correctly assigned for Q-allele of replicates. 
-  -> Consequence: Lead to exclusionary LR and model validation could trigger an error.
+	- In prepareC:L216. Drop-in model vector not correctly assigned for Q-allele of replicates. 
+	- Consequence: Lead to exclusionary LR and model validation could trigger an error.
  - Fixed "min" typo on fitgammamodel:L54. Also modify "min" to "minimum" at gammamodel:L90 to avoid issues.
  - Removed "DEG" as argument to function prepareC, since not in use. Function calls are adjusted.
 
 EuroForMix v4.0.4 (Release date: 2023-01-19)
 =============================================
- - An issue was found when evaluating the relationship of the major of a clear major/minor profile (Thanks to Damir Tesanovic for highlighting this). 
-  -> The issue causes the optimizer to struggle in reaching global maximum (and causing wrong MCMC results). 
-     Modifying code in helpfunctions.R->.paramrandomizer: Including boolean whether last unknown is related (Mx for last unknown must vary freely).
-  -> The issue causes the BayesFactor integration to be wrong.
-	 Modifying integration limits in calcINT.R: The related now counts as a known contributor (Mx for last unknown must vary freely).
-  -> An extra variable from prepareC was included (hasKinship) which eases the recognizion.
-  -> Including additional test in test_logLik2contr2Rep: Unknown is sibling of major contributor.
+ An issue was found when evaluating the relationship of the major of a clear major/minor profile (Thanks to Damir Tesanovic for highlighting this). 
+	- The issue causes the optimizer to struggle in reaching global maximum (and causing wrong MCMC results). 
+	- Modifying code in helpfunctions.R->.paramrandomizer: Including boolean whether last unknown is related (Mx for last unknown must vary freely).
+	- The issue causes the BayesFactor integration to be wrong.
+	- Modifying integration limits in calcINT.R: The related now counts as a known contributor (Mx for last unknown must vary freely).
+	- An extra variable from prepareC was included (hasKinship) which eases the recognizion.
+	- Including additional test in test_logLik2contr2Rep: Unknown is sibling of major contributor.
   
  Minor changes:
  - Avoids error in GUI when forgetting to select related individual: Added check at efm:L1924.
@@ -52,8 +64,8 @@ EuroForMix v4.0.3 (Release date: 2023-01-05)
 EuroForMix v4.0.2 (Release date: 2023-01-04)
 =============================================
  - Slight speed improvement by modifying the EFMfastengine code:
-   -> Precalculation of weights are now parallelized on both allele and outcome traversion.
-   -> Removed unused arguments in getContributionIndices C++ function (doesn't affect speed).   
+	- Precalculation of weights are now parallelized on both allele and outcome traversion.
+	- Removed unused arguments in getContributionIndices C++ function (doesn't affect speed).   
  - Fixed bug when calculating non-contributor LRs for qualitative model (efm:L2796).
  - Fixed bug when calculating model validation for R v3.6.x and earlier (data.frame in validMLEmodel.R caused wrong format)
  - Fixed crash issue with earlier R-versions (v3.5.x) which used earlier versions of RcppArmadillo (uvec vectors not initiated as zeros)
@@ -62,81 +74,81 @@ EuroForMix v4.0.1 (Release date: 2022-12-02)
 =============================================
  - Fixed bug causing non-contributor panel in GUI to vanish.
  - Fixed issue causing R versions earlier than 4.0 to compile:
- -> Removing shared variables for OpenMP operation (EFMfastengine-L220): 
+	- Removing shared variables for OpenMP operation (EFMfastengine-L220): 
 
 EuroForMix v4.0.0 (Release date: 2022-11-28)
 =============================================
  Special thanks to: Victor Saragoni (tester), Damir Tesanovic (tester) and Jerry Hoogenboom (algorithm).
 
-- Major changes:
- -> Speedup of qualitative likelihood calculations: calcQual is an alternative implementation of forensim::likEvid (can be ~10x faster)
- -> Speedup of quantitative likelihood calculations: MLE, INT, MCMC based calculations utilizes this.
- -> Modified underlying C++ code for deconvolution and validMLE (utilizing EFMrep development).
- -> All calculation functions are back-compatible: Same arguments are kept.
-  - The old functions calls the new ones indirectly: contLikINT->calcINT, contLikMLE->calcMLE
+ Major changes:
+ - Speedup of qualitative likelihood calculations: calcQual is an alternative implementation of forensim::likEvid (can be ~10x faster)
+ - Speedup of quantitative likelihood calculations: MLE, INT, MCMC based calculations utilizes this.
+ - Modified underlying C++ code for deconvolution and validMLE (utilizing EFMrep development).
+ - All calculation functions are back-compatible: Same arguments are kept.
+ - The old functions calls the new ones indirectly: contLikINT->calcINT, contLikMLE->calcMLE
 
- -> Modified fragment length designations:
-  - Non-observed alleles now linearly interpolated instead of using closest.
-  - New model option for assigning the fragment length of Q-allele: Weighted average of non-observed allele frequencies.
+ - Modified fragment length designations:
+	- Non-observed alleles now linearly interpolated instead of using closest.
+	- New model option for assigning the fragment length of Q-allele: Weighted average of non-observed allele frequencies.
 	- Can be turned on in Settings or given as argument in following functions: calcMLE,calcINT,contLikSearch.
   
- -> Updated feature for Conservative LR calculation (LR sensitivity): 
-  - The calculation can be done accumulatively. In the GUI: Pressing the button again will extended the MCMC chain.
-  - A 95% CI is included to take into account the MCMC simulation uncertainty.
-  - A traceplot is included to give the user an idea of accuracy as a function of number of iterations.
-  - The Bayes Factor estimate based on MCMC is also superimposed in both plots.
+ - Updated feature for Conservative LR calculation (LR sensitivity): 
+	- The calculation can be done accumulatively. In the GUI: Pressing the button again will extended the MCMC chain.
+	- A 95% CI is included to take into account the MCMC simulation uncertainty.
+	- A traceplot is included to give the user an idea of accuracy as a function of number of iterations.
+	- The Bayes Factor estimate based on MCMC is also superimposed in both plots.
     
- -> Added functions:
-  - Main functions: tableSaver, efm_gfile, efm_DBsearch (database search module is extracted outside of efm function)
-  - Helpfunctions (hidden) used for calculations:  .convBack, .paramrandomizer, .calcJacobian, .secondToTimeformat, .printTable, .plotTippet, .getFragLength
-  - plotSumPH placed outside efm function (used to show degradation trends)
+ - Added functions:
+	- Main functions: tableSaver, efm_gfile, efm_DBsearch (database search module is extracted outside of efm function)
+	- Helpfunctions (hidden) used for calculations:  .convBack, .paramrandomizer, .calcJacobian, .secondToTimeformat, .printTable, .plotTippet, .getFragLength
+	- plotSumPH placed outside efm function (used to show degradation trends)
   
- -> New functions to simplified calculations where input is fitted models under Hp and Hd.
-	1) calcLRmle: Returns MLE based LRs.
-	2) calcLRmcmc: Based on MCMC. Provides both conservative and estimated full bayesian.
-	3) calcLRint: First utilizes getParamLimits based on fitted model under Hd to obtain param limits.
-	4) calcTippet: Non-contributor analysis
+ - New functions to simplified calculations where input is fitted models under Hp and Hd.
+	- calcLRmle: Returns MLE based LRs.
+	- calcLRmcmc: Based on MCMC. Provides both conservative and estimated full bayesian.
+	- calcLRint: First utilizes getParamLimits based on fitted model under Hd to obtain param limits.
+	- calcTippet: Non-contributor analysis
   
- -> Updated Upper boundary LR: Now takes into account following (results may differ due to this):
-  - All typed individuals (under Hp) are included for calculations. 
-  - Missing markers of POI should not affect RMP and scaling.
+ - Updated Upper boundary LR: Now takes into account following (results may differ due to this):
+	- All typed individuals (under Hp) are included for calculations. 
+	- Missing markers of POI should not affect RMP and scaling.
 
- -> In GUI:
-  - Created button for showing LR-per markers in results
-  - Imported Profiles/Databases can now be removed from the selection list (Data panel).
-  - In "MLEfit" panel: Also show which sample(s) and hypotheses that are evaluated.
-  - A new button for storing top ranked genotypes as references (after Deconvolution), stores as EFM-format.
-  - Integration based LR (Bayes Factor) is no longer possible for database search.
-  - Changed options for Integration, MCMC
-  - All calculated results are stored in resEVID: MLE,INT,MCMC (and validHp/validHd). SEARCH is stored in setEVID.
-  - The created reported is now done in a separate function: createReport (taking mmTK environment as input).
-  - Additional comparison values of Ref->Evid added when "View Reference".
-  - When importing profiles: Gives user option whether to still import data if OL alleles are observed (automatically removed)
-  - The data selection in Model panel is moved to a separate window (activated with button). Also accepting any number of markers
-  - In settings: "Max number of loci" is removed. This is no longer a limitation (data selection and LR-per marker modified)
-  - Peak height plots: EPG/Bar-plots are shown in Browser only if plotly is installed.
-  - The sumPeakHeight visualiziation against fragment length is modified: 
-	A smoothing curve is shown for each replicate (colored). Also no longer showing p-values.
+ - In GUI:
+	- Created button for showing LR-per markers in results
+	- Imported Profiles/Databases can now be removed from the selection list (Data panel).
+	- In "MLEfit" panel: Also show which sample(s) and hypotheses that are evaluated.
+	- A new button for storing top ranked genotypes as references (after Deconvolution), stores as EFM-format.
+	- Integration based LR (Bayes Factor) is no longer possible for database search.
+	- Changed options for Integration, MCMC
+	- All calculated results are stored in resEVID: MLE,INT,MCMC (and validHp/validHd). SEARCH is stored in setEVID.
+	- The created reported is now done in a separate function: createReport (taking mmTK environment as input).
+	- Additional comparison values of Ref->Evid added when "View Reference".
+	- When importing profiles: Gives user option whether to still import data if OL alleles are observed (automatically removed)
+	- The data selection in Model panel is moved to a separate window (activated with button). Also accepting any number of markers
+	- In settings: "Max number of loci" is removed. This is no longer a limitation (data selection and LR-per marker modified)
+	- Peak height plots: EPG/Bar-plots are shown in Browser only if plotly is installed.
+	- The sumPeakHeight visualiziation against fragment length is modified: 
+		- A smoothing curve is shown for each replicate (colored). Also no longer showing p-values.
   
- -> The calcLikMLE argument "maxIter" is replaced with "difftol": tolerance for being exact in log-likelihood value (relevant when nDone>1).
- -> Function noncontrMLE replaced with a new function calcTippet (supports both MLE/INT).
- -> Additional information added to the report:
-  - Detailed information about samples and references are included into the report.
-  - The number of evaluations and time usage for the MLE method is included to the report ("Number of evaluations")
+ - The calcLikMLE argument "maxIter" is replaced with "difftol": tolerance for being exact in log-likelihood value (relevant when nDone>1).
+	- Function noncontrMLE replaced with a new function calcTippet (supports both MLE/INT).
+	- Additional information added to the report:
+		- Detailed information about samples and references are included into the report.
+		- The number of evaluations and time usage for the MLE method is included to the report ("Number of evaluations")
 
- -> Update in plotTopEPG2/plotTopMPS2 plots: Stutter products are now also shown
+ - Update in plotTopEPG2/plotTopMPS2 plots: Stutter products are now also shown
 
- -> Minor changes: 
-  - Tidy up RMP printout for references.
-  - Fixed issue of showing MCMC when assuming one contributor.
-  - Degradation option can now be included for the model search.
-  - Plot functions plotEPG2/plotMPS2
-  - plotTopEPG2/plotTopMPS2 now uses information from fitted model (prepareC)
-  - Fixed crash when replicates without kit specification is visualized (L1257: Use lapply instead of sapply).
-  - Database search LR results now shown on log10 scale
-  - Better error handling regarding the markerSpecific settings. 
-    Still error if user forget to use "Save settings".
-	Added guidance text to "setVecRightOrder" function.
+ - Minor changes: 
+	- Tidy up RMP printout for references.
+	- Fixed issue of showing MCMC when assuming one contributor.
+	- Degradation option can now be included for the model search.
+	- Plot functions plotEPG2/plotMPS2
+	- plotTopEPG2/plotTopMPS2 now uses information from fitted model (prepareC)
+	- Fixed crash when replicates without kit specification is visualized (L1257: Use lapply instead of sapply).
+	- Database search LR results now shown on log10 scale
+	- Better error handling regarding the markerSpecific settings. 
+		- Still error if user forget to use "Save settings".
+		- Added guidance text to "setVecRightOrder" function.
  
 EuroForMix v3.4.1 (Release date: 2022-03-22)
 =============================================

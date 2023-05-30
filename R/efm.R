@@ -323,7 +323,7 @@ efm = function(envirfile=NULL) {
    dyes = NULL #default is no colors (dyes)
    if(!is.null(kitname)) {
      kitdyes = getKit(kitname,"COLOR") #get kitinfo from selected kit
-     if(!is.na(kitdyes) && length(kitdyes)>1) { #if kitinformatation found
+     if(length(kitdyes)>1) { #if kitinformatation found
        locDyeTab = kitdyes[toupper(kitdyes$Marker)%in%locs,,drop=FALSE] #obtain list (overlap in loci)
        locs = toupper(locDyeTab[,1]) #update loci order (force to be capital letter)
        dyes = locDyeTab[,2] #get corrsponding colors

@@ -12,7 +12,7 @@ getSampleType = function(samples,kit=NULL,LUSsymbol="_") {
   isEPG = FALSE 
   if(!is.null(kit) && !is.na(kit) && kit!="" ) { #kit must be proper name
     kitinfo = getKit(kit) #check kit
-    if(!is.na(kitinfo)[1] && length(kitinfo)>1) isEPG = TRUE
+    if(length(kitinfo)>1) isEPG = TRUE
     #print("Please specify kit in order to show EPG. Otherwise default MPS format is shown!")
   }  
   
