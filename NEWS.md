@@ -34,6 +34,7 @@ EuroForMix v4.0.6 (Release date: 2023-04-28)
  - An error message is given to explain a crash when following is happening: 
 	- Evidence profile covers all alleles in frequency database and a conditional reference has a rare allele (not in database).
 
+
 EuroForMix v4.0.5 (Release date: 2023-03-27)
 =============================================
  - Fixed bug when having full marker dropout across all replicates (when evaluating at least two replicates):
@@ -42,9 +43,10 @@ EuroForMix v4.0.5 (Release date: 2023-03-27)
  - Fixed "min" typo on fitgammamodel:L54. Also modify "min" to "minimum" at gammamodel:L90 to avoid issues.
  - Removed "DEG" as argument to function prepareC, since not in use. Function calls are adjusted.
 
+
 EuroForMix v4.0.4 (Release date: 2023-01-19)
 =============================================
- An issue was found when evaluating the relationship of the major of a clear major/minor profile (Thanks to Damir Tesanovic for highlighting this). 
+ - An issue was found when evaluating the relationship of the major of a clear major/minor profile (Thanks to Damir Tesanovic for highlighting this). 
 	- The issue causes the optimizer to struggle in reaching global maximum (and causing wrong MCMC results). 
 	- Modifying code in helpfunctions.R->.paramrandomizer: Including boolean whether last unknown is related (Mx for last unknown must vary freely).
 	- The issue causes the BayesFactor integration to be wrong.
@@ -57,9 +59,11 @@ EuroForMix v4.0.4 (Release date: 2023-01-19)
  - sortComb argument in calcGjoint was removed (not used anymore).
  - Error estimate for numerical integration does no longer scale with combination factor (calcINT:L192 is ignored).
 
+
 EuroForMix v4.0.3 (Release date: 2023-01-05)
 =============================================
  - The modification of the EFMfastengine code in previous version (v4.0.2) led to worse speed: The implementation is reversed.
+
 
 EuroForMix v4.0.2 (Release date: 2023-01-04)
 =============================================
@@ -70,11 +74,13 @@ EuroForMix v4.0.2 (Release date: 2023-01-04)
  - Fixed bug when calculating model validation for R v3.6.x and earlier (data.frame in validMLEmodel.R caused wrong format)
  - Fixed crash issue with earlier R-versions (v3.5.x) which used earlier versions of RcppArmadillo (uvec vectors not initiated as zeros)
 
+
 EuroForMix v4.0.1 (Release date: 2022-12-02)
 =============================================
  - Fixed bug causing non-contributor panel in GUI to vanish.
  - Fixed issue causing R versions earlier than 4.0 to compile:
 	- Removing shared variables for OpenMP operation (EFMfastengine-L220): 
+
 
 EuroForMix v4.0.0 (Release date: 2022-11-28)
 =============================================
@@ -150,206 +156,206 @@ EuroForMix v4.0.0 (Release date: 2022-11-28)
 		- Still error if user forget to use "Save settings".
 		- Added guidance text to "setVecRightOrder" function.
  
+ 
 EuroForMix v3.4.1 (Release date: 2022-03-22)
 =============================================
 - efm function updates:
- -> Fixed issue with possible wrong reference name under Hd when hovering Mix-prop parameters.
- -> Additional statistics given when hovering Mix-prop parameters: "Average rfu (across markers) multiplied with mixture proportion"
- -> Avoid crash when directory of stored project was not found.
- -> Restoring MLE results from a stored project when deconvolution module was used.
+	- Fixed issue with possible wrong reference name under Hd when hovering Mix-prop parameters.
+	- Additional statistics given when hovering Mix-prop parameters: "Average rfu (across markers) multiplied with mixture proportion"
+	- Avoid crash when directory of stored project was not found.
+	- Restoring MLE results from a stored project when deconvolution module was used.
 - plotLUS updated: accepts no adata attribute for refData.
 - Added license file: GNU Lesser General Public License v3.0
 
+
 EuroForMix v3.4.0 (Release date: 2022-02-05)
 =============================================
-The STRidER import issue is fixed:
- -> Connection is using curl instead of Rcurl to parse text from file directly (package dependency changed).
+ The STRidER import issue is fixed:
+ - Connection is using curl instead of Rcurl to parse text from file directly (package dependency changed).
 
-Important decision changes:
-- In efm:L2140: References which are put forward to the Hypothesis specification GUI, but not included as contributors, are included as typed non-contributors. 
-- Model validation calculations slightly modified to integrate from 'AT-1' instead of 'AT'; calcloglik.cpp:L(782,785,793,795).
- -> The reason is that peak heights are discrete and not continuous.
- -> This avoids zero pvalue when observed peak=AT .
-- The unknown related individual under Hd is now last contributor.
+ Important decision changes:
+ - In efm:L2140: References which are put forward to the Hypothesis specification GUI, but not included as contributors, are included as typed non-contributors. 
+ - Model validation calculations slightly modified to integrate from 'AT-1' instead of 'AT'; calcloglik.cpp:L(782,785,793,795).
+	- The reason is that peak heights are discrete and not continuous.
+	- This avoids zero pvalue when observed peak=AT .
+ - The unknown related individual under Hd is now last contributor.
 
-Minor updates:
-- Avoiding hardcoded flags in Makevars file enables better system compatibility for Linux/MAC (thanks to Simon Urbanek for this suggestion).
-- The numerical test code has been tidied up (testthat).
-- Fixed bug in plotMPS2: Marker specific AT/ST argument was not used if provided.
-- prepareData now does no longer require that alleles of references are stored in element name "adata".
-- The fitgammamodel function was updated: Make pre-fitting of optimization start points even better and more robust (based on linear regression):
- -> The MLE approach calculations may give slightly different values, depending on the steptol parameter.
-- Fixed a formula error for kinship calculations when Fst>0 and at least two unknowns (thanks to Jerry Hoogenboom for highlighting this).
- -> In calcloglik.cpp: The relatedness genotype probability is now calculated last (OK when having one relationship).
- -> calcGjoint function was updated.
- -> Several kinship hypotheses was added to test_logLik2contr1RepNoStutter.
+ Minor updates:
+ - Avoiding hardcoded flags in Makevars file enables better system compatibility for Linux/MAC (thanks to Simon Urbanek for this suggestion).
+ - The numerical test code has been tidied up (testthat).
+ - Fixed bug in plotMPS2: Marker specific AT/ST argument was not used if provided.
+ - prepareData now does no longer require that alleles of references are stored in element name "adata".
+ - The fitgammamodel function was updated: Make pre-fitting of optimization start points even better and more robust (based on linear regression):
+	- The MLE approach calculations may give slightly different values, depending on the steptol parameter.
+ - Fixed a formula error for kinship calculations when Fst>0 and at least two unknowns (thanks to Jerry Hoogenboom for highlighting this).
+	- In calcloglik.cpp: The relatedness genotype probability is now calculated last (OK when having one relationship).
+	- calcGjoint function was updated.
+	- Several kinship hypotheses was added to test_logLik2contr1RepNoStutter.
 
 EuroForMix v3.3.3 (Release date: 2021-10-14)
 =============================================
-Faster computations (~10% increase).
-- Now using Rmath::pgamma instead of boost::gamma_p function in the C-code (the BH R-package is no longer required).
+ Faster computations (~10% increase).
+ - Now using Rmath::pgamma instead of boost::gamma_p function in the C-code (the BH R-package is no longer required).
+
 
 EuroForMix v3.3.2 (Release date: 2021-10-06)
 =============================================
+ Fixing Import from STRidER issue giving "SSL certificate problem.." crash:
+ - The getURL call in freqImport function was updated.
 
-Fixing Import from STRidER issue giving "SSL certificate problem.." crash:
-- The getURL call in freqImport function was updated.
+ Fixing a whitespace issue which occured for some textfiles:
+ - The sample_tableToList now also ignores " " alleles.
 
-Fixing a whitespace issue which occured for some textfiles:
-- The sample_tableToList now also ignores " " alleles.
+ Minor update:
+ - Included MiniFiler as a kit (Thanks to Oskar Hansson to providing this).
 
-Minor update:
-- Included MiniFiler as a kit (Thanks to Oskar Hansson to providing this).
 
 EuroForMix v3.3.1 (Release date: 2021-05-26)
 =============================================
+ Important update:
+ - The URL to the STRidER connection can be customized in toolbar (Frequencies->Set URL for STRidER import).
+	- The default URL path has been changed (earlier path did not work). Thanks to Marcin Wozniak for making aware of this issue.
 
-Important update:
-- The URL to the STRidER connection can be customized in toolbar (Frequencies->Set URL for STRidER import).
- -> The default URL path has been changed (earlier path did not work). Thanks to Marcin Wozniak for making aware of this issue.
+ Minor update:
+ - The Lik value in report (Create report) now avoids underflow. A helpfunction "getSmallNumber" was created.
+ - Suppressing gWidgets2 warnings in the efm function (suppressWarnings wrapped around the GUI code). 
 
-Minor update:
-- The Lik value in report (Create report) now avoids underflow. A helpfunction "getSmallNumber" was created.
-- Suppressing gWidgets2 warnings in the efm function (suppressWarnings wrapped around the GUI code). 
+ Bug fixes:
+ - In efm function (L1209,L1396): gWidgets2::gmessage gave error because of wrong arguments (messages are put first).
 
-Bug fixes:
-- In efm function (L1209,L1396): gWidgets2::gmessage gave error because of wrong arguments (messages are put first).
 
 EuroForMix v3.3.0 (Release date: 2021-03-30)
 =============================================
-
-Important updates:
-- The mix-proportion parameter of the last contributor (C_K) is now shown in the MCMC-results (function validMCMC updated).
-- Wrong calculations were obtained when the alleles in the evidence profile covers the ones defined in the frequency data, for at least one of the markers, and at the same time a stutter-model is considered (BW or/and FW).  
- -> This bug was introduced in v3.0.0 and remains until v3.2.0. See "Important Update" section on the website and "bug fixes" below for more details. Thanks to Kevin Cheng, John Buckleton and Jo-Anne Bright for providing the example leading to this discovery.
+ Important updates:
+ - The mix-proportion parameter of the last contributor (C_K) is now shown in the MCMC-results (function validMCMC updated).
+ - Wrong calculations were obtained when the alleles in the evidence profile covers the ones defined in the frequency data, for at least one of the markers, and at the same time a stutter-model is considered (BW or/and FW).  
+	- This bug was introduced in v3.0.0 and remains until v3.2.0. See "Important Update" section on the website and "bug fixes" below for more details. Thanks to Kevin Cheng, John Buckleton and Jo-Anne Bright for providing the example leading to this discovery.
  
-Minor updates:
-- The Optimal model search now also uses the seed from Optimization setting. efm:L2303.
-- Function genDataset (L50) now throws a warning instead of printing when the frequencies is "not a valid simplex".
-- In the example code for some of the external functions: now uses the right path to the population frequency file in the installation folder.
-- The insertion of rare alleles are now printed to the console.
-- The function contLikSearch now also contains "steptol" as argument (obtaining identical results as ordinary optimization). Thanks to Damir Tesanovic for noticing this.
+ Minor updates:
+ - The Optimal model search now also uses the seed from Optimization setting. efm:L2303.
+ - Function genDataset (L50) now throws a warning instead of printing when the frequencies is "not a valid simplex".
+ - In the example code for some of the external functions: now uses the right path to the population frequency file in the installation folder.
+ - The insertion of rare alleles are now printed to the console.
+ - The function contLikSearch now also contains "steptol" as argument (obtaining identical results as ordinary optimization). Thanks to Damir Tesanovic for noticing this.
 
-Bug fixes:
+ Bug fixes:
  - A bug was found when not having Q-allele (evidence alleles fully overlaps with frequency alleles) and considering stutter model:
-   -> prepareC:L244-L245; The dummy index "-1" should not be included. 
-   -> Adding 2 blocks to src/calcloglik:(L350-357 and L777-784); Last allele is also traversed if not a Q-allele. 	
+	- prepareC:L244-L245; The dummy index "-1" should not be included. 
+	- Adding 2 blocks to src/calcloglik:(L350-357 and L777-784); Last allele is also traversed if not a Q-allele. 	
  - If the reference had a dropout allele not defined in population frequency table and the observed evidence fully overlapped with the frequency table, the program earlier crashed.
-   -> The program now force the insertion of a Q-allele with minimum frequency to the frequency table (Qassignate:L77-82).
-   -> Care must be taken if this happens only under Hp (then there will be allele frequency missmatch under Hp and Hd).
+	- The program now force the insertion of a Q-allele with minimum frequency to the frequency table (Qassignate:L77-82).
+	- Care must be taken if this happens only under Hp (then there will be allele frequency missmatch under Hp and Hd).
  - Not using encoding when working with gfile caused crash for non-UTF8 characters (resolved by applying a mygfile helpfunction)
  - Setting empty Seed after putting number in "Set seed of randomizer" is now possible.
 
-Added tests:
+ Added tests:
  - test_logLik1contr_noQ: Example where population frequency table is same outcome as evidence profile for one marker.
  - test_logLik4contr1Rep_noQ: Same as above but a larger example considering a 4-person mixture (frequency of D16 has same outcome as evidence profile).
  - test_logLik4contr1Rep_noQref: Same example as above but we force the reference to have a drop-out allele for the D16 marker (causing inclusion of Q-allele).
 
+
 EuroForMix v3.2.0 (Release date: 2021-02-17)
 =============================================
+ Important updates:
+ - GUI R-package changed to gWidgets2 instead of gWidgets (gWidgets was removed from CRAN). Remember to install gWidgets2 and gWidgets2tcltk if not already done.
+	- Helptext may be available by hovering the mouse over button or text.
+	- The user can now hover the mix-proportion parameter estimates to highlight the name of the corresponding contributor.
+	- The list of sample profiles are now stored in a table (can list a large number).
+ - Importing population frequency data from selected folder will only use a folder from the euroformix installation path (~euroformix/FreqDatabases)
+ - The number of failed PH-validation points are now included to the exported report (this is calculated when exported).
+ - The MCMC simulations are automatically calibrated by iteratively running 100 samples under Hp (fastest). 
+ - Function contLikMCMC now return logMargL instead of margL to avoid underflow (log-scale).
+ - Modified MCMC results in report: 
+	- The report now also contains the estimated marginalized LR (Bayesian based on MCMC)
+	- The variation of the randomizer parameter is now also mentioned (needed for full reproducibility).
+ - The order of contributors under Hp is now same for both automatic model search and sole LR calculations (earlier the POI was always put last).
+ - The calculation of the upper boundary LR has now been modified when there are at least 2 unknown contributors under Hd and fst>0: The random match probability (RMP) is scaled (with value greater or equal than 1) with a formula depending only on selected fst value. Notice: The LR of a POI fitting a clear major unknown components could exceed 1/RMP(POI) when fst>0 when assuming at least 2 unknowns under Hd.
+ - It is no longer required to install external R-packages in order to load euroformix. This would be useful for those who only wants to use CaseSolver.
 
-Important updates:
-- GUI R-package changed to gWidgets2 instead of gWidgets (gWidgets was removed from CRAN). Remember to install gWidgets2 and gWidgets2tcltk if not already done.
- -> Helptext may be available by hovering the mouse over button or text.
- -> The user can now hover the mix-proportion parameter estimates to highlight the name of the corresponding contributor.
- -> The list of sample profiles are now stored in a table (can list a large number).
-- Importing population frequency data from selected folder will only use a folder from the euroformix installation path (~euroformix/FreqDatabases)
-- The number of failed PH-validation points are now included to the exported report (this is calculated when exported).
-- The MCMC simulations are automatically calibrated by iteratively running 100 samples under Hp (fastest). 
-- Function contLikMCMC now return logMargL instead of margL to avoid underflow (log-scale).
-- Modified MCMC results in report: 
- -> The report now also contains the estimated marginalized LR (Bayesian based on MCMC)
- -> The variation of the randomizer parameter is now also mentioned (needed for full reproducibility).
-- The order of contributors under Hp is now same for both automatic model search and sole LR calculations (earlier the POI was always put last).
-- The calculation of the upper boundary LR has now been modified when there are at least 2 unknown contributors under Hd and fst>0: The random match probability (RMP) is scaled (with value greater or equal than 1) with a formula depending only on selected fst value. Notice: The LR of a POI fitting a clear major unknown components could exceed 1/RMP(POI) when fst>0 when assuming at least 2 unknowns under Hd.
-- It is no longer required to install external R-packages in order to load euroformix. This would be useful for those who only wants to use CaseSolver.
+ Minor updates:
+ - Changed name in "File->Setup" removing "Default" word.
+ - Transparant level on barcolors in plotTopEPG2 has been increased (better visualization).
+ - When importing data from text files: A previous printout to R console is no longer performed.
+ - The degradation model is no longer a choice for automatic model selection (due to new GUI implementation).
+ - A message is shown when trying to select "View evidence/reference/database" without any selection.
+ - In genDataset function: Frequencies are rescaled to sum to 1 instead of throwing the "not a simplex" error.
+ - There are no longer any restrictions of number of markers to visualize in "Marker settings".
 
-Minor updates:
-- Changed name in "File->Setup" removing "Default" word.
-- Transparant level on barcolors in plotTopEPG2 has been increased (better visualization).
-- When importing data from text files: A previous printout to R console is no longer performed.
-- The degradation model is no longer a choice for automatic model selection (due to new GUI implementation).
-- A message is shown when trying to select "View evidence/reference/database" without any selection.
-- In genDataset function: Frequencies are rescaled to sum to 1 instead of throwing the "not a simplex" error.
-- There are no longer any restrictions of number of markers to visualize in "Marker settings".
-
-Bug fixes:
-- Marker settings are reset when saving "global settings" (File->Setup). Avoids earlier crash when using only global settings after Marker settings are saved.
-- Fixed problem in plotTopMPS2/plotTopEPS2 which caused marker names to not be shown when assuming 1 contributor.
-- Handle that references may have zero alleles in a marker (fixed bug in "View References" and made inactive in "Data selection")
-
+ Bug fixes:
+ - Marker settings are reset when saving "global settings" (File->Setup). Avoids earlier crash when using only global settings after Marker settings are saved.
+ - Fixed problem in plotTopMPS2/plotTopEPS2 which caused marker names to not be shown when assuming 1 contributor.
+ - Handle that references may have zero alleles in a marker (fixed bug in "View References" and made inactive in "Data selection")
 
 
 EuroForMix v3.1.1 (Release date: 2020-09-08)
 =============================================
-Bug fix:
+ Bug fix:
  - Problem loading projects and seting working directory when path involves non UTF8-characters.
 
 
 EuroForMix v3.1.0 (Release date: 2020-09-08)
 =============================================
-Important updates:
-- In GUI: It is now possible to export a frequency file from the 'Import data' panel (based on "Selected population").
-- In GUI and contLikMLE function: The user can now change the steptol parameter used in the optimization. This makes it possible to increase accuracy of the results (steptol=0.001 is default from v3, whereas it was 1e-6 in earlier versions).
-- MLE Optimizer strategy: Default number of optimizations set to 3 (instead of 2). This will make the MLE more robust. The user can change this at any time.
-- Default drop-in probability is now "0.05" instead of "0".
-- A new R-function called "qualLikMLE" has been included to the package, enabling more flexibility for inferring the qualitative model: Different drop-out probability for each contributor, in combination with fixed values, is possible. NB: This is not yet implemented in the GUI.
-- Enabling degradation model for MPS-STR sequences with "RU:sequence" format, when kit is selected (only ForenSeq included): Example is "10:[ATCG]10", where "10" is extracted for fragment length lookup.
-- Adding an error message if data is not properly structured before running contLikMLE: The function prepareC now throws the error "Please use the prepareData function to structure the data correctly." if last element.
+ Important updates:
+ - In GUI: It is now possible to export a frequency file from the 'Import data' panel (based on "Selected population").
+ - In GUI and contLikMLE function: The user can now change the steptol parameter used in the optimization. This makes it possible to increase accuracy of the results (steptol=0.001 is default from v3, whereas it was 1e-6 in earlier versions).
+ - MLE Optimizer strategy: Default number of optimizations set to 3 (instead of 2). This will make the MLE more robust. The user can change this at any time.
+ - Default drop-in probability is now "0.05" instead of "0".
+ - A new R-function called "qualLikMLE" has been included to the package, enabling more flexibility for inferring the qualitative model: Different drop-out probability for each contributor, in combination with fixed values, is possible. NB: This is not yet implemented in the GUI.
+ - Enabling degradation model for MPS-STR sequences with "RU:sequence" format, when kit is selected (only ForenSeq included): Example is "10:[ATCG]10", where "10" is extracted for fragment length lookup.
+ - Adding an error message if data is not properly structured before running contLikMLE: The function prepareC now throws the error "Please use the prepareData function to structure the data correctly." if last element.
 
-Bug fixes:
-- In function deconvolution: The startMarker indices was not correctly updated when no unknowns was given. This earlier caused crash.
-- In function contLikMLE-L349: "maxPhi" replaced with "phi" (only syntax change).
-- In function contLikSearch-L86: knownRel replaced with NULL. This bug caused the Optimal model search to fail when conditioning on known references under Hp/Hd and having relatedness under Hd. Thanks to Kent Harman for disovering this.
+ Bug fixes:
+ - In function deconvolution: The startMarker indices was not correctly updated when no unknowns was given. This earlier caused crash.
+ - In function contLikMLE-L349: "maxPhi" replaced with "phi" (only syntax change).
+ - In function contLikSearch-L86: knownRel replaced with NULL. This bug caused the Optimal model search to fail when conditioning on known references under Hp/Hd and having relatedness under Hd. Thanks to Kent Harman for disovering this.
 
-Added tests:
-- test_logLik2contr1RepSNP -> Numerical testing with 1 and 2 unknowns for 1 replicate (ensures that data with SNP frequency data becomes correct).
-- test_logLik2contr1RepNoStutter -> Numerical testing with 2 unknowns for 1 replicate (ensures that C++ function calcLogLikGammaMarkerUnknown is tested).
-- test_QualLogLik2contr2Rep -> Numerical testing for drop-out probability inference with qualitative model, with different variants.
-- test_logLikcontr2RepSNP renamed as test_logLik2contr2RepSNP.
+ Added tests:
+ - test_logLik2contr1RepSNP -> Numerical testing with 1 and 2 unknowns for 1 replicate (ensures that data with SNP frequency data becomes correct).
+ - test_logLik2contr1RepNoStutter -> Numerical testing with 2 unknowns for 1 replicate (ensures that C++ function calcLogLikGammaMarkerUnknown is tested).
+ - test_QualLogLik2contr2Rep -> Numerical testing for drop-out probability inference with qualitative model, with different variants.
+ - test_logLikcontr2RepSNP renamed as test_logLik2contr2RepSNP.
 
-Minor updates:
-- Added error message in the prepareC function (L185-L189) if there are alleles in the frequency outcome which was not observed (except "99" allele): "In marker ....: There are alleles in the frequencies data are not found in the observed data. This is not allowed. Please use the prepareData function beforehand! Program stops.". Thanks to Guro Dorum for providing an example with this.
-- The "Optimal quantitative LR (automatic model search)" module can only be run if hypothesis Hp and Hd only differ if a POI under Hp is replaced with an unknown under Hd.
-- Better error print out when allele frequencies does not sum to one (prepareC:L65-L70 and calcGjoint:L31-L32).
-- Added error message in function getData if any marker names between the data types are inconsistent.
-- Small text changes in report and GUI regarding optimization settings.
+ Minor updates:
+ - Added error message in the prepareC function (L185-L189) if there are alleles in the frequency outcome which was not observed (except "99" allele): "In marker ....: There are alleles in the frequencies data are not found in the observed data. This is not allowed. Please use the prepareData function beforehand! Program stops.". Thanks to Guro Dorum for providing an example with this.
+ - The "Optimal quantitative LR (automatic model search)" module can only be run if hypothesis Hp and Hd only differ if a POI under Hp is replaced with an unknown under Hd.
+ - Better error print out when allele frequencies does not sum to one (prepareC:L65-L70 and calcGjoint:L31-L32).
+ - Added error message in function getData if any marker names between the data types are inconsistent.
+ - Small text changes in report and GUI regarding optimization settings.
 
 
 EuroForMix v3.0.3 (Release date: 2020-05-06)
 =============================================
+ Important bug fix in the fitgammamodel function (bug introduced in v3.0.0):
+ - The returned degradation parameter value was not correct (always overestimated). This influences the degradation slope plot in the EFM GUI. Also, the fix may cause faster convergence of MLE. 
 
-Important bug fix in the fitgammamodel function (bug introduced in v3.0.0):
-- The returned degradation parameter value was not correct (always overestimated). This influences the degradation slope plot in the EFM GUI. Also, the fix may cause faster convergence of MLE. 
-
-Other fixed issue: 
-- GUI crashed when loading settings after saving settings with old projects (created with a version before v3.0.0). Thanks to Peter Gill for pointing out this issue. 
+ Other fixed issue: 
+ - GUI crashed when loading settings after saving settings with old projects (created with a version before v3.0.0). Thanks to Peter Gill for pointing out this issue. 
 
 
 EuroForMix v3.0.2 (Release date: 2020-05-06)
 =============================================
-Issue fix:
-- The MCMC simulations failed if first random startpoint gave a likelihood of zero. Thanks to Eugenio Alladio and Maria Martin Agudo for reporting this issue.
+ Issue fix:
+ - The MCMC simulations failed if first random startpoint gave a likelihood of zero. Thanks to Eugenio Alladio and Maria Martin Agudo for reporting this issue.
 
 
 EuroForMix v3.0.1 (Release date: 2020-04-24)
 =============================================
-Bug fix:
-- Markers containing space caused problem when loading Marker settings after saving (reading from the configMarkerSetup file failed).
+ Bug fix:
+ - Markers containing space caused problem when loading Marker settings after saving (reading from the configMarkerSetup file failed).
 
 
 EuroForMix v3.0.0 (Release date: 2020-04-01)
 =============================================
-Summary of version 3 updates:
-- Faster calculations due to paralellization on deeper level; causes speed to scale with the number of logical CPU cores (threads).
-- Progress bar for all types of calculations. Time estimates given for the MLE method (if time exceeds 10s).
-- Automatic model selection for the MLE method (number of contributors, Degradation (ON/OFF), BW-stutter (ON/OFF), FW-stutter (ON/OFF) decided based on the AkaikeInformationCriterion)
-- Model extensions: Forward stutter model and Marker/Dye specific settings for analytical thresholds, dropin model and fst.
-- Validation plots created (almost) instantly
-- Seed settings: The MCMC and conservative LR values are now reproducible. Also optional seed can be given for the MLE method (reproducible start values, useful for time comparisons).
-- Upper boundary of Likelihood Ratio provided in GUI (1/'Random match probability').
+ Summary of version 3 updates:
+ - Faster calculations due to paralellization on deeper level; causes speed to scale with the number of logical CPU cores (threads).
+ - Progress bar for all types of calculations. Time estimates given for the MLE method (if time exceeds 10s).
+ - Automatic model selection for the MLE method (number of contributors, Degradation (ON/OFF), BW-stutter (ON/OFF), FW-stutter (ON/OFF) decided based on the AkaikeInformationCriterion)
+ - Model extensions: Forward stutter model and Marker/Dye specific settings for analytical thresholds, dropin model and fst.
+ - Validation plots created (almost) instantly
+ - Seed settings: The MCMC and conservative LR values are now reproducible. Also optional seed can be given for the MLE method (reproducible start values, useful for time comparisons).
+ - Upper boundary of Likelihood Ratio provided in GUI (1/'Random match probability').
 
-Details of the update:
+ Details of the update:
  - GUI changes (efm):
 	- In 'Generate data' panel: New layout. Includes Forward stutter. 
 	- In 'Model specification' panel: Possibility of forward stutter model added.
@@ -407,9 +413,9 @@ Details of the update:
  - Other notes:
 	- Degradation slope param can never exceed 1. This was possible before 
 	- New optimization strategy for MLE (contLikMLE): 
-		-> New strategy: Require nDone number of obtained local maximum values (set to 2 as default).
-		-> Random start points are better chosen: Mixture proportions (flat, but sorted for unknowns), PHexp/PHvar/stuttprop/degradslope have lower variation.
-		-> Faster convergence in nlm, but about same accuracy (minimum step tolerance (steptol) set to 1e-3 instead of 1e-6).
+		- New strategy: Require nDone number of obtained local maximum values (set to 2 as default).
+		- Random start points are better chosen: Mixture proportions (flat, but sorted for unknowns), PHexp/PHvar/stuttprop/degradslope have lower variation.
+		- Faster convergence in nlm, but about same accuracy (minimum step tolerance (steptol) set to 1e-3 instead of 1e-6).
 	- New sampling strategy for MCMC: No block-wise sampling provided and only one chain is run.
 	- The parallel versions contLikMLEpara and contLikMCMCpara are no longer used (calls the original functions)
 	- The likelihood of underflow numbers are now shown in MLE results.
