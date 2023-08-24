@@ -1,8 +1,8 @@
 Package: euroformix
 Type: Package
 Title: A Quantitative Model for Interpreting DNA Mixtures
-Version: 4.0.7
-Date: 2023-05-30
+Version: 4.0.8
+Date: 2023-08-21
 Author: Oyvind Bleka <oyvble@hotmail.com>
 Maintainer: Oyvind Bleka <oyvble@hotmail.com>
 Description: Contains procedures for maximization, integration and MCMC of likelihoods of a quantitative model for DNA mixtures for a general specifications of hypotheses. It also contains procedures for estimating the profiles of unknown contributors. The implemented model takes care of drop-out, drop-in, degradation, stutters (both backward and forward). It also contains a graphical user interface to ease the use.

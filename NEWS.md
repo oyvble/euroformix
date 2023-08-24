@@ -15,6 +15,13 @@ Future version:
  - Add the possibility to define a prior for the PHvar param.
 
 
+
+EuroForMix v4.0.8 (Release date: 2023-08-21)
+=============================================
+ - Fixed bug with non-contributor test, occuring when having rare alleles of known non-contributors under Hd.
+	- Added lines in calcTippet:L75-L82
+ - Improved README file: Easier information to get started. Inspired by work of https://github.com/magnusdv/forrel
+
 EuroForMix v4.0.7 (Release date: 2023-05-30)
 =============================================
  A major issue caused by new R-version (v4.3.0) was fixed (caused program to crash):

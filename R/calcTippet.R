@@ -50,7 +50,7 @@ calcTippet = function(tipIdx, mlefitHp, mlefitHd, niter=100, type="MLE", LRobs=N
       return(mle$fit$loglik)
     }
   }
-
+  
   #Obtain Frequency information to Randomize non-contributors (provided under Hd)
   locs <- mlefitHd$prepareC$markerNames #loci to evaluate
   fst = setNames(mlefitHd$prepareC$fst,locs) #obtain fst per marker
@@ -70,10 +70,19 @@ calcTippet = function(tipIdx, mlefitHp, mlefitHd, niter=100, type="MLE", LRobs=N
   for(loc in locs) {
     refDataLoc = refData[[loc]] #keep a copy (assume correct structure already)
     if(!loc%in%names(refData)) refDataLoc = lapply(refData, function(x) x[[loc]]) #other structure
-    Glist[[loc]] = euroformix::calcGjoint(freq=popFreq[[loc]],nU=1,fst=fst[loc],refK=unlist(refDataLoc[refKnownIdxHd]),refR=unlist(refDataLoc[refRelIdx]),ibd=ibd)
+    freqAll = popFreq[[loc]] #get frequencies
+    
+    #Need to include missing alleles (avoid bug from v4.0.8):
+    alleles = c(unlist(refDataLoc[refKnownIdxHd]),unlist(refDataLoc[refRelIdx])) #get alleles
+    newA = alleles[!alleles%in%names(freqAll)] #new alleles
+    if(length(newA)>0) {
+      newA = setNames(rep(mlefitHd$model$minF,length(newA)),newA)
+      freqAll = c(freqAll,newA)
+    }
+    if(mlefitHd$model$normalize) freqAll = freqAll/sum(freqAll)
+    Glist[[loc]] = euroformix::calcGjoint(freq=freqAll,nU=1,fst=fst[loc],refK=unlist(refDataLoc[refKnownIdxHd]),refR=unlist(refDataLoc[refRelIdx]),ibd=ibd)
   } 
-  #NOTICe THE KNOWN REFERNCE GIVEN AS UNDER HD
-  
+  #NOTICE THE KNOWN REFERENCE(S) GIVEN AS UNDER HD  
   if(verbose) print(paste0("Calculating ",niter," LR values...")) 
   
   #Initiate PROGRESS BAR:

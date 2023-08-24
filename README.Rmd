@@ -1,15 +1,18 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE )
+```
+
 
 # EuroForMix <img src="man/figures/efmlogo.png" align="right" height=140/>
-
-Software for the interpretation of complex DNA profiles based on the
-information in peak heights. The model can take degradation and stutters
-into account.
+Software for the interpretation of complex DNA profiles based on the information in peak heights. The model can take degradation and stutters into account.
 
 ## Installation
-
 Installation for Windows: Open R (v4.2/v4.3) and write
-
-``` r
+```{r, eval = FALSE}
 install.packages('http://euroformix.com/sites/default/files/euroformix_4.0.8.zip',repos=NULL,type='win.binary')
 install.packages(c('gWidgets2tcltk','cubature','XML','curl','plotly'))
 
@@ -17,43 +20,36 @@ install.packages(c('gWidgets2tcltk','cubature','XML','curl','plotly'))
 library(euroformix);efm() 
 ```
 
-Also possible to download zip file from
-<https://github.com/oyvble/euroformix/releases> (compiled for Windows
-only)
+Also possible to download zip file from https://github.com/oyvble/euroformix/releases (compiled for Windows only)
 
-Alternative installation directly from source through GitHub (requires
-R-tools):
-
-``` r
+Alternative installation directly from source through GitHub (requires R-tools):
+```{r, eval = FALSE}
 install.packages("devtools")
 devtools::install_github("oyvble/euroformix")
 ```
 
-Info about suggested R-packages (all are optional to install):  
-- gWidgets2tcltk: Used for R GUI  
-- plotly: Used to vizualiaze DNA-profiles  
-- cubature: Used for numerical calculation of Bayes Factor  
-- XML/curl: Used to read allele frequencies from Strider population
-databases
+Info about suggested R-packages (all are optional to install):\
+- gWidgets2tcltk: Used for R GUI\
+- plotly: Used to vizualiaze DNA-profiles\
+- cubature: Used for numerical calculation of Bayes Factor\
+- XML/curl: Used to read allele frequencies from Strider population databases
 
 ## Open the GUI with data from manual (saved project)
-
 This will open the EuroForMix GUI with a tutorial project:
-
-``` r
+```{r, eval = FALSE}
 library(euroformix) #load package
 pkg = path.package("euroformix") #get package install folder
 proj = paste0(pkg,"/tutorialdata/EFM4proj_imported.Rdata") #obtain project file
-efm(proj)
+library(euroformix);efm(proj)
 ```
+
 
 ## Command line tutorial
 
 ### Part 1: Calculating MLE based LR
 
 #### Step 1: Import and visualize profiles
-
-``` r
+```{r}
 library(euroformix) #load package
 pkg = path.package("euroformix") #get package install folder
 
@@ -72,17 +68,18 @@ evidData = sample_tableToList(tableReader(evidfn))
 refData = sample_tableToList(tableReader(reffn))
 ```
 
-``` r
+```{r, fig.show='hide', eval=FALSE}
 plotEPG2(evidData,kit,refData) #Show in graphical interface
+
 ```
 
-#### Step 2: Specify hypotheses for interpretation
 
-Hypothesis sets: Ref3 as person of interest (POI)  
-Hp: Ref1 + ref3 + 1 unknown  
+#### Step 2: Specify hypotheses for interpretation
+Hypothesis sets: Ref3 as person of interest (POI) \
+Hp: Ref1 + ref3 + 1 unknown \
 Hd: Ref2 + 2 unknowns (all unrelated)
 
-``` r
+```{r}
 #Set up hypothesis (contributors)
 POIidx = 3 #index of POI (in refData)
 #Must construct a 'contribution vector' for each hypothesis:
@@ -91,19 +88,19 @@ condHd = c(1,0,0) #C1=Ref1
 knownRefhp = NULL #No known non-contributor reference under Hp
 knownRefhd = POIidx #known non-contributor reference under Hd
 NOC = 3 #assumed number of contributors
+
 ```
 
-#### Step 3: Model fit of Hp and Hd
+#### Step 3: Model fit of Hp and Hd 
+```{r}
 
-``` r
 #We keep degradation and back-stutter models on (default), but turns off forward stutter model:
 mleHp = calcMLE(NOC,evidData,popFreq,refData, condHp, knownRefhp, kit, FWS=FALSE) 
 mleHd = calcMLE(NOC,evidData,popFreq,refData, condHd, knownRefhd, kit, FWS=FALSE) 
 ```
 
 #### Step 4: Obtain calculated LR based on MLE
-
-``` r
+```{r,eval=FALSE}
 MLEresult = calcLRmle(mleHp,mleHd)
 LRmle = MLEresult$log10LR #get LR on log10 scale
 LRmleMarkers = MLEresult$log10LRmarker #get LR per markers
@@ -111,8 +108,7 @@ upperLR = MLEresult$log10LRupper #get theoretical upper LR
 ```
 
 #### Step 5: Perform model validation
-
-``` r
+```{r,fig.show='hide',eval=FALSE}
 validhp = validMLEmodel(mleHp,"Hp")
 validhd = validMLEmodel(mleHd,"Hd")
 nSignifHp = sum(validhp$Significant) #numbers outside envelope
@@ -120,30 +116,27 @@ nSignifHd = sum(validhp$Significant) #numbers outside envelope
 ```
 
 #### Step 6: Provide deconvolution
-
-``` r
+```{r,eval=FALSE}
 DCtableHp = deconvolve(mleHp)$table2 #top ranked genotypes (Hp)
 DCtableHd = deconvolve(mleHd)$table2 #top ranked genotypes (Hd)
 ```
 
 #### Step 7: Show model fit (expectation vs observations)
-
-``` r
+```{r,fig.show='hide',eval=FALSE}
 plotTopEPG2(mleHp)
 ```
 
 #### Step 8: Provide non-contributor simulations:
-
-``` r
+```{r,fig.show='hide',eval=FALSE}
 nTippets = 10 #this typically takes a while (depending on the number)
 tippets = calcTippet(POIidx,mleHp,mleHd,nTippets,seed = 1234) 
+
 ```
 
 ### Part 2: Calculating Bayesian based LR
 
 #### Step 9: Calculate conservative LR (and estimate Bayes Factor)
-
-``` r
+```{r,eval=FALSE}
 #obtain 10% quantile as 'conservative LR'
 mcmc = calcLRmcmc(mleHp,mleHd, 5000,quantile = 0.10,seed=1234)
 LRcons_mcmc = mcmc$log10LRcons #estimated conservative LR
@@ -155,11 +148,14 @@ mcmcExtended = calcLRmcmc(mleHp,mleHd, 5000,quantile = 0.10,seed=1234,,mcmcObjLi
 
 #### Step 10: Calculate Bayes Factor with numerical integration
 
-``` r
+```{r,eval=FALSE}
 #The following calculation would take some time
 int = calcLRint(mleHp,mleHd, reltol = 0.1, maxEval=20000)
 
 #Obtaining calculated LR with relative errors:
 LRbayes_int = int$log10LR 
 LRbayes_intError = int$log10LRerror
+
 ```
+
+

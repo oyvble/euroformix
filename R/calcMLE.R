@@ -45,7 +45,7 @@
 #' refData = sample_tableToList(tableReader(reffn)) #reference sample
 #' plotEPG2(samples,kit,refData,AT)
 #' condOrder = c(1,2,0) #assuming C1=ref1,C2=ref2
-#' mlefit = contLikMLE(3,samples,popFreq,refData,condOrder,kit=kit)
+#' mlefit = calcMLE(3,samples,popFreq,refData,condOrder,kit=kit)
 #' plotTopEPG2(mlefit)
 #' }
 
