@@ -169,6 +169,9 @@ class EFMmarker { //Each marker is treated separately
 			
 			int genotypePower = 1; //don't think about known contributors here
 			double genoProd = 1; //genotype probability
+			int UgindPrev=0; //used to store prevously unknown genotype
+			int aindR=0;
+			int bindR=0;
 			for(int k=0; k < m_NOU; k++) { //loop over all unknown contributors				
 				int Ugind = (gind/genotypePower) % m_NumGenos1p; // //get genotype for partifular contributor	
 				genotypePower *= m_NumGenos1p; //update genotype comb ready for next contributors
@@ -177,17 +180,23 @@ class EFMmarker { //Each marker is treated separately
 				
 				//Handle related individual (placed last)
 				int Rgind = -1; //genotype of related unknown
-				int aindR = 0;
-				int bindR = 0;
-				if(k==(m_NOU-1) && m_relGind > -1) { //check if last visited
-					Rgind = m_relGind; //copy
-					aindR = m_outG1allele(Rgind,0); 
-					bindR = m_outG1allele(Rgind,1); 
+				if(m_ibd[0]<0.999 && k==(m_NOU-1)) { //If relationship given and IF last unknown
+					if(m_relGind > -1) { //check if related individual was given (do as normal)
+						Rgind = m_relGind; //copy					
+						aindR = m_outG1allele(Rgind,0); 
+						bindR = m_outG1allele(Rgind,1); 
+					} else if(m_NOU>=2) { //otherwise we evaluate another type of relationship (requires at least 2 unknowns)
+						Rgind = UgindPrev; //set related genotype same as previous unknown genotype
+						aindR = m_outG1allele(Rgind,0); 
+						bindR = m_outG1allele(Rgind,1); 
+					}
 				}
+				
 				genoProd *= prob_relUnknown(aindU, bindU, Ugind, &(m_freqs[0]), m_fst, &(maTypedvec[0]), nTyped, aindR, bindR, Rgind, &(m_ibd[0]));				
 				maTypedvec[aindU] += 1; //update allele count (allele 1)
 				maTypedvec[bindU] += 1; //update allele count (allele 2)
-				nTyped += 2; //update total count				
+				nTyped += 2; //update total count
+				UgindPrev = Ugind; //store previous unknown genotype				
 			}
 			m_pGvec[gind] = log(genoProd); //store genotype-prob outcome
 			

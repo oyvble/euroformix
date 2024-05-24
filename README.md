@@ -10,7 +10,7 @@ into account.
 Installation for Windows: Open R (v4.2/v4.3) and write
 
 ``` r
-install.packages('http://euroformix.com/sites/default/files/euroformix_4.0.8.zip',repos=NULL,type='win.binary')
+install.packages('http://euroformix.com/sites/default/files/euroformix_4.0.9.zip',repos=NULL,type='win.binary')
 install.packages(c('gWidgets2tcltk','cubature','XML','curl','plotly'))
 
 #Run EuroForMix (GUI)

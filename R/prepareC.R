@@ -365,6 +365,9 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     #length(basepairLong)==sum(nAlleles)
   }
 
+  #Create a warning/note when there is a typed related
+  if(any(relGind>=0) && !all(relGind>=0)) warning("WARNING: Missing markers for the typed related should be deselected to avoid wrong LR!") 
+  
    #Prepare output
    c = list(nStutterModels=as.integer(nStutterModels),nMarkers=as.integer(nLocs),nAlleles=as.integer(nAlleles),
           startIndMarker_nAlleles=as.integer(startIndMarker_nAlleles),startIndMarker_nAllelesReps=as.integer(startIndMarker_nAllelesReps), 
@@ -380,7 +383,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
    c$useDEG=useDEG #check of whether to use DEG
    c$genoList=genoList #add genotype list
    c$refNamesCond = refNamesCond #add reference names that are conditoned on (correct order)
-   c$hasKinship = any(relGind>=0) #check if kinship were defined
+   c$hasKinship = ibd0[1]<1 #any(relGind>=0) #check if kinship were defined
    
    #Additional objects required for non-fast version (calcloglik_allcomb/calcloglik_cumprob)
    #Stutters: Only required stutter shifts are stored (in simlar from/to vectors)

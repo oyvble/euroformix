@@ -31,7 +31,7 @@ efm = function(envirfile=NULL) {
  spc <- 10
  
  #Strider link (can be customized in toolbar)
- striderlink = "https://strider.online/frequencies_xml/download" #"https://strider.online/frequencies/download"
+ striderlink = "https://strider.online/frequencies/xml" #"https://strider.online/frequencies_xml/download" #"https://strider.online/frequencies/download"
 
  #Marker specific setting names (objects)
  objnameMarkerSettings = c("threshv","pCv","lamv","fstv") #get object names for marker settings (optMarkerSetup)

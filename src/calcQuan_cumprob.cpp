@@ -172,6 +172,9 @@ void loglikGamma_cumprob(double *pvalVEC, double *maxY, int *nJointGenos, int *N
 					//jointGind = digits(iter, base = numGenos1p, pad = NOU); #Equivalent operaion					
 					double genoProd = 1.0; //calculating the genotype probability of the unknowns
 					int genotypePower = 1; 
+					int UgindPrev=0; //used to store prevously unknown genotype
+					int aindR = 0;
+					int bindR = 0;	
 					int genoidx; //genotype index
 					int allele_contr; //allele contribution (decided by genotype combinations)
 					for (k = 0; k < NOU; k++) { //for each unknown contributors (summing up wrt both contr (outG1contr) and mx (mixProp)): Need each contr to derive shapev
@@ -192,22 +195,27 @@ void loglikGamma_cumprob(double *pvalVEC, double *maxY, int *nJointGenos, int *N
 						//Ugind = genoidx; //SI_outG1allele0 + 2*genoidx; //obtain genotype index of unknown
 						int aindU = outG1allele[2*genoidx];
 						int bindU = outG1allele[2*genoidx+1];
-							
+													
 						//Handle related individual (placed last)
 						int Rgind = -1; //genotype of related unknown
-						int aindR = 0;
-						int bindR = 0;
-						if(k==(NOU-1) && kindRel > -1) { //check if last visited
-							Rgind = kindRel; //copy
-							aindR = outG1allele[2*Rgind ]; 
-							bindR = outG1allele[2*Rgind+1]; 
-						}
+						if(ibd[0]<0.999 && k==(NOU-1)) { //If relationship given and IF last unknown
+							if(kindRel > -1) { //check if related individual was given (do as normal)
+								Rgind = kindRel; //copy					
+								aindR = outG1allele[2*Rgind ]; 
+								bindR = outG1allele[2*Rgind+1]; 
+							} else if(NOU>=2) { //otherwise we evaluate another type of relationship (requires at least 2 unknowns)
+								Rgind = UgindPrev; //set related genotype same as previous unknown genotype
+								aindR = outG1allele[2*Rgind ]; 
+								bindR = outG1allele[2*Rgind+1]; 
+							}
+						}									
 						genoProd *= prob_relUnknown(aindU,bindU, genoidx, freqsLong + SI_nAlleles0, fst0,  &(maTypedvec2[0]), nTyped2,  aindR, bindR, Rgind, ibd );	 //Note: scale with 3 because ibdLong is a '3-long vector' per contributor						
 									
 						//LAST: UPDATE COUNTERS FOR ALLELES (a and b)
 						maTypedvec2[ outG1allele[2*genoidx  ] ] +=1; //update allele count for particular allele (1)
 						maTypedvec2[ outG1allele[2*genoidx+1] ] +=1; //update allele count for particular allele (2)					
-						nTyped2 += 2; //update total count						
+						nTyped2 += 2; //update total count	
+						UgindPrev = genoidx; //store previous unknown genotype								
 					} //end for each unknown contributor
 
 					//////////////////////////////////////////////
