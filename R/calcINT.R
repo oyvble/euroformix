@@ -102,7 +102,7 @@ calcINT = function(nC,samples,popFreq, lower=NULL, upper=NULL, refData=NULL, con
  #DERIVED RESTRICTION FOR MIXTURE PROPORTIONS:
  nK = sum(condOrder>0) #number of conditionals
  nU <- nC-nK #number of unknowns
- if(c$hasKinship && nU>1) nU=nU-1 #reduce number of unknowns by one if specified kinship
+ if(nU>1) nU = nU - as.integer(c$hasKinship) #reduce number of unknowns by one if specified kinship
  
  #Specify updated limits (takes symmetry of unknowns into account)
  if(nC==2 && nU==2) {

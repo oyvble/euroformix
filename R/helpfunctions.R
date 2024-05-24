@@ -48,14 +48,19 @@
 }
 
 #Helpfunction to draw "good" randoms start points (good guess)
-.paramrandomizer = function(th0,NOC,modTypes,delta,ncond=0,hasKinship=FALSE,verbose=FALSE) { 
+.paramrandomizer = function(th0,NOC,modTypes,delta,ncond=0,hasKinship=0,verbose=FALSE) { 
   .logit = function(x) log(x/(1-x))
   mxrnd = rgamma(NOC,1) #Draw simplex (flat)
   mxrnd = mxrnd/sum(mxrnd)
-  if( (NOC-ncond)>1) { #sort if more than 1 unknown
-    ind = (ncond+1):NOC #sort Mix-prop for the unknowns 
-    if(hasKinship) ind = ind[-length(ind)] #remove index of last unknown (last element)
-    if(length(ind)>1) mxrnd[ind] = sort(mxrnd[ind],decreasing = TRUE) #sort Mx in decreasing order if at least 2
+  nU = NOC-ncond
+  if( nU>1) { #sort if more than 1 unknown
+    indSort = (ncond+1):NOC #indicate indices to sort Mix-prop for the unknowns 
+    if(as.integer(hasKinship)>0) { #we need to shorten which indices that are sorted
+      rmRange = length(indSort) #remove last contributor (this is an unknown related)
+      if(nU > 2 && as.integer(hasKinship)==2) rmRange = rmRange - 1:0 #also remove second last (this is also unrelated if hasKinship=2)  
+      indSort = indSort[-rmRange] #remove index of last unknown (last element)
+    }
+    if(length(indSort)>1) mxrnd[indSort] = sort(mxrnd[indSort],decreasing = TRUE) #sort Mx in decreasing order if at least 2
   }
 
   #convert Mx values to real domain (nu:

@@ -383,8 +383,8 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
    c$useDEG=useDEG #check of whether to use DEG
    c$genoList=genoList #add genotype list
    c$refNamesCond = refNamesCond #add reference names that are conditoned on (correct order)
-   c$hasKinship = ibd0[1]<1 #any(relGind>=0) #check if kinship were defined
-   
+   c$hasKinship = as.integer(any(relGind>=0)) #check if kinship were defined
+   if(c$hasKinship==0 && ibd0[1]<1) c$hasKinship = as.integer(2) #set as model variant 2
    #Additional objects required for non-fast version (calcloglik_allcomb/calcloglik_cumprob)
    #Stutters: Only required stutter shifts are stored (in simlar from/to vectors)
    c$nStutters <- rep(0L,nLocs) #init as zero
