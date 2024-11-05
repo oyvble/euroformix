@@ -81,6 +81,13 @@ EuroForMix v4.1.0 (Release date: 2024-11-05)
  - Fixed bug: Only for v4.0 (not earlier).
 	- AMEL was wrongly calculated when using a stutter model: Fixed in (EFMfastengine.cpp) by applying NumStutterModelsMAX to m_possibleContributionsPerContributor.
 
+EuroForMix v4.0.9 (Release date: 2024-05-24)
+=============================================
+ - Changed STRIDER-path to "https://strider.online/frequencies/xml"
+ - For relationship calculations:
+    - Require that all markers are typed for a related reference (throws a warning if not)
+	- Introduction of new relationship model: If ibd is given but no related reference index is given, the last two unknowns will be assumed specified relationship.
+
 EuroForMix v4.0.8 (Release date: 2023-08-21)
 =============================================
  - Fixed bug with non-contributor test, occuring when having rare alleles of known non-contributors under Hd.
