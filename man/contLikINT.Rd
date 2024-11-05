@@ -15,7 +15,7 @@ contLikINT(
   knownRef = NULL,
   xi = NULL,
   prC = 0,
-  reltol = 0.01,
+  reltol = 1,
   threshT = 50,
   fst = 0,
   lambda = 0,
@@ -52,7 +52,7 @@ contLikINT(
 
 \item{prC}{A numeric for allele drop-in probability. Default is 0.}
 
-\item{reltol}{Required relative tolerance error of evaluations in integration routine. Default is 0.001.}
+\item{reltol}{Required relative tolerance error of evaluations in integration routine.}
 
 \item{threshT}{The detection threshold given. Used when considering probability of allele drop-outs.}
 

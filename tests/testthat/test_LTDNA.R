@@ -1,8 +1,6 @@
 #Testing of whether the numerical calculation of loglik (maximum likelihood approach) is correct
 #BOTH QUALITATIVE AND QUANTITATIVE MODEL IS TESTED
-
 #library(euroformix);library(testthat)
-#rm(list=ls());
 
 kit0 = "ESX17" #name of selected kit
 s0 = 3 #signif
@@ -35,7 +33,12 @@ condhd = c(1,2,0)
 knownRef = 3
 
 test_that("Calculating quantitative model (1 rep):", {
-  likhp = calcMLE(nC=NOC,samples=dat1$samples,popFreq=dat1$popFreq,refData=dat1$refData,condOrder=condhp,AT=ATv,pC=pCv,fst=fstv,lambda = lamv ,kit=kit0, DEG = TRUE,BWS = FALSE, FWS=FALSE)$fit$loglik
+#  nC=NOC;samples=dat1$samples;popFreq=dat1$popFreq;refData=dat1$refData;condOrder=condhp;AT=ATv;pC=pCv;fst=fstv;lambda = lamv ;kit=kit0; DEG = TRUE;BWS = FALSE; FWS=FALSE
+  mlefit = calcMLE(nC=NOC,samples=dat1$samples,popFreq=dat1$popFreq,refData=dat1$refData,condOrder=condhp,AT=ATv,pC=pCv,fst=fstv,lambda = lamv ,kit=kit0, DEG = TRUE,BWS = FALSE, FWS=FALSE)
+  #Check DC
+  DC = deconvolve(mlefit)
+  
+  likhp = mlefit$fit$loglik
   likhd = calcMLE(nC=NOC,samples=dat1$samples,popFreq=dat1$popFreq,refData=dat1$refData,condOrder=condhd,AT=ATv,pC=pCv,fst=fstv,lambda = lamv ,kit=kit0, DEG = TRUE,BWS = FALSE, FWS=FALSE, knownRef = knownRef)$fit$loglik
   LR = (likhp-likhd)/log(10)
   expect(round(likhp,s0),-245.016)

@@ -2,9 +2,9 @@
 #' @author Oyvind Bleka
 #' @description EPG data visualizer (interactive)
 #' @details Plots peak height with corresponding allele for sample(s) for a given kit.
-#' @param mixData List of mixData[[ss]][[loc]] =list(adata,hdata), with samplenames ss, loci names loc, allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
+#' @param mixData List object of [[sampleName]][[locus]] =list(adata,hdata), Allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
 #' @param kit Short name of kit: See supported kits with getKit()
-#' @param refData List of refData[[rr]][[loc]] or refData[[loc]][[rr]] to label references (flexible). Visualizer will show dropout alleles. 
+#' @param refData List of refData[[reference]][[locus]] or refData[[locus]][[reference]] to label references (flexible). Visualizer will show dropout alleles. 
 #' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param dyeYmax Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)

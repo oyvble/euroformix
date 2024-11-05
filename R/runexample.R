@@ -21,7 +21,8 @@
 #' @param seed Seed used in contLikMLE/contLikMCMC)
 #' @param nDone Number of required optimizations in contLikMLE 
 #' @param mcmcIter Number of iterations used in contLikMCMC
-#' @param mcmcDelta Scaling of variance used for proposal in contLikMCMC (calibrated based on mcmc$accrat object)
+#' @param nTippets Number of iterations used for non-contributor/tippet analysis 
+#' Scaling of variance used for proposal in contLikMCMC (calibrated based on mcmc$accrat object)
 #' @param verbose Boolean whether printing data (EPG) and progress
 #' @return A list with calculated result elements
 #' @examples
@@ -40,7 +41,7 @@
 #library(euroformix);NOC=2;POIind=1;condInd=2;modelDegrad=TRUE;modelBWstutt=TRUE;modelFWstutt=FALSE;verbose=FALSE
 #kit = "ESX17";popfn = paste(path.package("euroformix"),"FreqDatabases",paste0(kit,"_Norway.csv"),sep=.Platform$file.sep);evidfn = paste(path.package("euroformix"),"examples",paste0(kit,"_3p.csv"),sep=.Platform$file.sep);reffn = paste(path.package("euroformix"),"examples",paste0(kit,"_refs.csv"),sep=.Platform$file.sep);
 #fst=0.01;lambda=0.01;prC=0.05;threshT=50;alpha=0.01;minF=NULL;normalize=TRUE;seed=1;nDone=2;mcmcIter=500;mcmcDelta=2;intRelTol=0.1;intMaxEval=1000;findOptimalModel=FALSE
-runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE,findOptimalModel=TRUE,fst=0.01,lambda=0.01,prC=0.05,threshT=50,alpha=0.01,seed=1,nDone=2,mcmcIter=500,mcmcDelta=2,verbose=TRUE) { 
+runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE,findOptimalModel=TRUE,fst=0.01,lambda=0.01,prC=0.05,threshT=50,alpha=0.01,seed=1,nDone=2,mcmcIter=1000,nTippets=10,verbose=TRUE) { 
   LUSsymbol = "_" #LUS symbold
   if(modelDegrad && is.null(kit)) stop("Please specify a valid kit to model degradation")  
   
@@ -122,8 +123,8 @@ runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, mod
   
   #C: Deconvolution:
   if(verbose) print("Performing Deconvolution...")
-  DChp = deconvolve(mlefit=mlehp)
-  DChd = deconvolve(mlefit=mlehd)
+  DChp = deconvolve(mlehp)
+  DChd = deconvolve(mlehd)
 #  DChd$table2
   
   #D: Show expected PHs with data:
@@ -138,26 +139,24 @@ runexample = function(NOC,popfn,evidfn,reffn,POIind=1,condInd=NULL,kit=NULL, mod
   }
   
   #E: Perform MCMC based inference:
-  mcmcobj = calcLRmcmc(mlehp,mlehd,niter = 1000)
+  mcmcobj = calcLRmcmc(mlehp,mlehd,niter = mcmcIter)
   LRmcmcBayes = mcmcobj$log10LRbayes
   LRcons = mcmcobj$log10LRcons
   
+  #mcmchp = contLikMCMC(mlehp, delta=mcmcobj$delta,niter=mcmcIter)
+  #validMCMC(mcmchp) #diagnostic of mcmc 
+  
   #F: Perform Integral based inference:
   #mlefitHp=mlehp;mlefitHd=mlehd;
-  LRintBayes = calcLRint(mlehp,mlehd,reltol=0.01,dev = 2,verbose = TRUE)
+  LRintBayes = calcLRint(mlehp,mlehd,verbose = TRUE)
   
   #LRintBayes$calcHp
   #LRintBayes$calcHd
   LRint = LRintBayes$log10LR #obtain integration based LR
   
-  #G: Perform MCMC on model params under Hp:
-  mcmchp = contLikMCMC(mlehp, delta=mcmcobj$delta,niter=1000)
-  validMCMC(mcmchp) #diagnostic of mcmc 
-
-  #Calculate non-contributors (CAREFUL WITH NUMBER)
-  nTippets = 10
+  #G: Calculate non-contributors (CAREFUL WITH NUMBER)
   tippets = calcTippet(POIind,mlehp,mlehd,nTippets) #MLE is default
 
-  return( list(LRmle=LRmle,LRcons=LRcons,LRint=LRint,LRmarg=LRmcmcBayes,DChp=DChp$table2,DChd=DChd$table2,validhp=validhp,validhd=validhd,LRmarker = LRmarker,modelSelTable=modelSelTable) )
+  return( list(LRmle=LRmle,LRcons=LRcons,LRint=LRint,LRmarg=LRmcmcBayes,DChp=DChp$table2,DChd=DChd$table2,validhp=validhp,validhd=validhd,LRmarker = LRmarker,modelSelTable=modelSelTable, tippets=tippets) )
     
 }

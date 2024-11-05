@@ -14,7 +14,7 @@ validMLEmodel(
 )
 }
 \arguments{
-\item{mlefit}{Fitted object using contLikMLE}
+\item{mlefit}{Fitted object using calcMLE/contLikMLE}
 
 \item{kit}{This is no longer used.}
 

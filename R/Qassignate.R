@@ -4,7 +4,7 @@
 #' @details Assigns non-shown alleles as one single allele (the Q-allele).
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
 #' @param popFreq A list of allele frequencies for a given population.
-#' @param refData Reference objects with list element [[s]]$adata[[i]]. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.
+#' @param refData Reference objects with list element [[locus]][[reference]]$adata. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.
 #' @param doQ Whether to Q-designate or not
 #' @param incR Whether to include reference-alleles in the Q-assignation 
 #' @param incS Whether to include potential BW stutters in the Q-assignation 

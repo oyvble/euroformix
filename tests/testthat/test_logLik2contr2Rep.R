@@ -110,14 +110,14 @@ test_that("check maximum likelihood Hd (sibling of minor):", {
   
   #Check param and loglik values:
   #paste0(round(thhat,s0),collapse = ",")
-  expect(round(thhat,s0),c(0.782,0.218,794.674,0.152,0.746,0.119,0.051) )
+  expect(round(thhat,s0),c(0.782,0.218,794.669,0.152,0.746,0.119,0.051) )
   expect(round(mle$fit$loglik,s0),-337.189) 
   
   #CHECK Cumulative probs    
   #paste0(round(valid$ProbObs,s0),collapse = ",")
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
   #valid2 = getValidProbs(mle)
-  compareValid(valid$ProbObs,c(0.812,0.213,0.652,0.287,0.925,0.81,0.178,0.019,0.253,0.109,0.062,0.195,0.606,0.373,0.991,0.939,0.689,0.963,0.322,0.097,0.768,0.495,0.402,0.166,0.503,0.111,0.842,0.929,0.295,0.27,0.659,0.346,0.884,0.036,0.094,0.589,0.686,0.02,0.964,0.575,0.466,0.661,0.886,0.671,0.183,0.264,0.753,0.985,0.366,0.727,0.565,0.94,0.791,0.548,0.576,0.371,0.597))
+  compareValid(valid$ProbObs,c(0.812,0.213,0.652,0.287,0.925,0.81,0.178,0.019,0.253,0.109,0.062,0.195,0.606,0.373,0.991,0.939,0.689,0.963,0.322,0.097,0.768,0.495,0.402,0.166,0.503,0.111,0.842,0.929,0.295,0.27,0.659,0.346,0.884,0.036,0.094,0.589,0.686,0.02,0.964,0.575,0.466,0.661,0.886,0.671,0.183,0.264,0.753,0.985,0.367,0.727,0.565,0.94,0.791,0.548,0.576,0.371,0.597))
   
   #CHECK deconvolution (DC):
   DC = deconvolve(mle)
@@ -145,8 +145,8 @@ test_that("check maximum likelihood Hd (sibling of major):", {
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:
-  #paste0(round(thhat,s0),collapse = ",")
-  expect(round(thhat,s0),c(0.237,0.763,796.756,0.148,0.739,0.119,0.051) )
+# paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c(0.237,0.763,796.757,0.148,0.739,0.119,0.051) )
   expect(round(mle$fit$loglik,s0),-358.273) 
   
   #CHECK Cumulative probs    

@@ -1,7 +1,7 @@
 #' @title calcRMPfst
 #' @author Oyvind Bleka
 #' @description A helpfunction for calculating the random match probability for a person of interest (given fst)
-#' @param dat A object retured from getData function
+#' @param dat A list with refData and popFreq objects (also retured from prepareData function)
 #' @param POIind Index of the references being Person of interest (POI)
 #' @param condInd Index of conditional references 
 #' @param fst The co-ancestry coefficient (theta-correction). Can be a vector (must contain the marker names)

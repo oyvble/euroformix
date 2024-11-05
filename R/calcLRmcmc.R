@@ -1,9 +1,9 @@
 #' @title calcLRmcmc
 #' @author Oyvind Bleka
 #' @description A function for calculating LR from MCMC simulations
-#' @details Returns a conservative (quantile) LR or a Full Bayesian based LR
-#' @param mlefitHp A fitted object returned from contLikMLE (under Hp)
-#' @param mlefitHd A fitted object returned from contLikMLE (under Hd)
+#' @details Returns a conservative (quantile) LR or an estimated Bayesian Factor
+#' @param mlefitHp A fitted object returned from calcMLE (under Hp)
+#' @param mlefitHd A fitted object returned from calcMLE (under Hd)
 #' @param niter Number of samples in the MCMC-sampling.
 #' @param delta A numerical parameter to scale with the covariance function Sigma. Default is 2. Will be tuned automtically.
 #' @param quantile The quantile used to report conservative LR 
@@ -11,7 +11,7 @@
 #' @param accRate aimed acceptance rate
 #' @param accRateTol Difference tolerance regarding acceptance rate
 #' @param niterTune Number of samples for tuning delta in the MCMC-sampling.
-#' @param diffSeed Seed difference
+#' @param diffSeed Seed difference between Hp and Hd
 #' @param verbose Whether progress should be printed
 #' @param traceplot Whether to add a traceplot with 95\% CI
 #' @param mcmcObjList A list with hp/hd earlier run with contLikMCMC output
@@ -19,6 +19,7 @@
 #' @export
 
 #niter=5000;delta=2;quantile=0.05;seed=NULL; accRate=0.25;accRateTol=0.1; niterTune=200; diffSeed=999; verbose=TRUE; traceplot=TRUE;mcmcObjList=NULL
+#mlefitHp=mleHp ;mlefitHd=mleHd
 calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=NULL, accRate=0.25,accRateTol=0.1, niterTune=200, diffSeed=999, verbose=TRUE, traceplot=TRUE, mcmcObjList=NULL) {
   #PERFORM CALIBRATING OF DELTA BEFORE RUNNING ALL SAMPLE
   #Tweak delta to find  suitable acceptance rate:
@@ -31,7 +32,7 @@ calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=N
       if(verbose) print(paste0("Check with delta=",delta))
       hpmcmc <- contLikMCMC(mlefitHp,niter=niterTune,delta=delta, verbose=verbose)
       acc0 = hpmcmc$accrat #obtain acceptance rate
-      if(verbose) print(paste0("Acceptance rate=",acc0))
+      if(verbose) print(paste0("Acceptance rate=",signif(acc0,2)))
       if( abs(acc0-accRate)<accRateTol) break
       
       if(acc0==0) {
@@ -41,7 +42,7 @@ calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=N
       }
       delta = delta*scaleAcc #update delta
     }
-    if(verbose) print(paste0("Tuned delta=",delta))
+    if(verbose) print(paste0("Tuned delta=",round(delta,2)))
   }
   gfun = function(x) quantile(x,quantile) #this is function to obtain result from
 
@@ -49,13 +50,13 @@ calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=N
   hpmcmc <- contLikMCMC(mlefitHp,niter=niter,delta=delta,seed=seed,mcmcObj=mcmcObjList$hp, verbose=verbose)
   
   if(verbose) {
-    print(paste0("Estimated integral: logLik=",hpmcmc$logmargL))
+    print(paste0("Estimated integral: logLik=",round(hpmcmc$logmargL,2)))
     print("Sampling under Hd...")
   }
   seed2 = seed + diffSeed #same seed diff as in EFM
   if(length(seed2)==0) seed2 = NULL
   hdmcmc <- contLikMCMC(mlefitHd,niter=niter,delta=delta,seed=seed2,mcmcObj=mcmcObjList$hd, verbose=verbose) 
-  if(verbose) print(paste0("Estimated integral: logLik=",hdmcmc$logmargL))
+  if(verbose) print(paste0("Estimated integral: logLik=",round(hdmcmc$logmargL,2)))
   delta = hdmcmc$delta #be sure that latest delta is the one tuned.
   
   #Post-evaluation:
@@ -85,13 +86,15 @@ calcLRmcmc = function(mlefitHp, mlefitHd,niter=2000,delta=2,quantile=0.05,seed=N
     if(verbose) print("Creating traceplot...")
     
     #obtain trace of Bayes Factor
-    margLogLik = function(mcmc) {
+    margLogLikTrace = function(mcmc) {
       logVals = mcmc$logpX - mcmc$postlogL #this is logged values intended to be "exped"
       offset = mcmc$offset
-      return( log(seq_along(logVals)) - offset - log(cumsum(exp(logVals-offset)))) #estimated marginal likelihood (logged)
+      trace = log(seq_along(logVals)) - offset - log(cumsum(exp(logVals-offset)))
+      trace = trace + mcmc$logCombAdjFactor #adjust for combinatorial factor
+      return(trace) #estimated marginal likelihood (logged)
     }
-    BayesFactorTrace =  (margLogLik(hpmcmc) - margLogLik(hdmcmc))/log(10)
-    #plot(1:length(BayesFactorTrace),BayesFactorTrace,ty="l")
+    BayesFactorTrace =  (margLogLikTrace(hpmcmc) - margLogLikTrace(hdmcmc))/log(10)
+    #plot(1:length(BayesFactorTrace),BayesFactorTrace,ty="l");abline(h=log10(LRbayes))
     
     niterTrace1 = floor(seq(min(niter,500),niter,l=100)) #used to show smoothed trace
     niterTrace2 = floor(seq(min(niter,1000),niter,l=10)) #used to show 95% CI (less places)

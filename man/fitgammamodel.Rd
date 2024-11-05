@@ -13,7 +13,7 @@ fitgammamodel(
   alpha = 0.05,
   offset = 125,
   scale = 100,
-  restrictDeg = TRUE
+  restrictDeg = FALSE
 )
 }
 \arguments{

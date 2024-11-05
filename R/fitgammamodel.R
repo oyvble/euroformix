@@ -22,7 +22,7 @@
 #' fitgammamodel(y,x,plott=TRUE,alpha=0.05)
 #'}
 
-fitgammamodel <- function(y,x=NULL,niter=10,delta=1,plott=FALSE,alpha=0.05,offset=125,scale=100, restrictDeg=TRUE) {
+fitgammamodel <- function(y,x=NULL,niter=10,delta=1,plott=FALSE,alpha=0.05,offset=125,scale=100, restrictDeg=FALSE) {
    DEG = TRUE #degradation used by default
    if(is.null(x) || any(is.na(x))) DEG=FALSE #degradation set to FALSE if x not given or any is NA
    isOK = !is.na(y) #get non-NA values

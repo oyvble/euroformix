@@ -15,9 +15,9 @@ plotTopEPG2(
 )
 }
 \arguments{
-\item{MLEobj}{An object returned from contLikMLE}
+\item{MLEobj}{An object returned from calcMLE/contLikMLE}
 
-\item{DCobj}{An object returned from devonvolve: Must be run with same object as MLEobj}
+\item{DCobj}{An object returned from deconvolve: Must be run with same object as MLEobj}
 
 \item{kit}{Short name of kit: See supported kits with getKit(). Argument ignored if degradation model used.}
 

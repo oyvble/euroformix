@@ -7,10 +7,13 @@
 #' @param acf Whether showing autocorrelation function of samples.
 #' @export
 
-#trace=TRUE;acf=TRUE
+#mcmcfit=mcmc;trace=TRUE;acf=TRUE
 validMCMC <- function(mcmcfit,trace=TRUE,acf=TRUE) {
   MLEv = mcmcfit$MLE #vector with MLE values
-  SDv = sqrt(diag(mcmcfit$Sigma)) #vector with SD values
+  suppressWarnings({
+    SDv = sqrt(diag(mcmcfit$Sigma)) #vector with SD values
+    SDv[is.nan(SDv)] = 0
+  })
   useVars = SDv>0
   #plot(mcmcfit$postlogL,ty="l")
   p <- sum(useVars) #number of parameters to show

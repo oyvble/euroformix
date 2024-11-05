@@ -2,8 +2,8 @@
 #' @author Oyvind Bleka
 #' @description MPS data visualizer (interactive)
 #' @details Plots the expected peak heights of the top genotypes. The peak heights for corresponding alleles (one sample) are superimposed.
-#' @param MLEobj An object returned from contLikMLE
-#' @param DCobj An object returned from devonvolve: Must be run with same object as MLEobj
+#' @param MLEobj An object returned from calcMLE/contLikMLE
+#' @param DCobj An object returned from deconvolve: Must be run with same object as MLEobj
 #' @param grpsymbol A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.
 #' @param locYmax Whether Y-axis should be same for all markers (FALSE) or not (TRUE this is default)
 #' @param options A list of possible plot configurations. See comments below
@@ -22,141 +22,21 @@ plotTopMPS2 = function(MLEobj,DCobj=NULL,grpsymbol="_",locYmax=TRUE,options=NULL
   if(is.null(options$ymaxscale)) { ymaxscale = 1.06 } else { ymaxscale = options$ymaxscale } #y-axis scaling to the locus name positions
   if(is.null(options$grptype)) { grptype="group" } else { grptype = options$grptype }#,"stack" "group" is default 
   Qallele = "99"
-  c = MLEobj$prepareC #obtain C-preparation object
-  
-  #extract info from DC (deconvolution) object
-  if(is.null(DCobj)) DCobj <- deconvolve(MLEobj,maxlist=1) #get top candidate profiles
-  topGmat <- sapply(DCobj$rankGi,function(x) x[1,-ncol(x),drop=F])
-  if(is.null(nrow(topGmat))) topGmat <- t(topGmat) #consider as matrix
-  pG <- as.numeric(sapply(DCobj$rankGi,function(x) x[1,ncol(x)])) #probabilities
-  names(pG) = toupper(names(DCobj$rankGi)) #assign loci names
-  
-  #obtain estimates:
-  AT = MLEobj$model$threshT #extract analytical threholds from object
-  thhat <- MLEobj$fit$thetahat2 #get estimates
-  nC <- MLEobj$model$nC #number of contributors
-  mx <- thhat[1:nC]   
-  mu <- thhat[nC+1]   
-  sigma <- thhat[nC+2]   
-  beta <- 1
-  xiBW <- xiFW <- 0
-  if(MLEobj$model$DEG) beta <- thhat[nC+3]
-  if(MLEobj$model$BWS) xiBW <- thhat[nC+3 + as.integer(MLEobj$model$DEG) ]
-  if(MLEobj$model$FWS) xiFW <- thhat[nC+4 + as.integer(MLEobj$model$DEG) ] #need to assume BWS
   
   col0 = "#0000007F" #color of all peak heights (is gray colored)
   col1 = .getContrCols(0.3) #get contribution colors
+  mx = MLEobj$fit$thetahat2[grep("Mix",names(MLEobj$fit$thetahat2))]
   mxtxt = paste0("Contr.C",1:length(mx),"(",names(col1)[1:length(mx)],")=",signif(mx,3))
-  nReps = c$nReps #number of replicates
-  locsAll = c$markerNames #get locus names
-  sampleNames = c$repNames #obtain evidence names
-  refNames = c$refNamesCond #obtain reference name of conditionals
+  AT = MLEobj$model$AT
+  refNames = MLEobj$prepareC$refNamesCond #obtain reference name of conditionals
   nrefs = length(refNames)
-
-  #Obtain kit-info (used for degradation model)  
-  kitinfo = NULL
-  if(!is.null(MLEobj$model$kit)) {
-    kit = MLEobj$model$kit #NB: Use kit of degradation model if given (ignoring kit argument!)
-    kitinfo = euroformix::getKit(kit) #names(kitinfo)
-    if( is.na(kitinfo)[1] ) kitinfo = NULL
-  }
-
-  #Create dataset (per dye info with bp)
-  df = NULL #store data: (sample,marker,allele,height,bp)
-  for(locidx in seq_along(locsAll)) {
-#  locidx = 1
-    loc = locsAll[locidx]
-    
-    #Obtain allele/peak/fragmentLen details for marker:
-    genoNames = c$genoList[[loc]]
-    nAlleles = c$nAlleles[locidx] #number of alleles (not replicates)
-    nReps = c$nRepMarkers[locidx]
-    
-    offset_alleles = c$startIndMarker_nAlleles[locidx]
-    offset_allelesReps = c$startIndMarker_nAllelesReps[locidx]
-    alleles = c$alleleNames[offset_alleles + seq_len(nAlleles)] #obtain allele names
-    peaksAlleles = c$peaks[offset_allelesReps + seq_len(nAlleles*nReps)]
-    peaksAlleles = matrix(peaksAlleles,nrow=nReps,ncol=nAlleles)
-    bpAlleles = c$basepairs[offset_alleles + seq_len(nAlleles)]
-    
-    #Obtain genotypes to visualize
-    Gcontr = topGmat[,colnames(topGmat)==loc] #get genotypes
-    knownRefGeno = matrix("",ncol=2,nrow=nrefs)
-    if(nrefs>0) {
-      ginds = c$knownGind[nrefs*(locidx-1) + seq_len(nrefs)] + 1 #note adjust index
-      ins = which(ginds>0)
-      if(length(ins)>0) knownRefGeno[ins,] = genoNames[ginds[ins],,drop=FALSE] #insert if non-empty
-    }
-    
-    #ref text under each allele
-    reftxt = rep("",length(alleles))
-    for(rr in seq_len(nrefs)) { #for each ref
-      indadd = which(alleles%in%knownRefGeno[rr,]) #index of alleles to add to text
-      hasprevval = indadd[nchar(reftxt[indadd])>0] #indice to add backslash (sharing alleles)
-      reftxt[ hasprevval ] = paste0(reftxt[ hasprevval ],"/")      
-      reftxt[indadd] = paste0( reftxt[indadd], rr)
-    }
-    
-    #GET cumulative model information, EXPECTation (and std) of PH
-    EXPmat <- matrix(0,nrow=length(alleles),ncol=nC)
-    SHAPEvec <- rep(0,length(alleles)) 
-    for (aa in seq_along(alleles)) { # Loop over all alleles in locus
-      allele = alleles[aa]
-      contr <- sapply(strsplit(Gcontr,"/"),function(x) sum(x%in%allele)) #get contribution
-      EXPmat[aa,] <- cumsum(contr*mx*mu*beta^bpAlleles[aa]) #expected peak heights for each contributors
-      SHAPEvec[aa] <- sum(contr*mx)*beta^bpAlleles[aa]/sigma^2 #expected peak heights for each contributors
-    }
-    
-    nStutt = c$nStutters[locidx] #obtain number of stutters
-    if(withStutterModel && nStutt>0) {
-      stuttidx = c$startIndMarker_nStutters[locidx] + seq_len(nStutt) #get idx range
-      stuttFrom = c$stuttFromInd[stuttidx] + 1 #adjust index
-      stuttTo = c$stuttToInd[stuttidx] + 1  #adjust index
-      #stuttParamIdx = c$stuttParamInd[stuttidx]+1 #obtain parameter indx
-      stuttProp = c(xiBW,xiFW)[c$stuttParamInd[stuttidx]+1] #obtain stutter proportions
-      
-      #scale expectation and shape with stutter:
-      EXPmat2 = EXPmat
-      SHAPEvec2 = SHAPEvec
-      for(ss in seq_len(nStutt) ) {
-        from = stuttFrom[ss]
-        to = stuttTo[ss]
-        EXPmat2[from,] = EXPmat2[from,] - stuttProp[ss]*EXPmat[from,] #SUBTRACTED stutters
-        SHAPEvec2[from] = SHAPEvec2[from] - stuttProp[ss]*SHAPEvec[from]  
-        if( to <= length(alleles)) {
-          EXPmat2[to,] = EXPmat2[to,] + stuttProp[ss]*EXPmat[from,] #OBTAINED stutters
-          SHAPEvec2[to] = SHAPEvec2[to] + stuttProp[ss]*SHAPEvec[from]  
-        }   
-      }
-      EXPmat = EXPmat2 #override with stutter products
-      SHAPEvec = SHAPEvec2
-    }
-    PIlow = qgamma(0.025, shape=SHAPEvec, scale=mu*sigma^2)
-    PIup = qgamma(0.975, shape=SHAPEvec, scale=mu*sigma^2)
-    EXP <- apply(EXPmat,1,function(x) paste0(x,collapse = "/"))
-    
-    #SPECIAL HANDLING FOR MPS (use group symbol to extract)
-    splitlist = strsplit(alleles,grpsymbol)  #split allele wrt split symbol
-    allelesCE = sapply(splitlist,function(x) x[1]) #extract RU allele
-    
-    #Store values in table (not Q-allele if not relevant)
-    Qidx = which(alleles%in%Qallele) #get index of Q-allele 
-    showQ =  reftxt[Qidx]!="" ||  SHAPEvec[Qidx]>0 #whether Q-allele should be included
-    if(!is.na(showQ) && !showQ) {
-      alleles = alleles[-Qidx]
-      allelesCE = allelesCE[-Qidx]
-      peaksAlleles = peaksAlleles[,-Qidx,drop=FALSE]
-      reftxt = reftxt[-Qidx] 
-      EXP = EXP[-Qidx] 
-      PIlow = PIlow[-Qidx]
-      PIup = PIup[-Qidx]
-    }
-    for(ss in seq_len(nReps)) {
-      df = rbind(df, cbind(sampleNames[ss],loc,alleles,allelesCE,peaksAlleles[ss,],reftxt,EXP,PIlow,PIup) )
-    }
-  } #end for each loci
-  df = data.frame(Sample=df[,1],Marker=df[,2],Allele=as.character(df[,3]),AlleleCE=as.character(df[,4]),Height=as.numeric(df[,5]),reftxt=df[,6],EXP=df[,7],PIlow=as.numeric(df[,8]),PIup=as.numeric(df[,9]),stringsAsFactors=FALSE)
   
+  #Obtain expected contribution based on model
+  df = .getDataToPlotProfile(MLEobj,DCobj,kit=NULL,withStutterModel,grpsymbol=grpsymbol)
+  sampleNames = unique(df$Sample)
+  nReps = length(sampleNames)
+  locsAll = unique(df$Marker)
+
   #CREATE PLOTS
   #colnames(df)
   EYmax <- max(as.numeric(unlist( strsplit(df$EXP,"/") )))
@@ -234,10 +114,10 @@ plotTopMPS2 = function(MLEobj,DCobj=NULL,grpsymbol="_",locYmax=TRUE,options=NULL
       
       #Add threshold lines to shapes
       if(locYmax)  ymax1 = ymaxscale*max( na.omit( c(minY,AT1,as.numeric(unlist(Ev)),dfs$Height) ))  #get max 
-
-      prob = pG[names(pG)==toupper(loc)]
-      if( length(prob)>0 ) {
-        markerCol = "black"
+      pGvec = dfs$genoProb
+      markerCol = "black" 
+      if( length(pGvec)>0 ) {
+        prob = min(as.numeric(pGvec)) #get smallest marginal prob
         if( prob>=.95 ) {
           markerCol = "forestgreen"
         } else if(prob>=.9) {
@@ -245,8 +125,9 @@ plotTopMPS2 = function(MLEobj,DCobj=NULL,grpsymbol="_",locYmax=TRUE,options=NULL
         } else {
           markerCol = "red"
         }
-        p = plotly::add_annotations(p, x=(AlleleCE_nunique-1)/2 ,y=ymax1,text=loc,showarrow=FALSE,font = list(color = markerCol,family = 'Gravitas One',size = locsize0))  #ADD LOCI NAME
       }
+      p = plotly::add_annotations(p, x=(AlleleCE_nunique-1)/2 ,y=ymax1,text=loc,showarrow=FALSE,font = list(color = markerCol,family = 'Gravitas One',size = locsize0))  #ADD LOCI NAME
+
       if(max(atxtL)<=5) p = plotly::add_annotations(p, x=xpos0 ,y=rep(0,AlleleCE_nunique),text=AlleleCE_unique ,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-10)  #ADD ALLELE NAMES
       #Rotate alleles if many alleles? Using tickangle: layout(xaxis=list(tickangle=-45))
       #p = plotly::add_annotations(p, x=(AlleleCE_nunique-1)/2 ,y=ymax1,text=loc,showarrow=FALSE,font = list(color = 1,family = 'Gravitas One',size = locsize0))  #ADD LOCI NAMES 

@@ -7,7 +7,7 @@
 plotLUS(mixData, sn = "", refData = NULL, threshT = 0, LUSsymbol = "_")
 }
 \arguments{
-\item{mixData}{List of adata- and hdata-elements. adata must be separated with LUSsymbol}
+\item{mixData}{List object of [[sampleName]][[locus]] =list(adata,hdata), Allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric)}
 
 \item{sn}{The Sample name, will be plotted in title.}
 

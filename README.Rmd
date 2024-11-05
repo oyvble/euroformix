@@ -11,10 +11,10 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE )
 Software for the interpretation of complex DNA profiles based on the information in peak heights. The model can take degradation and stutters into account.
 
 ## Installation
-Installation for Windows: Open R (v4.2/v4.3) and write
+Installation for Windows: Open R (v4.2 or newer) and write
 ```{r, eval = FALSE}
-install.packages('http://euroformix.com/sites/default/files/euroformix_4.0.9.zip',repos=NULL,type='win.binary')
-install.packages(c('gWidgets2tcltk','cubature','XML','curl','plotly'))
+install.packages('http://euroformix.com/sites/default/files/euroformix_4.1.0.zip',repos=NULL,type='win.binary')
+install.packages(c('numDeriv','gWidgets2tcltk','cubature','XML','curl','plotly'))
 
 #Run EuroForMix (GUI)
 library(euroformix);efm() 
@@ -150,7 +150,7 @@ mcmcExtended = calcLRmcmc(mleHp,mleHd, 5000,quantile = 0.10,seed=1234,,mcmcObjLi
 
 ```{r,eval=FALSE}
 #The following calculation would take some time
-int = calcLRint(mleHp,mleHd, reltol = 0.1, maxEval=20000)
+int = calcLRint(mleHp,mleHd)
 
 #Obtaining calculated LR with relative errors:
 LRbayes_int = int$log10LR 

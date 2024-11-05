@@ -16,7 +16,7 @@
 #' @param prC A numerical dropin probability (can be a vector with names giving the loci names). Default is 0. 
 #' @param lambda The rate parameter in the exponential distribution for simulating drop-in peak heights (can be a vector with names giving the loci names). Default is 0.
 #' @param beta The degradation slope parameter used for simulating degradation trend (requires valid kit to be specified). Default is 1.
-#' @param kit shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
+#' @param kit shortname of kit: "ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"
 #' @param stuttFW A numerical Forward stutter proportion (n+1). Default is 0.
 #' @return List with elements theta,samples,refData where theta is the true parameters of the model. samples is a list with samples which for each samples has locus-list elements with list elements adata and hdata
 #' @export

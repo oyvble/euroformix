@@ -7,14 +7,15 @@
 #' @return returned object from calcINT
 #' @export 
 
-getParamLimits = function(mlefit, dev=3) {
+getParamLimits = function(mlefit, dev=2) {
   th0 <- mlefit$fit$thetahat #estimate params
   Sigma0 <- mlefit$fit$thetaSigma #estimated covariance of param estimtates
   SE = sqrt(diag(Sigma0)) #obtain standard errors
+  if(any(is.na(SE))) stop("Cannot obtain parameter limits since the covariance matrix is not valid. Please optimize a model with less complexity.")
   lower = th0 - dev*2*SE
   upper = th0 + dev*2*SE
   lower[lower<0] = 0 #Restrict
-  scale = abs(mlefit$fit$loglik)
-  return(list(lower=lower,upper=upper,scale=scale,acc = NULL))
+  scale = mlefit$fit$loglik #dont take absolute value
+  return(list(lower=lower,upper=upper,scale=scale))
 } #end function
 

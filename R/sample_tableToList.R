@@ -1,7 +1,7 @@
 #' @title sample_tableToList
 #' @author Oyvind Bleka
-#' @description Converting table to list format (helpfunction)
-#' @param table A table with data (Evid or refs)
+#' @description Converting table to list format
+#' @param table A table with data (Evid or refs): A list on form [[name]][[locus]]
 #' @return outL A data list
 #' @export
 

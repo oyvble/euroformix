@@ -77,8 +77,8 @@ test_that("check maximum likelihood Hd (unrelated):", {
   expect(logLikv,logLikv2)
   
   #Check param and loglik values:
-  #paste0(round(thhat,s0),collapse = ",")
-  expect(round(thhat,s0),c( 1,921.887,0.099,0.771,0.104,0.051) )
+#paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c( 1,921.894,0.099,0.771,0.104,0.051) )
   expect(round(mle$fit$loglik,s0),-155.291) 
   
   #CHECK Cumulative probs    

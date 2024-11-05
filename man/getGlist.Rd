@@ -21,7 +21,7 @@ getGlist(popFreq, fst = 0, refKlist = NULL, refRlist = NULL, ibd = c(1, 0, 0))
 Glist A list with genotypes and genotype probabilities for each locus.
 }
 \description{
-getGlist Returns a list of genotypes with corresponding genotype probabilities for an unknown individual.
+Returns a list of genotypes with corresponding genotype probabilities for an unknown individual.
 }
 \details{
 The function returns the list of all possible observed genotypes for each marker. A wrapper of the function calcGjoint.

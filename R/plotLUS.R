@@ -2,7 +2,7 @@
 #' @author Oyvind Bleka
 #' @description A dataplotter for MPS data
 #' @details Plots peak height with corresponding allele variant for one sample
-#' @param mixData List of adata- and hdata-elements. adata must be separated with LUSsymbol
+#' @param mixData List object of [[sampleName]][[locus]] =list(adata,hdata), Allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
 #' @param sn The Sample name, will be plotted in title.
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @param refData Condition on a list$refname$locname$adata of reference alleles which are labeled in EPG

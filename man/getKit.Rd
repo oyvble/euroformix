@@ -9,7 +9,7 @@ getKit(kit = NULL, what = NA, fileName = "kit.txt", folderName = NULL)
 \arguments{
 \item{kit}{Short name of kit: See supported kits with getKit()}
 
-\item{what}{Options: {"Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}}
+\item{what}{Options: "Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}
 
 \item{fileName}{Name of kit file used to extract kitinformation}
 

@@ -21,7 +21,7 @@ Qassignate(
 
 \item{popFreq}{A list of allele frequencies for a given population.}
 
-\item{refData}{Reference objects with list element [[s]]$adata[[i]]. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.}
+\item{refData}{Reference objects with list element [[locus]][[reference]]$adata. The list element has reference-list with list-element 's' having a loci-list adata with list-element 'i storing qualitative data.}
 
 \item{doQ}{Whether to Q-designate or not}
 

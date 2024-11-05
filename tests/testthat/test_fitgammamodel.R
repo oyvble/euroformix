@@ -1,5 +1,5 @@
 #Testing that the numerical inference of gamma distribution is working
-#NEW VERSION FOR v3.4.0
+#NEW VERSION FOR v4.1.0
 #rm(list=ls());library(euroformix);library(testthat)
 
 #PART 1: beta < 1

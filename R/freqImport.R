@@ -1,6 +1,6 @@
 #' @title freqImport
 #' @author Oyvind Bleka
-#' @description FreqImport is a function to import allele frequencies directly from file(s) or URLs
+#' @description Imports allele frequencies directly from file(s) or URLs
 #' @details The function supports XML as input, directly from an URL or local file (for instance from the STRidER webpage).
 #' @param f The path of file(s) or an url. If file(s), then the url argument must be FALSE.
 #' @param url Whether f is pointing to an url or not. Default is FALSE.

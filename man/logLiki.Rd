@@ -7,7 +7,7 @@
 logLiki(mlefit, verbose = FALSE, maxThreads = 0)
 }
 \arguments{
-\item{mlefit}{Fitted object using contLikMLE}
+\item{mlefit}{Fitted object using calcMLE/contLikMLE}
 
 \item{verbose}{Whether printing deconvolution progress. Default is TRUE.}
 

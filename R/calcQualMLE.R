@@ -1,11 +1,10 @@
 #' @title calcQualMLE
 #' @author Oyvind Bleka
 #' @description Optimizing the likelihood function based on qualitative model (LRmix).
-#'
 #' @param nC Number of contributors in model. Must be a constant.
 #' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
 #' @param popFreq A list of allele frequencies for a given population.
-#' @param refData Reference objects with (2-size) allele-vector given in list element [[i]][[s]].
+#' @param refData Reference objects with (2-size) allele-vector given in list element [[locus]][[sample]].
 #' @param condOrder Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model. 
 #' @param knownRef Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.
 #' @param prC A numeric for allele drop-in probability. Can be a vector (must contain the marker names). Default is 0.

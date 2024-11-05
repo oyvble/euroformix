@@ -33,10 +33,10 @@ contLikMCMC(
 ret A list (logmargL,posttheta,postlogL,logpX,accrat) where logmargL is Marginalized likelihood, posttheta is the posterior samples, postlogL is log-likelihood values
 }
 \description{
-calcMCMC provides samples from the posterior distribution for the model.
+calcMCMC provides samples from the posterior distribution of the model parameters
 }
 \details{
-The procedure are doing MCMC to approximate the marginal probability over model parameters. 
+The procedure also uses the samples to approximate the marginal likelihood used for Bayes Factor 
 
 The Metropolis Hastings routine uses following proposal: Multivariate Normal distribution with mean 0 and covariance as delta multiplied with the inverse negative hessian with MLE inserted.
 Marginalized likelihood (Bayesian) is estimated using Metropolis Hastings with the "GD-method, Gelfand and Dey (1994).

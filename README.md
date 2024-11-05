@@ -7,11 +7,11 @@ into account.
 
 ## Installation
 
-Installation for Windows: Open R (v4.2/v4.3) and write
+Installation for Windows: Open R (v4.2 or newer) and write
 
 ``` r
-install.packages('http://euroformix.com/sites/default/files/euroformix_4.0.9.zip',repos=NULL,type='win.binary')
-install.packages(c('gWidgets2tcltk','cubature','XML','curl','plotly'))
+install.packages('http://euroformix.com/sites/default/files/euroformix_4.1.0.zip',repos=NULL,type='win.binary')
+install.packages(c('numDeriv','gWidgets2tcltk','cubature','XML','curl','plotly'))
 
 #Run EuroForMix (GUI)
 library(euroformix);efm() 
@@ -44,7 +44,7 @@ This will open the EuroForMix GUI with a tutorial project:
 library(euroformix) #load package
 pkg = path.package("euroformix") #get package install folder
 proj = paste0(pkg,"/tutorialdata/EFM4proj_imported.Rdata") #obtain project file
-efm(proj)
+library(euroformix);efm(proj)
 ```
 
 ## Command line tutorial
@@ -157,7 +157,7 @@ mcmcExtended = calcLRmcmc(mleHp,mleHd, 5000,quantile = 0.10,seed=1234,,mcmcObjLi
 
 ``` r
 #The following calculation would take some time
-int = calcLRint(mleHp,mleHd, reltol = 0.1, maxEval=20000)
+int = calcLRint(mleHp,mleHd)
 
 #Obtaining calculated LR with relative errors:
 LRbayes_int = int$log10LR 

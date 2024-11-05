@@ -1,7 +1,7 @@
 #Testing that the numerical calculation of loglik is correct
 #library(euroformix);library(testthat)
 seed0 = 1 #important to get reproducible results
-nDone0=3
+nDone0=5
 steptol0=1e-6
 s0 = 3 #signif of checking
 
@@ -37,14 +37,15 @@ test_that("check maximum likelihood Hp:", {
   expect(sum(logLikv),mle$fit$loglik)
   
   #Check param and loglik values:
-  #paste0(round(thhat,s0),collapse = ",")
-  expect(round(thhat,s0),c(0.762,0.238,1904.47,0.285,0.686,0.057) )
-  expect(round(mle$fit$loglik,s0),-399.678) 
+# paste0(round(thhat,s0),collapse = ",")
+#  expect(round(thhat,s0),c(0.762,0.238,1904.481,0.285,0.686,0.057) )
+  expect(round(thhat,s0),c(0.765,0.235,1870.515,0.288,0.696,0.057) )
+  expect(round(mle$fit$loglik,s0),-400.064) 
   
   #CHECK Cumulative probs    
-  #paste0(round(valid$ProbObs,s0),collapse = ",")
+# paste0(round(valid$ProbObs,s0),collapse = ",")
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
-  compareValid(valid$ProbObs,c(0.162,0.079,0.198,0.822,0.679,0.561,0.321,0.269,0.681,0.866,0.279,0.381,0.157,0.048,0.186,0.418,0.787,0.691,0.051,0.937,0.425,0.199,0.358,0.296,0.27,0.515,0.542,0.452,0.001,0.012,0.49,0.595,0.232,0.183,0.504,0.562,0.474,0.409,0.3,0.335,0.998,0.756,1,0.301,0.716,0.904,0.174,0.709,0.712,0.773,0.566,0.327,0.469,0.638))
+  compareValid(valid$ProbObs,c(0.271,0.13, 0.199,0.837,0.699,0.572,0.331,0.279,0.682,0.867,0.269,0.369,0.184,0.048,0.203,0.432,0.795,0.7,0.051,0.938,0.429,0.2,0.361,0.294,0.271,0.514,0.531,0.442,0.002,0.014,0.504,0.607,0.247,0.186,0.508,0.56,0.472,0.4,0.293,0.335,0.998,0.779,1,0.314,0.725,0.908,0.173,0.716,0.711,0.78,0.564,0.324,0.452,0.621))
 })
 
 test_that("check maximum likelihood Hd:", {
@@ -58,17 +59,17 @@ test_that("check maximum likelihood Hd:", {
   expect(sum(logLikv),mle$fit$loglik)
   
   #Check param and loglik values:
-  #paste0(round(thhat,s0),collapse = ",")
-  expect(round(thhat,s0),c(0.768,0.232,1927.452,0.305,0.676,0.061) )
-  expect(round(mle$fit$loglik,s0),-426.181) 
+# paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c(0.771,0.229,1874.725,0.312,0.692,0.061))
+  expect(round(mle$fit$loglik,s0),-426.993) 
   
   #CHECK Cumulative probs    
   #paste0(round(valid$ProbObs,s0),collapse = ",")
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
-  compareValid(valid$ProbObs,c(0.241,0.023,0.111,0.814,0.766,0.584,0.328,0.268,0.641,0.842,0.223,0.329,0.383,0.007,0.089,0.412,0.823,0.689,0.045,0.917,0.429,0.219,0.365,0.314,0.281,0.628,0.467,0.419,0.009,0.001,0.425,0.549,0.374,0.193,0.542,0.531,0.472,0.337,0.442,0.299,0.994,0.959,0.999,0.39,0.695,0.879,0.143,0.681,0.654,0.886,0.562,0.347,0.456,0.638))
+  compareValid(valid$ProbObs,c(0.4,0.059,0.113,0.839,0.79,0.597,0.339,0.285,0.644,0.845,0.213,0.315,0.445,0.008,0.114,0.435,0.83,0.699,0.045,0.921,0.432,0.221,0.368,0.313,0.28,0.624,0.454,0.406,0.015,0.002,0.452,0.566,0.401,0.196,0.545,0.53,0.471,0.326,0.429,0.299,0.995,0.963,0.999,0.402,0.71,0.885,0.143,0.693,0.655,0.887,0.56,0.341,0.433,0.615))
   
   #Calculate deconvolution (DC):
   DC = deconvolve(mle)
-  expect_equal(as.numeric(DC$table2[1,5]),c(0.6688))
+  expect_equal(as.numeric(DC$table2[1,5]),c(0.6499))
 })
 

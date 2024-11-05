@@ -1,6 +1,6 @@
 #' @title contLikSearch
 #' @author Oyvind Bleka
-#' @description contLikSearch search through the models which optimizes the likelihood function
+#' @description Searches through a set of model configurations which optimizes the likelihood function
 #'
 #' @param NOC #The vector of number of contributors to search
 #' @param modelDegrad Whether degradation should be modeled (requires kit to be specified): can be vector (FALSE,TRUE)

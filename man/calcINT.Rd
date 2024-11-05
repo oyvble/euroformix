@@ -5,101 +5,35 @@
 \title{calcINT}
 \usage{
 calcINT(
-  nC,
-  samples,
-  popFreq,
-  lower = NULL,
-  upper = NULL,
-  refData = NULL,
-  condOrder = NULL,
-  knownRef = NULL,
-  kit = NULL,
-  DEG = TRUE,
-  BWS = TRUE,
-  FWS = TRUE,
-  AT = 50,
-  pC = 0.05,
-  lambda = 0.01,
-  fst = 0,
-  knownRel = NULL,
-  ibd = NULL,
-  minF = NULL,
-  normalize = TRUE,
-  priorBWS = NULL,
-  priorFWS = NULL,
-  reltol = 0.001,
+  mlefit,
+  lower,
+  upper,
+  reltol = 1,
   scale = 0,
-  maxEval = 0,
-  verbose = FALSE,
-  maxThreads = 0,
-  adjQbp = FALSE
+  maxEval = 1000,
+  verbose = FALSE
 )
 }
 \arguments{
-\item{nC}{Number of contributors in model.}
-
-\item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
-
-\item{popFreq}{A list of allele frequencies for a given population.}
+\item{mlefit}{Fitted object using calcMLE}
 
 \item{lower}{Lower bounds of parameters. Must be in following order: mx1,..,mx_(nC-1),mu,sigma,beta,xi.}
 
 \item{upper}{Upper bounds of parameters. Must be in following order: mx1,..,mx_(nC-1),mu,sigma,beta,xi.}
 
-\item{refData}{Reference objects has locus-list element [[i]] with a list element 'r' which contains a 2 long vector with alleles for each references.}
+\item{reltol}{Required relative tolerance error of evaluations in integration routine.}
 
-\item{condOrder}{Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model.}
+\item{scale}{used to avoid underflow (should be the maximum likelihood value)}
 
-\item{knownRef}{Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.}
+\item{maxEval}{Maximum number of evaluations in the adaptIntegrate function.}
 
-\item{kit}{shortname of kit: Obtained from getKit()}
-
-\item{DEG}{Boolean of whether Degradation model should be used}
-
-\item{BWS}{Boolean of whether back-stutter model should be used}
-
-\item{FWS}{Boolean of whether for-stutter model should be used}
-
-\item{AT}{The analytical threshold given. Used when considering probability of allele drop-outs.}
-
-\item{pC}{A numeric for allele drop-in probability. Default is 0.}
-
-\item{lambda}{Parameter in modeled peak height shifted exponential model. Default is 0.}
-
-\item{fst}{is the coancestry coeffecient. Default is 0.}
-
-\item{knownRel}{gives the index of the reference which the 1st unknown is related to.}
-
-\item{ibd}{the identical by decent coefficients of the relationship (specifies the type of relationship)}
-
-\item{minF}{The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.}
-
-\item{normalize}{Whether normalization should be applied or not. Default is FALSE.}
-
-\item{priorBWS}{Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.}
-
-\item{priorFWS}{Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.}
-
-\item{reltol}{Required relative tolerance error of evaluations in integration routine. Default is 0.001.}
-
-\item{scale}{used to make integrale calculateable for small numbers. For scale!=0, integrale must be scaled afterwards with exp(-scale) to be correct.}
-
-\item{maxEval}{Maximum number of evaluations in the adaptIntegrate function. Default is 0 which gives an infinite limit.}
-
-\item{verbose}{Whether printing limits to integrate over. Printing progress if maxEval>0. Default is TRUE.}
-
-\item{maxThreads}{Maximum number of threads to be executed by the parallelization}
-
-\item{adjQbp}{Indicate whether fragmenth length of Q-allele is based on averaged weighted with frequencies}
+\item{verbose}{Whether printing limits to integrate over. Printing progress if maxEval>0}
 }
 \value{
-ret A list(margL,deviation,nEvals,scale) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
+ret A list(loglik,logdeviation,nEvals,scale) where loglik is Marginalized likelihood, logdeviation is the error-interval of loglik, nEvals is the total number of likelihood evaluations.
 }
 \description{
 Marginalizing the likelihood through numerical integration.
-}
-\details{
-The procedure does numerical integration to approximate the marginal probability over the model parameters.
 }
 \references{
 Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.

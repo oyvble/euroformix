@@ -30,6 +30,6 @@ likelihood value
 Implementation of the qualitative likelihood calculations
 }
 \details{
-Assumes that prD is a identical for all contributors. Otherwise running forensim::likEvid (or possibly other implementations)
+Assumes that prD is a identical for all contributors. Otherwise need to run forensim::likEvid (or possibly other implementations)
 From likEvid documentation: If there are two replicates, showing alleles 12,13, and 14 respectively, then evids should be given as c(12,13,0,14), where the 0 is used as a separator. An empty replicate is simply 0. For example, replicates (12,13) and and one empty replicate must be given as: c(12,14,0,0).
 }

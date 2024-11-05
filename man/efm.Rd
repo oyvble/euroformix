@@ -7,10 +7,10 @@
 efm(envirfile = NULL)
 }
 \arguments{
-\item{envirfile}{A Rdata file including a saved environment of a project}
+\item{envirfile}{A Rdata file including a saved environment of a project  (variable must be named mmTK)}
 }
 \description{
-efm (EuroForMix) is a GUI wrapper for euroformix
+efm is a GUI wrapper for EuroForMix
 }
 \details{
 The function is a graphical layer for the functions in the package euroformix. See ?euroformix for more information.

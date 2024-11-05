@@ -49,7 +49,7 @@ genDataset(
 
 \item{beta}{The degradation slope parameter used for simulating degradation trend (requires valid kit to be specified). Default is 1.}
 
-\item{kit}{shortname of kit: {"ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}}
+\item{kit}{shortname of kit: "ESX17","ESI17","ESI17Fast","ESX17Fast","Y23","Identifiler","NGM","ESSPlex","ESSplexSE","NGMSElect","SGMPlus","ESX16", "Fusion","GlobalFiler"}
 
 \item{stuttFW}{A numerical Forward stutter proportion (n+1). Default is 0.}
 }

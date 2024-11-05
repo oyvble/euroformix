@@ -44,8 +44,8 @@ test_that("check maximum likelihood Hp: No Stutter", {
   expect_equal(sum(logLikv),mle$fit$loglik)
   
   #Check param and loglik values:
-  #paste0(round(thhat,s0),collapse = ",")
-  expect(round(thhat,s0),c(0.695,0.219,0.087,1082.381,0.46,0.781) )
+# paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c(0.695,0.219,0.087,1082.382,0.46,0.781) )
   expect(round(mle$fit$loglik,s0),-946.952) 
   
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
@@ -65,8 +65,8 @@ test_that("check maximum likelihood Hd (unrelated): No Stutter", {
   expect_equal(sum(logLikv),mle$fit$loglik)
   
   #Check param and loglik values:
-  #paste0(round(thhat,s0),collapse = ",")
-  expect(round(thhat,s0),c(0.713,0.105,0.182,1107.704,0.462,0.778) )
+# paste0(round(thhat,s0),collapse = ",")
+  expect(round(thhat,s0),c(0.713,0.105,0.182,1107.705,0.462,0.778) )
   expect(round(mle$fit$loglik,s0),-966.185) 
   
   #CHECK Cumulative probs    

@@ -31,12 +31,8 @@ calcLogLik = function(mod,DEG=TRUE) {
   if(!BWS) param[nC+4] = 0
   if(!FWS) param[nC+5] = 0
   c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FWS,AT,pC,lambda,fst,NULL,NULL,NULL,TRUE, FALSE)
-  mod = Rcpp::Module( "mod",PACKAGE="euroformix" ) #load module
-  obj = methods::new(mod$ExposedClass) #create object of class
-  obj$filldata(c$nStutterModels,c$nMarkers,c$nRepMarkers,c$nAlleles,c$startIndMarker_nAlleles,c$startIndMarker_nAllelesReps,c$peaks,c$freqs,c$dropinWeight, c$nTyped, c$maTyped, c$basepair,
-               c$BWfrom, c$FWfrom, c$BWto, c$FWto, c$nPotStutters, c$startIndMarker_nAllelesTot, c$QalleleIndex, c$dropinProb, c$fst, c$AT, c$NOK, c$knownGind, c$relGind, c$ibd, as.integer(0)) 
-  obj$prepare(as.integer(nC))
-  loglik = obj$loglik(as.numeric(param) ) #Calculate
+  obj = prepareCobj(c) #use wrapper function to obtain C++ pointer
+  loglik = obj$calcGenoWeightsMax(as.numeric(param) ) #Calculate
   logliki = obj$logliki()
   obj$close() #free memory
   return(list(loglik,logliki))

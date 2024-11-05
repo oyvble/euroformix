@@ -27,7 +27,7 @@ calcQualMLE(
 
 \item{popFreq}{A list of allele frequencies for a given population.}
 
-\item{refData}{Reference objects with (2-size) allele-vector given in list element [[i]][[s]].}
+\item{refData}{Reference objects with (2-size) allele-vector given in list element [[locus]][[sample]].}
 
 \item{condOrder}{Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model.}
 

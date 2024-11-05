@@ -17,7 +17,7 @@ freqImport(f = NULL, url = FALSE, xml = FALSE)
 dblist A list giving the population frequencies for every population
 }
 \description{
-FreqImport is a function to import allele frequencies directly from file(s) or URLs
+Imports allele frequencies directly from file(s) or URLs
 }
 \details{
 The function supports XML as input, directly from an URL or local file (for instance from the STRidER webpage).

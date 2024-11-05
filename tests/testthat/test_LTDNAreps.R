@@ -73,7 +73,8 @@ test_that("Calculating valid/DC of model (3 reps):", {
   compareValid(as.numeric(DC$table2[,5]),c(0.99,0.408,1,1,0.853,0.742,0.699,0.977,0.562,0.451))
   
   DC = deconvolve(mleHd)
-  compareValid(as.numeric(DC$table2[,2]),c(0.999,0.917,1,1,0.987,0.708,0.631,0.999,0.661,0.757))
+  #mleHd$fit$thetahat2
+  compareValid(as.numeric(DC$table2[,5]),c(0.999,0.917,1,1,0.987,0.708,0.631,0.999,0.661,0.757))
 })
 
 

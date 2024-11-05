@@ -52,7 +52,7 @@ efm_createReport = function(mmTK, type="EVID",save=TRUE) { #function for storing
   popKitInfo <- get("selPopKitName",envir=mmTK) #selected kit and population for popFreq
   
   printMLE <- function(mlefit,hyp) {
-    mle <- cbind(mlefit$thetahat2,sqrt(diag(mlefit$thetaSigma2))) #standard deviation
+    mle <- cbind(mlefit$thetahat2,mlefit$thetaSE) #standard deviation
     txt0 <- paste0("\n\n-------Estimates under ",hyp,"---------\n")
     txt1 <- paste0(c("Param.","MLE","Std.Err."),collapse=colps)
     for(i in 1:nrow(mle)) txt1 <- paste0(txt1,"\n",paste0( c(rownames(mle)[i],myform(mle[i,])),collapse=colps) )
@@ -165,9 +165,10 @@ efm_createReport = function(mmTK, type="EVID",save=TRUE) { #function for storing
   #START CURATING TEXT
   version = utils::packageVersion("euroformix")
   txt <- paste0("EuroForMix version ",version)#," (euroformix_",packageVersion("euroformix"),").")
-  txt <- paste0(txt,"\nR-version: ",R.version.string) #Add R-version used
+  Rversion = strsplit(R.version.string," ")[[1]][3] #get only version number
+  txt <- paste0(txt,"\nR-version: ",Rversion) #Add R-version used
   txt <- paste0(txt,"\nUser: ",Sys.getenv("USERNAME"))
-  txt <- paste0(txt,"\nCreated: ",Sys.time(),"\n")
+  txt <- paste0(txt,"\nCreated: ",round(Sys.time()),"\n")
   
   txt <- paste0(txt,"\n-------Data-------")
   txt <- paste0(txt,"\nSelected STR Kit: ",popKitInfo[1])
@@ -176,9 +177,10 @@ efm_createReport = function(mmTK, type="EVID",save=TRUE) { #function for storing
   txt <-  paste0(txt,printSET(set$mlefit_hd$model)) #Print Data and model options under Hd
   
   txt <- paste0(txt,"\n\n-------Optimalisation setting-------")
-  txt <- paste0(txt,"\nRequired number of (identical) optimizations: ",set$mlefit_hd$nDone) #Added v3.0.0: Number of identical optimization
+  txt <- paste0(txt,"\nRequired number of optimizations: ",set$mlefit_hd$nDone) #Added v3.0.0: Number of identical optimization
   txt <- paste0(txt,"\nAccuracy of optimisations (steptol): ",set$mlefit_hd$steptol) #Added v3.1.0: Steptol to use in nlm
-  txt <- paste0(txt,"\nSeed for optimisations: ", ifelse(is.null(set$mlefit_hd$seed),"NONE",set$mlefit_hd$seed)) #Added v3.0.0: 
+  #txt <- paste0(txt,"\nSeed for optimisations: ", ifelse(is.null(set$mlefit_hd$seed),"NONE",set$mlefit_hd$seed)) #Added v3.0.0: 
+  txt <- paste0(txt,"\nRestriction threshold (genotype outcome): ",set$mlefit_hd$resttol) #Added v4.1.0
   
   if(!is.null(set$mlefit_hp)) txt <- paste0(txt,printMOD(model=set$mlefit_hp$model,hyp="Hp")) #Print hypothesis Hp:
   if(!is.null(set$mlefit_hd)) txt <- paste0(txt,printMOD(model=set$mlefit_hd$model,hyp="Hd")) #Print hypothesis Hd:

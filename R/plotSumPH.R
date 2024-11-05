@@ -2,7 +2,7 @@
 #' @author Oyvind Bleka
 #' @description Plotting sumPH per marker
 #' @details The function is fitting gamma distribution to the sumPH per marker to investigate fit: Degradation or sample differences
-#' @param samples A List [[sample]][[locus]] with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
+#' @param samples List object of [[sampleName]][[locus]] =list(adata,hdata), Allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
 #' @param kit shortname of kit: Obtained from getKit()
 #' @param ignoreMarkers Give string subset of markers that should be ignored in visualization
 #' @param LUSsymbol Used to recognize CE in LUS alleles

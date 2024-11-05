@@ -6,25 +6,25 @@
 \usage{
 deconvolve(
   mlefit,
-  alpha = 0.95,
+  alpha = 0.99,
   maxlist = 1000,
   signif = 4,
   checkCalcs = FALSE
 )
 }
 \arguments{
-\item{mlefit}{Fitted object using contLikMLE function.}
+\item{mlefit}{Fitted object using calcMLE/contLikMLE function.}
 
-\item{alpha}{Required sum of the listed posterior probabilities.}
+\item{alpha}{Required sum of the listed posterior probabilities}
 
-\item{maxlist}{The ranked deconvolved profile list will not exceed this number (used to avoid endless search).}
+\item{maxlist}{NOT IN USE}
 
 \item{signif}{Number of significant numbers}
 
-\item{checkCalcs}{Return only calculated log-likelihood per markers (summed). Used for testing.}
+\item{checkCalcs}{NOT IN USE}
 }
 \value{
-ret A list(table1,table2,table3,table4,rankGi,rankG,pG) where rankG is the ranked genotypes with corresponding probabilities in pG. rankgGi is the same, but per marker. table1 is rankG and pG combined (joint results). table2 uses rankGi to find marginal results for top-genotypes. table3 and table4 shows this marginalized on genotypes and alleles per contributor
+ret A list(table1,table2,table3,table4,rankGi,rankG,pG) where rankG is the ranked genotypes with corresponding probabilities in pG. rankgGi is the same, but per marker. table1 is now empty (since joint results is not obtained). table2 uses rankGi to find marginal results for top-genotypes. table3 and table4 shows this marginalized on genotypes and alleles per contributor
 }
 \description{
 deconvolve ranks the set of the most conditional posterior probability of genotypes the STR DNA mixture given a fitted model under a hypothesis.

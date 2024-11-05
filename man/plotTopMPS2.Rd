@@ -14,9 +14,9 @@ plotTopMPS2(
 )
 }
 \arguments{
-\item{MLEobj}{An object returned from contLikMLE}
+\item{MLEobj}{An object returned from calcMLE/contLikMLE}
 
-\item{DCobj}{An object returned from devonvolve: Must be run with same object as MLEobj}
+\item{DCobj}{An object returned from deconvolve: Must be run with same object as MLEobj}
 
 \item{grpsymbol}{A separator for each allele giving plot grouping. Useful for separating conventional repeat units (RU) and sequence variant.}
 

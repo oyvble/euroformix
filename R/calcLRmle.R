@@ -1,8 +1,7 @@
 #' @title calcLRmle
-#' @description A function for calculating LR from MCMC simulations
-#' @details Returns a conservative (quantile) LR or a Full Bayesian based LR
-#' @param mlefitHp A fitted object returned from contLikMLE (under Hp)
-#' @param mlefitHd A fitted object returned from contLikMLE (under Hd)
+#' @description A function for summarizing LR (MLE)
+#' @param mlefitHp A fitted object returned from calcMLE (under Hp)
+#' @param mlefitHd A fitted object returned from calcMLE (under Hd)
 #' @export
 
 calcLRmle = function(mlefitHp, mlefitHd) {

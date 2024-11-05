@@ -99,7 +99,7 @@ contLikSearch(
 A list with fitted models, and table results for the defined model outcome
 }
 \description{
-contLikSearch search through the models which optimizes the likelihood function
+Searches through a set of model configurations which optimizes the likelihood function
 }
 \author{
 Oyvind Bleka

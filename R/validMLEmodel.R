@@ -4,7 +4,7 @@
 #' @details The cumulative probability of the observed allele peaks are calculated and compared with a uniform distribution.
 #' Function calls a 'cumulative procedure' in C++ which uses the package Boost and performs paralellisation (OpenMP).
 #'
-#' @param mlefit Fitted object using contLikMLE
+#' @param mlefit Fitted object using calcMLE/contLikMLE
 #' @param kit This is no longer used.
 #' @param plottitle Maintitle text used in the PP-plot
 #' @param alpha The significance level used for the envelope test. Default is 0.01
@@ -15,109 +15,24 @@
 
 #plottitle="PP-plot";alpha=0.01;createplot=TRUE;verbose=TRUE
 validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createplot=TRUE,verbose=TRUE) {
- cols = c("black","#df462a","#466791","#60bf37","#953ada","#5a51dc","#d49f36","#507f2d","#db37aa","#5b83db","#c76c2d","#552095","#82702d","#55baad","#62aad3","#8c3025","#417d61")
+  cols = c("black","#df462a","#466791","#60bf37","#953ada","#5a51dc","#d49f36","#507f2d","#db37aa","#5b83db","#c76c2d","#552095","#82702d","#55baad","#62aad3","#8c3025","#417d61")
   xlab="Expected probabilities"#: Unif(0,1)"
   ylab="Observed probabilities"#: (Pr(Yj<=yj|Y_{-j}<=y_{-j},Yj>=thresh,model))"
   sz <- 1.5
   
-  maxThreads <- mlefit$maxThreads #note used
-  pchmax = 26 #number of possible point types
-  c <- mlefit$prepareC #Object already stored in mlefit. returned from prepareC function
-  modelType = mlefit$modelType #obtain model type (DEG,BWS,FWS)
-  nC = c$nC #number of contrs
+  #c <- mlefit$prepareC #Object already stored in mlefit. returned from prepareC function
+  repNames = mlefit$prepareC$repNames
+  locNames = mlefit$prepareC$markerNames
+  tab = mlefit$MLEvalidTable #copy table from fitted object
+  if(is.null(tab)) return(NULL) #couldnt find validation results
   
-  #prepare format parameter (required for other code)
-  th = mlefit$fit$thetahat2 #obtain params
-  if(any(is.na(th))) return(NULL) #return if params not found
-  par = list(mixProp=th[1:nC], PHexp=th[nC+1], PHvar=th[nC+2], DEG=1, stutt=rep(0,2) )
-  cc = 3 #counter
-  if(modelType[1]) { par$DEG = th[nC+cc]; cc = cc + 1 } #update counter
-  if(modelType[2]) { par$stutt[1] = th[nC+cc]; cc = cc + 1 } #update counter
-  if(modelType[3]) par$stutt[2] = th[nC+cc]; 
-  
-  #Obtaining number of alleles to obtain an upper peak height boundary to integrate up to (maxY)
-  nAtotObs = sum(c$peaks>0)
-  alphaQ <- 0.001 #ensure very far out in quantile (used for estimating probs in gamma-distribution).
-  alpha2 <- alphaQ/nAtotObs #"bonferroni outlier"
-  suppressWarnings({ #don't show missing allele warning
-    maxYobs <- c$peaks #max observation
-    maxYexp <- qgamma(1-alpha2,2/par$PHvar^2,scale=par$PHexp*par$PHvar^2) #max observation in theory
-    maxY <- ceiling( max( na.omit(c(maxYobs,maxYexp))) ) #get max observed (scaled up)
-  }) 
-  
-  #PArt 1/2: Consider evaluation at PH-levels  
-  dropinWeight1 <- dropinWeight2 <- c$dropinWeight #modify dropin weights to account for cdf instead of pdf
-  for(locind in 1:c$nMarkers) { #traverse each marker
-    lambda0 = c$lambda[ locind ]
-    AT0 =  c$AT[ locind ]
-    pC0 = c$dropinProb[ locind ]
-    for(rind in 1:c$nRepMarkers[locind]) { 
-      for(aind in 1:c$nAlleles[locind]) {
-        cind = c$startIndMarker_nAllelesReps[locind] + (aind-1)*c$nRepMarkers[locind] + rind
-        peak = c$peaks[cind]
-        if(peak < AT0) next #skip if less than zero
-        if(peak==AT0) peak = peak + 1 #avoid Inf in dropin model (equivalent with 'AT-1' threshold)
-        freq = c$freq[ c$startIndMarker_nAlleles[locind] + aind] #obtain frequency
-        
-        dropinWeight1[cind] = log(pC0) + log(freq) + pexp(peak-AT0,lambda0,log.p=TRUE) #= log( 1 - exp(- (lambda0)*(peak-AT0)))
-        dropinWeight2[cind] = log(pC0) + log(freq) + pexp(maxY-AT0,lambda0,log.p=TRUE) #= log(freq) + 1
-	   }
-    }
-  }
-  dropinWeight1[is.infinite(dropinWeight1)] = -1e+30 ##insert large negative number
-  dropinWeight2[is.infinite(dropinWeight2)] = -1e+30 ##insert large negative number
-  
-  #obtain cumulative vals int_0^y 
-  if(verbose) print("Calculating cumulative probabilities (1/2)...")
-  pvalVEC = c$peaks #must have a copy
-  UaPH = .C("loglikGamma_cumprob",as.numeric(pvalVEC), as.numeric(0), c$nJointGenos, c$nC, c$NOK, c$nKnowns,
-                 as.numeric(par$mixProp),  as.numeric(par$PHexp), as.numeric(par$PHvar), as.numeric(par$DEG), as.numeric(par$stutt), 
-                 c$AT,c$fst,c$dropinProb, c$dropinWeight, as.numeric(dropinWeight1),c$nMarkers, c$nRepMarkers, c$nAlleles, c$nPotStutters,
-            c$startIndMarker_nAlleles, c$startIndMarker_nAllelesReps, c$peaks, c$freqs, c$nTyped, c$maTyped, c$basepairs, 
-            c$nStutters, c$stuttFromInd, c$stuttToInd, c$stuttParamInd , c$startIndMarker_nStutters, c$knownGind, c$relGind, c$ibd, as.integer(mlefit$maxThreads) )[[1]] #obtain 
-#  print(UaPH)
-  
-  #PArt 2/2: Consider evaluation at PH-levels  
-  #obtain cumulative vals int_0^inf 
-  if(verbose) print("Calculating cumulative probabilities (2/2)...")
-  pvalVEC = c$peaks #must have a copy
-  UaMAX = .C("loglikGamma_cumprob",as.numeric(pvalVEC), as.numeric(maxY), c$nJointGenos, c$nC, c$NOK, c$nKnowns,
-                as.numeric(par$mixProp),  as.numeric(par$PHexp), as.numeric(par$PHvar), as.numeric(par$DEG), as.numeric(par$stutt), 
-                c$AT,c$fst,c$dropinProb, c$dropinWeight, as.numeric(dropinWeight2), c$nMarkers, c$nRepMarkers, c$nAlleles, c$nPotStutters,
-             c$startIndMarker_nAlleles, c$startIndMarker_nAllelesReps, c$peaks, c$freqs, c$nTyped, c$maTyped, c$basepairs, 
-             c$nStutters, c$stuttFromInd, c$stuttToInd, c$stuttParamInd , c$startIndMarker_nStutters,  c$knownGind, c$relGind, c$ibd, as.integer(mlefit$maxThreads) )[[1]] #obtain 
-#  print(UaMAX)
-  #Combing the product from the two parts:  
-  cumprobi = UaPH/UaMAX #obtaining cumulative probs
-  #print(cumprobi)
-  #hist(cumprobi)
-  #Obtain names:
-  locNames = c$markerNames #obtain locus names
-  alleleNames = c$alleleNames
-  repNames = c$repNames
-  
-  tab = NULL
-  for(locind in 1:c$nMarkers) { #traverse each marker
-    loc0 = locNames[locind] #obtain locus name
-    for(aind in 1:c$nAlleles[locind]) { #for each allele
-      for(rind in 1:c$nRepMarkers[locind]) { #for each replicate 
-        cind = c$startIndMarker_nAllelesReps[locind] + (aind-1)*c$nRepMarkers[locind] + rind #get replicate-index
-        peak = c$peaks[cind]
-        if(peak==0) next 
-        rep0 =  repNames[ rind ] #obtain replicate name
-        allele0  = alleleNames[aind + c$startIndMarker_nAlleles[locind]] #obtain allele name
-        newrow = data.frame( Marker=loc0, Sample=rep0, Allele=allele0, Height=peak, ProbObs=as.numeric(cumprobi[cind]))
-        tab = rbind(tab, newrow)
-      }
-    }
-  }
-  cumprobi = tab$ProbObs #as.numeric(tab[,ncol(tab)]) #obtain values again
   N <- nrow(tab) #length(cumprobi) #number of peak heights
   alpha2 <- alpha/N #0.05 significanse level with bonferroni correction
   cumunif <- ((1:N)-0.5)/N #=punif((1:N)-0.5,0,N)
   
   #hist(cumprobi)
   #sum(cumprobi<=0.5)/N
+  cumprobi = tab$ProbObs
   ord <- order(cumprobi,decreasing = FALSE)
   ord2 <- match(1:length(ord),ord) #get reverse index
   pval <- 1-pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1) #one sided p-value

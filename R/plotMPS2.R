@@ -2,7 +2,7 @@
 #' @author Oyvind Bleka
 #' @description MPS data visualizer (interactive)
 #' @details Plots intensities with corresponding allele variant for one sample. Does not yet handle replicates. Can handle RU grouping with separator grpsymbol.
-#' @param mixData List of mixData[[ss]][[loc]] =list(adata,hdata), with samplenames ss, loci names loc, allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
+#' @param mixData List object of [[sampleName]][[locus]] =list(adata,hdata), Allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric) 
 #' @param refData List of refData[[rr]][[loc]] or refData[[loc]][[rr]] to label references (flexible). Visualizer will show dropout alleles. 
 #' @param AT A detection threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names
 #' @param ST A stochastic threshold can be shown in a dashed line in the plot (constant). Possibly a vector with locus column names

@@ -32,17 +32,18 @@ calcMLE(
   priorBWS = NULL,
   priorFWS = NULL,
   maxThreads = 0,
-  adjQbp = FALSE
+  adjQbp = FALSE,
+  resttol = 1e-06
 )
 }
 \arguments{
 \item{nC}{Number of contributors in model.}
 
-\item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
+\item{samples}{A list of samples (evidence) with structure [[samplename]][[locus]] = list(adata,...)}
 
 \item{popFreq}{A list of allele frequencies for a given population.}
 
-\item{refData}{Reference objects has locus-list element [[i]] with a list element 'r' which contains a 2 long vector with alleles for each references.}
+\item{refData}{Reference objects has locus-list element with a list element 'r' which contains a 2 long vector with alleles for each references.}
 
 \item{condOrder}{Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model.}
 
@@ -76,13 +77,13 @@ calcMLE(
 
 \item{nDone}{Number of optimizations required providing equivalent results (same logLik value obtained)}
 
-\item{delta}{Scaling of variation of normal distribution when drawing random startpoints. Default is 1.}
+\item{delta}{NOT IN USE Scaling of variation of normal distribution when drawing random startpoints. Default is 1.}
 
-\item{difftol}{Tolerance for being exact in log-likelihood value (relevant when nDone>1)}
+\item{difftol}{NOT IN USE Tolerance for being exact in log-likelihood value (relevant when nDone>1)}
 
-\item{seed}{The user can set seed if wanted}
+\item{seed}{NOT IN USE The user can set seed if wanted}
 
-\item{verbose}{Whether printing limits to integrate over. Printing progress if maxEval>0. Default is TRUE.}
+\item{verbose}{Whether to print progress of optimization}
 
 \item{priorBWS}{Prior function for BWS-parameter. Flat prior on [0,1] is default.}
 
@@ -91,12 +92,14 @@ calcMLE(
 \item{maxThreads}{Maximum number of threads to be executed by the parallelization}
 
 \item{adjQbp}{Indicate whether fragmenth length of Q-allele is based on averaged weighted with frequencies}
+
+\item{resttol}{Restriction tolerance used to restrict genotype outcome. 0=No restriction, 1=Full restriction.}
 }
 \value{
 Fitted maximum likelihood object
 }
 \description{
-Optimizes the likelihood function of the DNA mixture model
+Optimizes the likelihood function (MLE)
 }
 \examples{
 \dontrun{

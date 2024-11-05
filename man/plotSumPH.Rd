@@ -13,7 +13,7 @@ plotSumPH(
 )
 }
 \arguments{
-\item{samples}{A List [[sample]][[locus]] with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
+\item{samples}{List object of [[sampleName]][[locus]] =list(adata,hdata), Allele vector adata (can be strings or numeric), intensity vector hdata (must be numeric)}
 
 \item{kit}{shortname of kit: Obtained from getKit()}
 

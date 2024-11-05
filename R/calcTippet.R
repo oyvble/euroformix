@@ -1,61 +1,57 @@
 #' @title calcTippet
 #' @author Oyvind Bleka
-#' @description Performing tippet analysis for a given model
-#' @details The procedure is a wrapper for the numerical integration function.
+#' @description Performing tippet/non-contributor analysis for a given set of hypotheses
 #' @param tipIdx Index in condOrder which are replaced with a random man
-#' @param mlefitHp A fitted object returned from contLikMLE (under Hp)
-#' @param mlefitHd A fitted object returned from contLikMLE (under Hd)
-#' @param niter Number of non-contributor iterations 
+#' @param mlefitHp A fitted object returned from calcMLE (under Hp)
+#' @param mlefitHd A fitted object returned from calcMLE (under Hd)
+#' @param niter Number of drawn non-contributors/iterations 
 #' @param type type of Tippet analysis to conduct (MLE or INT)
 #' @param LRobs The user can send an observed LR to superimpose to the plot
-#' @param MLEopt MLE options (must include nDone, steptol, delta, difftol, seed is optional)
+#' @param MLEopt MLE options (Not used since it uses what is stored in mlefit object)
 #' @param INTopt INT options (must include reltol, maxEval, dev)
-#' @param seed Seed used for reproducibility. Note that seed can also be a variable in MLEopt option 
-#' @param verbose Whether printing simulation progress. Default is TRUE
-#' @return returned non-contributor LR values
+#' @param seed Seed used for reproducibility
+#' @param verbose Whether printing the progress. Default is TRUE
+#' @return returned non-contributor LR values and statistics
 #' @export 
 
-calcTippet = function(tipIdx, mlefitHp, mlefitHd, niter=100, type="MLE", LRobs=NULL, MLEopt=NULL, INTopt=NULL, seed = NULL, verbose=TRUE)  {
+#type="MLE"; LRobs=NULL; INTopt=list(reltol=1, maxEval=1000,dev=2); seed = NULL; verbose=TRUE
+calcTippet = function(tipIdx, mlefitHp, mlefitHd, niter=100, type="MLE", LRobs=NULL, MLEopt=NULL, INTopt=list(reltol=1, maxEval=1000,dev=2), seed = NULL, verbose=TRUE)  {
   if(!is.null(seed)) set.seed(seed)
   if(!type%in%c("MLE","INT")) stop("Type not supported!")
   
   #Obtain model variants
-  maxThreads = mlefitHp$maxThreads
   if(is.null(LRobs) && type=="MLE") LRobs = (mlefitHp$fit$loglik-mlefitHd$fit$loglik)/log(10) #obtain observed LR for MLE (log10 scale)
   
-  #Obtain calculation options (Note that MLE method is always done first)
-  if(is.null(MLEopt)) MLEopt = list(nDone=3,steptol=1e-4,delta=1,difftol=0.01,seed=NULL)
-  if(type=="INT" && is.null(INTopt)) INTopt = list(reltol=0.001, maxEval = 0, dev=3)  
+  #Obtain settings:
+  MLEopt = mlefitHd 
+  maxThreads = mlefitHd$prepareC$maxThreads
   
   #Helpfunction to calculate the likelihood  
   calcLogLik = function(mod) { #noticed modified reference object
-    
+    #mod=mlefitHp$model
     #ALways calculate MLE based first      
     mle <- calcMLE(mod$nC,mod$samples,mod$popFreq,refDataRM,mod$condOrder,mod$knownRef, mod$kit, mod$DEG, mod$BWS, mod$FWS, 
                    mod$AT, mod$prC, mod$lambda, mod$fst, mod$knownRel, mod$ibd, mod$minF, mod$normalize, 
-                   priorBWS = mod$priorBWS, priorFWS = mod$priorFWS, verbose=FALSE, maxThreads=maxThreads,
-                   delta=MLEopt$delta, difftol=MLEopt$difftol,seed=MLEopt$seed,steptol=MLEopt$steptol, adjQbp=mod$adjQbp) 
-      
+                   MLEopt$steptol, MLEopt$nDone, MLEopt$delta, MLEopt$difftol, MLEopt$seed, 
+                   verbose=FALSE, priorBWS = mod$priorBWS, priorFWS = mod$priorFWS,
+                   maxThreads=maxThreads, adjQbp=mod$adjQbp,resttol=MLEopt$resttol) 
+    
     if(type=="MLE") {
       return(mle$fit$loglik)
       
       #Otherwise continue calculating 
     } else if(type=="INT") {
       lims = euroformix::getParamLimits(mle,dev=INTopt$dev)
-      int <- calcINT(mod$nC,mod$samples,mod$popFreq, lims$lower, lims$upper, refDataRM, mod$condOrder,mod$knownRef, mod$kit, 
-                     mod$DEG, mod$BWS, mod$FWS,  mod$AT, mod$prC, mod$lambda, mod$fst, mod$knownRel, mod$ibd, 
-                     mod$minF, mod$normalize, mod$priorBWS, mod$priorFWS, verbose=FALSE, maxThreads=maxThreads,
-                     reltol = INTopt$reltol, maxEval = INTopt$maxEval, scale = lims$scale, adjQbp=mod$adjQbp ) 
-      
-      return(mle$fit$loglik)
+      int <- calcINT(mle, lims$lower, lims$upper, reltol = INTopt$reltol, maxEval = INTopt$maxEval, scale = lims$scale, verbose=FALSE) 
+      return(int$loglik)
     }
   }
   
   #Obtain Frequency information to Randomize non-contributors (provided under Hd)
-  locs <- mlefitHd$prepareC$markerNames #loci to evaluate
-  fst = setNames(mlefitHd$prepareC$fst,locs) #obtain fst per marker
-  popFreq = mlefitHd$model$popFreq
-  refData = mlefitHd$model$refData
+  locs <- MLEopt$prepareC$markerNames #loci to evaluate
+  fst = setNames(MLEopt$prepareC$fst,locs) #obtain fst per marker
+  popFreq = MLEopt$model$popFreq
+  refData = MLEopt$model$refData
 
   refKnownIdxHd = unique(c(which(mlefitHd$model$condOrder>0),mlefitHp$model$knownRef)) #index of known  individuals under Hd (contributors and known non-contributors)
   #refKnownIdxHp = setdiff(which(mlefitHp$model$condOrder>0),tipIdx) #index of known individuals under Hp (exlude tippet index=POI)
@@ -76,10 +72,10 @@ calcTippet = function(tipIdx, mlefitHp, mlefitHd, niter=100, type="MLE", LRobs=N
     alleles = c(unlist(refDataLoc[refKnownIdxHd]),unlist(refDataLoc[refRelIdx])) #get alleles
     newA = alleles[!alleles%in%names(freqAll)] #new alleles
     if(length(newA)>0) {
-      newA = setNames(rep(mlefitHd$model$minF,length(newA)),newA)
+      newA = setNames(rep(MLEopt$model$minF,length(newA)),newA)
       freqAll = c(freqAll,newA)
     }
-    if(mlefitHd$model$normalize) freqAll = freqAll/sum(freqAll)
+    if(MLEopt$model$normalize) freqAll = freqAll/sum(freqAll)
     Glist[[loc]] = euroformix::calcGjoint(freq=freqAll,nU=1,fst=fst[loc],refK=unlist(refDataLoc[refKnownIdxHd]),refR=unlist(refDataLoc[refRelIdx]),ibd=ibd)
   } 
   #NOTICE THE KNOWN REFERENCE(S) GIVEN AS UNDER HD  
@@ -96,7 +92,7 @@ calcTippet = function(tipIdx, mlefitHp, mlefitHd, niter=100, type="MLE", LRobs=N
     for(loc in locs) {
       GenoLoc = Glist[[loc]]
       randIdx = sample( seq_along(GenoLoc$Gprob),1,prob=GenoLoc$Gprob) #get random index
-      GenoSim = GenoLoc$G[randIdx,] #Obtain random genotype
+      GenoSim = as.character(GenoLoc$G[randIdx,]) #Obtain random genotype
       
       #Insert to correct structure
       if(loc%in%names(refData)) {

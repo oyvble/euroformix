@@ -7,13 +7,10 @@
 calcLRmle(mlefitHp, mlefitHd)
 }
 \arguments{
-\item{mlefitHp}{A fitted object returned from contLikMLE (under Hp)}
+\item{mlefitHp}{A fitted object returned from calcMLE (under Hp)}
 
-\item{mlefitHd}{A fitted object returned from contLikMLE (under Hd)}
+\item{mlefitHd}{A fitted object returned from calcMLE (under Hd)}
 }
 \description{
-A function for calculating LR from MCMC simulations
-}
-\details{
-Returns a conservative (quantile) LR or a Full Bayesian based LR
+A function for summarizing LR (MLE)
 }

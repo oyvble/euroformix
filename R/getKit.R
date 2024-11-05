@@ -3,7 +3,7 @@
 #' @description Function to get kit information. Tidied up and slightly modified by Oyvind Bleka
 #' @details Returns kit information
 #' @param kit Short name of kit: See supported kits with getKit()
-#' @param what Options: {"Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"}
+#' @param what Options: "Index","Panel","Short.Name","Full.Name","Marker","Allele","Size","Virtual","Color","Repeat","Range","Offset","Gender"
 #' @param fileName Name of kit file used to extract kitinformation
 #' @param folderName Name of folder containing the kit file 'fileName'. Using package folder if not specified.
 #' @return res A data frame with kit information

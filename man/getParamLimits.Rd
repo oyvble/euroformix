@@ -4,7 +4,7 @@
 \alias{getParamLimits}
 \title{getParamLimits}
 \usage{
-getParamLimits(mlefit, dev = 3)
+getParamLimits(mlefit, dev = 2)
 }
 \arguments{
 \item{mlefit}{Fitted object using calcMLE}

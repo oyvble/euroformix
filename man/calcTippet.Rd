@@ -12,7 +12,7 @@ calcTippet(
   type = "MLE",
   LRobs = NULL,
   MLEopt = NULL,
-  INTopt = NULL,
+  INTopt = list(reltol = 1, maxEval = 1000, dev = 2),
   seed = NULL,
   verbose = TRUE
 )
@@ -20,32 +20,29 @@ calcTippet(
 \arguments{
 \item{tipIdx}{Index in condOrder which are replaced with a random man}
 
-\item{mlefitHp}{A fitted object returned from contLikMLE (under Hp)}
+\item{mlefitHp}{A fitted object returned from calcMLE (under Hp)}
 
-\item{mlefitHd}{A fitted object returned from contLikMLE (under Hd)}
+\item{mlefitHd}{A fitted object returned from calcMLE (under Hd)}
 
-\item{niter}{Number of non-contributor iterations}
+\item{niter}{Number of drawn non-contributors/iterations}
 
 \item{type}{type of Tippet analysis to conduct (MLE or INT)}
 
 \item{LRobs}{The user can send an observed LR to superimpose to the plot}
 
-\item{MLEopt}{MLE options (must include nDone, steptol, delta, difftol, seed is optional)}
+\item{MLEopt}{MLE options (Not used since it uses what is stored in mlefit object)}
 
 \item{INTopt}{INT options (must include reltol, maxEval, dev)}
 
-\item{seed}{Seed used for reproducibility. Note that seed can also be a variable in MLEopt option}
+\item{seed}{Seed used for reproducibility}
 
-\item{verbose}{Whether printing simulation progress. Default is TRUE}
+\item{verbose}{Whether printing the progress. Default is TRUE}
 }
 \value{
-returned non-contributor LR values
+returned non-contributor LR values and statistics
 }
 \description{
-Performing tippet analysis for a given model
-}
-\details{
-The procedure is a wrapper for the numerical integration function.
+Performing tippet/non-contributor analysis for a given set of hypotheses
 }
 \author{
 Oyvind Bleka

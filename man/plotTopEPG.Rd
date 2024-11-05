@@ -7,7 +7,7 @@
 plotTopEPG(MLEobj, DCobj = NULL, kitname = NULL, threshT = 0)
 }
 \arguments{
-\item{MLEobj}{An object returned from contLikMLE}
+\item{MLEobj}{An object returned from calcMLE/contLikMLE}
 
 \item{DCobj}{An object returned from devonvolve: Must be run with same object as MLEobj}
 
@@ -16,10 +16,7 @@ plotTopEPG(MLEobj, DCobj = NULL, kitname = NULL, threshT = 0)
 \item{threshT}{The detection threshold can be shown in gray in the plot.}
 }
 \description{
-EPG plotter created by Oskar Hansson.
-}
-\details{
-Plots the expected peak heights of the top genotypes. The peak heights for corresponding alleles (one sample) are superimposed.
+Replaced by plotTopEPG2
 }
 \author{
 Oyvind Bleka

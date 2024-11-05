@@ -7,13 +7,13 @@
 sample_tableToList(table)
 }
 \arguments{
-\item{table}{A table with data (Evid or refs)}
+\item{table}{A table with data (Evid or refs): A list on form [[name]][[locus]]}
 }
 \value{
 outL A data list
 }
 \description{
-Converting table to list format (helpfunction)
+Converting table to list format
 }
 \author{
 Oyvind Bleka

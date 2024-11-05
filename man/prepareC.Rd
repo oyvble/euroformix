@@ -28,7 +28,7 @@ prepareC(
 \arguments{
 \item{nC}{Number of contributors in model.}
 
-\item{samples}{A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.}
+\item{samples}{A list of samples (evidence) with structure [[samplename]][[locus]] = list(adata,...)}
 
 \item{popFreq}{A list of allele frequencies for a given population.}
 
@@ -66,7 +66,7 @@ prepareC(
 ret A list of data input to call the C++ code with
 }
 \description{
-Used for preparing C++ calls
+Preparing C++ calls (structure data into vectors)
 }
 \author{
 Oyvind Bleka

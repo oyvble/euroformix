@@ -7,7 +7,7 @@
 plotEPG(Data, kitname, threshT = 0, refcond = NULL, showPH = FALSE)
 }
 \arguments{
-\item{Data}{List of adata- and hdata-elements.}
+\item{Data}{List of adata- and hdata-elements ("samples")}
 
 \item{kitname}{Short name of kit: See supported kits with getKit()}
 

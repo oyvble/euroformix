@@ -1,6 +1,6 @@
 #' @title getGlist 
 #' @author Oyvind Bleka
-#' @description getGlist Returns a list of genotypes with corresponding genotype probabilities for an unknown individual.
+#' @description Returns a list of genotypes with corresponding genotype probabilities for an unknown individual.
 #' @details The function returns the list of all possible observed genotypes for each marker. A wrapper of the function calcGjoint. 
 #' @param popFreq A list of allele frequencies for a given population. Each named element in the list must be a allele-named vector with allele frequencies. 
 #' @param fst Assumed theta/fst-correction

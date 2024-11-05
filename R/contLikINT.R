@@ -14,7 +14,7 @@
 #' @param knownRef Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.
 #' @param xi A numeric giving stutter-ratio if it is known. Default is NULL, meaning it is integrated out.
 #' @param prC A numeric for allele drop-in probability. Default is 0.
-#' @param reltol Required relative tolerance error of evaluations in integration routine. Default is 0.001.
+#' @param reltol Required relative tolerance error of evaluations in integration routine. 
 #' @param threshT The detection threshold given. Used when considering probability of allele drop-outs.
 #' @param fst is the coancestry coeffecient. Default is 0.
 #' @param lambda Parameter in modeled peak height shifted exponential model. Default is 0.
@@ -34,7 +34,7 @@
 #' @keywords Marginalized likelihood
 
 
-contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=0.01,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,maxThreads=0,verbose=TRUE){
+contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL,knownRef=NULL,xi=NULL,prC=0,reltol=1,threshT=50,fst=0,lambda=0,pXi=function(x)1,kit=NULL,scale=0,maxEval=0,knownRel=NULL,ibd=c(1,0,0),xiFW=0,pXiFW=function(x)1,maxThreads=0,verbose=TRUE){
  DEG <- BWS <- FWS <- TRUE
 	if(is.null(kit)) DEG <- FALSE
 	if(!is.null(xi) && xi==0) BWS = FALSE
@@ -44,7 +44,10 @@ contLikINT = function(nC,samples,popFreq,lower,upper,refData=NULL,condOrder=NULL
 	  if(verbose) print("Backward stutter was switched on again..")
 	  BWS = TRUE #Back stutter must be ON if switched off (limitation of EFMfast)
 	}
-	int = euroformix::calcINT(nC,samples,popFreq, lower,upper, refData,condOrder,knownRef,kit,DEG,BWS,FWS,AT=threshT,pC=prC,lambda=lambda,fst=fst,knownRel=knownRel,ibd=ibd, priorBWS=pXi, priorFWS=pXiFW, reltol=reltol, scale=scale,maxEval=maxEval,maxThreads=maxThreads,verbose=verbose)
+	mlefit = calcMLE(nC,samples,popFreq, refData, condOrder, knownRef, kit, DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd,
+	                 priorBWS=pXi,priorFWS=pXiFW, maxThreads=maxThreads, verbose=verbose)
+	#lims =  getParamLimits(mlefit) #obtain values under Hd if not provided otherwise
+	int = calcINT(mlefit, lower=lower, upper=upper, reltol=reltol,scale=scale,maxEval=maxEval,verbose=verbose)
 	return(int)
 }
 

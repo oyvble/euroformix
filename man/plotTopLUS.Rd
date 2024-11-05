@@ -7,19 +7,19 @@
 plotTopLUS(MLEobj, DCobj = NULL, threshT = 0, LUSsymbol = "_")
 }
 \arguments{
-\item{MLEobj}{An object returned from contLikMLE}
+\item{MLEobj}{An object returned from calcMLE/contLikMLE}
 
-\item{DCobj}{An object returned from devonvolve: Must be run with same object as MLEobj}
+\item{DCobj}{An object returned from deconvolve: Must be run with same object as MLEobj}
 
 \item{threshT}{The detection threshold can be shown in gray in the plot.}
 
-\item{LUSsymbol}{The separator for each allele. Assumed to be "_" separating sequence variant and LUS.}
+\item{LUSsymbol}{The separator for each variant. First is assumed to be CE.}
 }
 \description{
 A dataplotter for MPS data with LUS format
 }
 \details{
-Plots the expected coverage reads of the top genotypes. The coverage reads for corresponding alleles (one sample) are superimposed.
+Utilizing existing function plotTopMPS2 to show.
 }
 \author{
 Oyvind Bleka

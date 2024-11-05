@@ -23,8 +23,8 @@ runexample(
   alpha = 0.01,
   seed = 1,
   nDone = 2,
-  mcmcIter = 500,
-  mcmcDelta = 2,
+  mcmcIter = 1000,
+  nTippets = 10,
   verbose = TRUE
 )
 }
@@ -67,7 +67,8 @@ runexample(
 
 \item{mcmcIter}{Number of iterations used in contLikMCMC}
 
-\item{mcmcDelta}{Scaling of variance used for proposal in contLikMCMC (calibrated based on mcmc$accrat object)}
+\item{nTippets}{Number of iterations used for non-contributor/tippet analysis 
+Scaling of variance used for proposal in contLikMCMC (calibrated based on mcmc$accrat object)}
 
 \item{verbose}{Boolean whether printing data (EPG) and progress}
 }

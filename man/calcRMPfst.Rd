@@ -7,7 +7,7 @@
 calcRMPfst(dat, POIind = 1, condInd = NULL, fst = 0)
 }
 \arguments{
-\item{dat}{A object retured from getData function}
+\item{dat}{A list with refData and popFreq objects (also retured from prepareData function)}
 
 \item{POIind}{Index of the references being Person of interest (POI)}
 

@@ -7,24 +7,24 @@
 calcLRint(
   mlefitHp,
   mlefitHd,
-  reltol = 0.001,
-  maxEval = 0,
-  dev = 3,
+  reltol = 1,
+  maxEval = 1000,
+  dev = 2,
   verbose = TRUE
 )
 }
 \arguments{
-\item{mlefitHp}{A fitted object returned from contLikMLE (under Hp)}
+\item{mlefitHp}{A fitted object returned from calcMLE (under Hp)}
 
-\item{mlefitHd}{A fitted object returned from contLikMLE (under Hd)}
+\item{mlefitHd}{A fitted object returned from calcMLE (under Hd)}
 
-\item{reltol}{Required relative tolerance error of evaluations in integration routine. Default is 0.001.}
+\item{reltol}{Required relative tolerance error of evaluations in integration routine}
 
-\item{maxEval}{Maximum number of evaluations in the adaptIntegrate function. Default is 0 which gives an infinite limit.}
+\item{maxEval}{Maximum number of evaluations in the integration routine function.}
 
-\item{dev}{Scaling relative to 2*SE (i.e. 97.5 percentile). Should cover most of post}
+\item{dev}{Scaling relative to 2*SE (i.e. 97.5 percentile). Should cover most of posterior distribution}
 
-\item{verbose}{Whether printing simulation progress. Default is TRUE}
+\item{verbose}{Whether printing simulation progress.}
 }
 \value{
 returned inferred LR with error range (reflects relative error)
@@ -33,7 +33,7 @@ returned inferred LR with error range (reflects relative error)
 Calculating marginal likelihood based on integration
 }
 \details{
-The procedure is a wrapper for the numerical integration function.
+The procedure is a wrapper for the numerical integration function for obtaining Bayes Factor
 }
 \author{
 Oyvind Bleka

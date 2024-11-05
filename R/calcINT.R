@@ -1,201 +1,210 @@
-
 #' @title calcINT
 #' @author Oyvind Bleka
 #' @description Marginalizing the likelihood through numerical integration.
-#' @details The procedure does numerical integration to approximate the marginal probability over the model parameters.
-#' 
-#' @param nC Number of contributors in model.
-#' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
-#' @param popFreq A list of allele frequencies for a given population.
+#' @param mlefit Fitted object using calcMLE
 #' @param lower Lower bounds of parameters. Must be in following order: mx1,..,mx_(nC-1),mu,sigma,beta,xi.
 #' @param upper Upper bounds of parameters. Must be in following order: mx1,..,mx_(nC-1),mu,sigma,beta,xi.
-#' @param refData Reference objects has locus-list element [[i]] with a list element 'r' which contains a 2 long vector with alleles for each references.
-#' @param condOrder Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model. 
-#' @param knownRef Specify known non-contributing references from refData (index). For instance knownRef=(1,2) means that reference 1 and 2 is known non-contributor in the hypothesis. This affectes coancestry correction.
-#' @param kit shortname of kit: Obtained from getKit()
-#' @param DEG Boolean of whether Degradation model should be used
-#' @param BWS Boolean of whether back-stutter model should be used
-#' @param FWS Boolean of whether for-stutter model should be used
-#' @param AT The analytical threshold given. Used when considering probability of allele drop-outs.
-#' @param pC A numeric for allele drop-in probability. Default is 0.
-#' @param lambda Parameter in modeled peak height shifted exponential model. Default is 0.
-#' @param fst is the coancestry coeffecient. Default is 0.
-#' @param knownRel gives the index of the reference which the 1st unknown is related to.
-#' @param ibd the identical by decent coefficients of the relationship (specifies the type of relationship)
-#' @param minF The freq value included for new alleles (new alleles as potential stutters will have 0). Default NULL is using min.observed in popFreq.
-#' @param normalize Whether normalization should be applied or not. Default is FALSE.
-#' @param priorBWS Prior function for xi-parameter (stutter). Flat prior on [0,1] is default.
-#' @param priorFWS Prior function for xiFW-parameter (FW stutter). Flat prior on [0,1] is default.
-#' @param reltol Required relative tolerance error of evaluations in integration routine. Default is 0.001.
-#' @param scale used to make integrale calculateable for small numbers. For scale!=0, integrale must be scaled afterwards with exp(-scale) to be correct.
-#' @param maxEval Maximum number of evaluations in the adaptIntegrate function. Default is 0 which gives an infinite limit.
-#' @param verbose Whether printing limits to integrate over. Printing progress if maxEval>0. Default is TRUE.
-#' @param maxThreads Maximum number of threads to be executed by the parallelization
-#' @param adjQbp Indicate whether fragmenth length of Q-allele is based on averaged weighted with frequencies
-#' @return ret A list(margL,deviation,nEvals,scale) where margL is Marginalized likelihood for hypothesis (model) given observed evidence, deviation is the confidence-interval of margL, nEvals is number of evaluations.
+#' @param reltol Required relative tolerance error of evaluations in integration routine.
+#' @param scale used to avoid underflow (should be the maximum likelihood value)
+#' @param maxEval Maximum number of evaluations in the adaptIntegrate function. 
+#' @param verbose Whether printing limits to integrate over. Printing progress if maxEval>0
+#' @return ret A list(loglik,logdeviation,nEvals,scale) where loglik is Marginalized likelihood, logdeviation is the error-interval of loglik, nEvals is the total number of likelihood evaluations.
 #' @export 
 #' @references Hahn,T. (2005). CUBA - a library for multidimensional numerical integration. Computer Physics Communications, 168(2),78-95.
 #' @keywords Marginalized likelihood
 
 
-calcINT = function(nC,samples,popFreq, lower=NULL, upper=NULL, refData=NULL, condOrder = NULL, knownRef = NULL, kit=NULL,DEG=TRUE,BWS=TRUE,FWS=TRUE,
-                   AT=50,pC=0.05,lambda=0.01,fst=0,knownRel=NULL,ibd=NULL,minF=NULL,normalize=TRUE, priorBWS=NULL, priorFWS=NULL, 
-                   reltol=0.001, scale=0,maxEval=0,verbose=FALSE, maxThreads=0, adjQbp=FALSE) {
-  
- if(is.null(maxEval)) maxEval <- 0
- if(is.null(lower) || is.null(upper)) stop("Not implemented for missing limits (do be done)")
- if(length(lower)!=length(upper)) stop("Length of integral limits differs")
- if(nC>1) {
-   lower[1:(nC-1)] <- 0
-   upper[1:(nC-1)] <- 1
- }
+calcINT = function(mlefit, lower, upper, reltol=1,scale=0,maxEval=1000,verbose=FALSE) {
+  if(is.null(lower) || is.null(upper)) stop("Not implemented for missing limits (do be done)")
+  if(length(lower)!=length(upper)) stop("Length of integral limits differs")
 
- start_time <- Sys.time()
- c = prepareC(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FWS,AT,pC,lambda,fst,knownRel,ibd,minF,normalize,adjQbp)
- #Other variables: basepairinfo, number of typed allelse  
- if(DEG && !c$useDEG) {
-   print("Degradation had to be turned off since kitinfo was not found for selected kit.")
-   DEG = FALSE
- }
- modTypes = c(DEG,BWS,FWS) #obtain model types
- if(length(lower)!= (nC+sum(modTypes)+1) ) stop("The length of the integral limits did not correpond with number of parameters!")
- if(DEG) upper[nC+2] = min(upper[nC+2],1) #restrict degradationif necessary
- if(BWS) {
-   upper[nC + 2 + sum(DEG)] = min(upper[nC + 2 + sum(DEG)],1) #restrict BWS proportion if necessary
-   if(FWS) upper[nC + 3 + sum(DEG)] = min(upper[nC + 3 + sum(DEG)],1) #restrict FWS proportion if necessary
- }
- 
- #PREPARE FEEDING DATA
- if(verbose) print("Carrying out preparations for integration...")
- mod = Rcpp::Module( "mod",PACKAGE="euroformix" ) #load module
- obj = methods::new(mod$ExposedClass) #create object of class
- 
- #Step 1: insert data to exposed class (filldata)
- obj$filldata(c$nStutterModels,c$nMarkers,c$nRepMarkers,c$nAlleles,c$startIndMarker_nAlleles,c$startIndMarker_nAllelesReps,c$peaks,c$freqs,c$dropinWeight, c$nTyped, c$maTyped, c$basepair,
-              c$BWfrom, c$FWfrom, c$BWto, c$FWto, c$nPotStutters, c$startIndMarker_nAllelesTot, c$QalleleIndex, c$dropinProb, c$fst, c$AT, c$NOK, c$knownGind, c$relGind, c$ibd, as.integer(maxThreads)) 
- 
- #Step 2: Indexing large matrix (doIndex)
- prepTime=system.time({
-   obj$prepare(as.integer(nC))
- })[3]
- #sum((nA+nPS)*(nA*(nA+1)/2)^NOC) #number of evaluations
- if(verbose) print(paste0("Prep. done and took ",round(prepTime),"s. Start integration..."))
- 
- #Inner likelihood function to integrate out
- liktheta <- function(theta) {
-  param = .convBack(theta,nC, modTypes,isPhi=FALSE) #need to convert params back
-  if(any(param<0)) return(0)
-  loglik = obj$loglik(as.numeric(param))  #calculate likelihood
-  if(!is.null(priorBWS) && param[nC+4]>0)  loglik <- loglik + log(priorBWS(param[nC+4])) #weight with prior of xi
-  if(!is.null(priorFWS) && param[nC+5]>0)  loglik <- loglik + log(priorFWS(param[nC+5])) #weight with prior of xiFW
-  likval <- exp(loglik+scale) #note the scaling given as parameter "scale".
-  if(is.nan(likval)) return(0) #avoid NAN values
+  tol2integrate = 0.01 #tolerance for integrating a variable (width of integral)
+  model <- mlefit$model
+  priorBWS = model$priorBWS #obtain prior stutter model
+  priorFWS = model$priorFWS #obtain prior stutter model
+  modTypes <- mlefit$modelType #obtain model types
+  c <- mlefit$prepareC #returned from prepareC
+  nC = model$nC #number of contributors
   
-  if(verbose && maxEval>0) { #only show progressbar if verbose
-    progcount <<- progcount + 1
-    setTxtProgressBar(progbar,progcount)
+  #PREPARE:
+  if(verbose) print("Carrying out preparations for Integral...")
+  obj = prepareCobj(c, verbose) #use wrapper function to obtain C++ pointer
+  
+  restTime=system.time({ #prepare restriction (can take a while)
+    preSearched = .preSearch(obj,c,mlefit$thetaPresearch,mlefit$resttol,priorBWS, priorFWS)
+  })[3]
+  if(verbose) {
+    print(paste0("Presearch done and took ",round(restTime),"s. Start integrate..."))
+    print(paste0("Percentage of genotype outcome to be used: ",round(preSearched$restprop*100,1),"% (tol=",mlefit$resttol,")"))
+  }
+  nEvals = sum(sapply(preSearched$presearchFitList,function(x) nrow(x))) #store number of evaluations used
+  
+  #prepare restriction rule for Mx  
+  nKinship = as.integer(c$hasKinship) #number of kinship specifications
+  if(nKinship>0) stop("Cannot (yet) calculate INT based LR where kinship is specified!")
+  nKnown = c$nC - c$nU + nKinship#number of conditionals
+  nUnknown = c$nU - nKinship#number of Mx params to be restricted
+  
+  #The likelihood function taking theta-parameters (non-transformed params)
+ # mxLower = pmax(0,lower[1:(nC-1)]) #avoid lower than zero
+ # mxUpper = pmin(1,upper[1:(nC-1)]) #avoid higher than one
+  other_lower = pmax(0,lower[nC:length(lower)]) #avoid lower than zero
+  other_upper = upper[nC:length(upper)]
+  #Also avoid that DEG,StuttProp params are higher than one
+  #if(length(other_upper)>2) other_upper[-c(1:2)] = pmin(1,other_upper[-c(1:2)])
+  
+  mxLims = NULL
+  if(nC>1) { #only relevant for having at least 2 contributors
+    mxLims = cbind(0,1/(2:nC)) #obtain Mx limits in case of unknowns
+    if(nKnown>0) { #if conditionals
+      mxLimsKnown = t(replicate(nKnown,c(0,1))) #get limits for knowns
+      mxLims = rbind(mxLimsKnown,mxLims)[1:(nC-1),,drop=FALSE]
+    }
+    mxLower = pmax(mxLims[,1],lower[1:(nC-1)])
+    mxUpper = pmin(mxLims[,2],upper[1:(nC-1)])
+    mxLims = cbind(mxLower,mxUpper) #construct limit
+  }
+  #Init an own integration function
+  myInt = function(fun,L,U,...) {
+    diff = U-L
+    if(diff<tol2integrate) { #dont integrate if less than this (use middle)
+      middle = (U+L)/2 #insert "middle" as known variable
+      int = fun(middle,...)
+    } else {
+      int = cubature::adaptIntegrate(fun,L,U, tol=2,...)[[1]]
+      #int = integrate(Vectorize(fun),L,U, rel.tol=1,...)[[1]]
+    }
+    return(int)
+  }
+  
+  
+  logLik <- function(par) {
+    nEvals <<- nEvals + 1
+    param = .convBack(par,nC, modTypes,isPhi=FALSE) #need to convert params back
+    llv = obj$loglik(as.numeric(param) )
+    if(!is.null(priorBWS) && param[nC+4]>0)  llv <- llv + log(priorBWS(param[nC+4])) #weight with prior of xi
+    if(!is.null(priorFWS) && param[nC+5]>0)  llv <- llv + log(priorFWS(param[nC+5])) #weight with prior of xiFW
+    return(llv)
+  }
+
+#DEFINING DIFFERENT INTEGRAL FUNCTION FOR DIFFERENT HYPOTHESIS
+  LikFun = function(par) { #helpfunction to obtain (Scaled) likelihood value
+    return(exp(logLik(par)-scale))
+  }
+  
+
+  
+####DONE DEFINING OUTCOME OF INTEGRAL
+  
+  if(verbose) {
+    print(paste0("lower=",paste0(round(lower,2),collapse="/")))
+    print(paste0("upper=",paste0(round(upper,2),collapse="/")))
+  }
+  
+  #Indicate calculation situations
+  calcIntMx = NULL
+  if(nC==1) calcIntMx = .calcInt1p
+  if(nC==2) {
+    if(nKnown==0) calcIntMx = .calcInt2p0K
+    if(nKnown>0) calcIntMx = .calcInt2p1K
+  }
+  if(nC==3) {
+    if(nKnown==0) calcIntMx = .calcInt3p0K
+    if(nKnown==1) calcIntMx = .calcInt3p1K
+    if(nKnown>1) calcIntMx = .calcInt3p2K
+  }
+  if(nC==4) {
+    if(nKnown==0) calcIntMx = .calcInt4p0K
+    if(nKnown==1) calcIntMx = .calcInt4p1K
+    if(nKnown==2) calcIntMx = .calcInt4p2K
+    if(nKnown>2) calcIntMx = .calcInt4p3K
+  }
+  if(nC==5) {
+    if(nKnown==0) calcIntMx = .calcInt5p0K
+    if(nKnown==1) calcIntMx = .calcInt5p1K
+    if(nKnown==2) calcIntMx = .calcInt5p2K
+    if(nKnown==3) calcIntMx = .calcInt5p3K
+    if(nKnown>3) calcIntMx = .calcInt5p4K
+  }
+  if(is.null(calcIntMx)) {
+    print("WARNING:Cannot calculate integral for at least 6 contributors!")
+    return(NULL)
   } 
   
-  return(likval) #weight with prior of tau and stutter.
- }
  
- #DERIVED RESTRICTION FOR MIXTURE PROPORTIONS:
- nK = sum(condOrder>0) #number of conditionals
- nU <- nC-nK #number of unknowns
- if(nU>1) nU = nU - as.integer(c$hasKinship) #reduce number of unknowns by one if specified kinship
+  
+  #Create a wrapper function to print out progress
+  progbar = NULL #init progbar
+  progcount = 1  #counter
+  intfunWrapper = function(thetaOther,stuttParam=NULL,...) {
+    if(!is.null(stuttParam)) thetaOther = c(thetaOther,stuttParam) #always append value
+    if(progcount==1 && verbose) print("Start integrating...")
+    timeMxInt = system.time({ #calculate time for one call
+      val = calcIntMx(LikFun,myInt,mxLims,thetaOther,...)
+    })[3]
+    if(verbose && maxEval>0) { #only show progressbar if verbose
+      if(progcount==1) {
+        expectedTimeProgress = .secondToTimeformat(timeMxInt*maxEval)
+        print(paste0("Upper time for integration: ", expectedTimeProgress, " (HH:MM:SS):")) 
+        
+        #Inititate progressbar
+        progbar <<- txtProgressBar(min = 0, max = maxEval, style = 3) #create progress bar
+      }
+      setTxtProgressBar(progbar,progcount)
+    } 
+    progcount <<- progcount + 1
+#    print(progcount)
+    return(val)
+  }
  
- #Specify updated limits (takes symmetry of unknowns into account)
- if(nC==2 && nU==2) {
-  lower[1] <- max(1/2,lower[1]) #restrict to 1/2-size
- }
- if(nC==3 && nU==3) { #restrict to 1/6-size
-  lower[1] <-  max(1/3,lower[1])
-  upper[2] <- min(1/2,upper[2])
- }
- if(nC==4 && nU==4) { #restrict to 1/12-size
-  lower[1] <- max(1/4,lower[1])
-  upper[2] <- min(1/2,upper[2])
-  upper[3] <- min(1/3,upper[3])
- }
- if(nC==4 && nU==3) { #restrict to 1/2-size
-  upper[3] <- min(1/2,upper[3])
- }
- if(nC==5 && nU==5) { #restrict to 1/20-size
-  lower[1] <- max(1/5,lower[1])
-  upper[2] <- min(1/2,upper[2])
-  upper[3] <- min(1/3,upper[3])
-  upper[4] <- min(1/4,upper[4])
- }
- if(nC==5 && nU==4) { #restrict to 1/3-size
-  upper[3] <- min(1/2,upper[3])
-  upper[4] <- min(1/3,upper[4])
- }
- if(nC==5 && nU==3) { #restrict to 1/2-size
-  upper[4] <- min(1/2,upper[4])
- }
- if(nC==6 && nU==6) { #restrict to 1/25-size
-  lower[1] <- max(1/5,lower[1])
-  upper[2] <- min(1/2,upper[2])
-  upper[3] <- min(1/3,upper[3])
-  upper[4] <- min(1/4,upper[4])
-  upper[5] <- min(1/5,upper[5])
- }
- if(nC==6 && nU==5) { #restrict to 1/4-size
-  upper[3] <- min(1/2,upper[3])
-  upper[4] <- min(1/3,upper[4])
-  upper[5] <- min(1/4,upper[5])
- }
- if(nC==6 && nU==4) { #restrict to 1/3-size
-  upper[4] <- min(1/2,upper[4])
-  upper[5] <- min(1/3,upper[5])
- }
- if(nC==6 && nU==3) { #restrict to 1/2-size
-  upper[5] <- min(1/2,upper[5])
- }
+  ######################################## 
+  #PERFORM INTEGRATION ('Outer integral')#
+  #Special situation: Check if the integral width of the stutter parameters is too narrow
+  
+  # Identify stutter indices based on model types
+  stuttIdx = NULL
+  if(modTypes[2]) stuttIdx =  sum(modTypes[1]) + 3 #also count PHexp/PHvar variables
+  if(modTypes[3]) stuttIdx <- c(stuttIdx, sum(modTypes[1:2]) + 3)
 
- #Get number of combinations which are used to scale the integral (cause of calculating symmetries):
- comb <- 1
- if(nC>1) {
-   comb2 <- rep(1,nC-1) - (upper[1:(nC-1)]-lower[1:(nC-1)])
-   comb <- round(1/prod(comb2[comb2>0]))
- }
+  # Determine if we need to skip integration
+  outer_diff <- other_upper - other_lower  # Obtain width of integrals
+  dontIntegrate <- outer_diff[stuttIdx] < tol2integrate
+  
+  if(any(dontIntegrate)) { #there was a special situation where we want to avoid integrate
+    #in case of having both BW and FW model ..and to Integrate on FWstutt but not BWstutt (Weird!)
+    if(length(stuttIdx)==2 && dontIntegrate[1] && !dontIntegrate[2]) { #
+      stop("Progress with integration is stalled because the BW-stutter model was not informative, whereas the FW-stutter model was-an unexpected outcome.")
+    }
+    # Update stutter indices to skip integration for narrow stutter parameters
+    stuttIdx <- stuttIdx[dontIntegrate]
+    outer_MLE <- (other_upper + other_lower) / 2  # Obtain MLE
+    #mlefit$fit$thetahat2
+    integration_result <- cubature::adaptIntegrate(intfunWrapper, lowerLimit=other_lower[-stuttIdx] ,upperLimit=other_upper[-stuttIdx], tol=reltol, maxEval=maxEval, stuttParam=outer_MLE[stuttIdx])
+  } else { #integrate as normal
+    integration_result <- cubature::adaptIntegrate(intfunWrapper, lowerLimit=other_lower ,upperLimit=other_upper, tol=reltol, maxEval=maxEval)
+  }
+  if(verbose && maxEval>0)  cat("\n") #ensure skipping line after computations
+  
+  #intFun = cubature::hcubature
+  #integration_result <- cubature::adaptIntegrate(intfunWrapper, lowerLimit=other_lower ,upperLimit=other_upper, tol=intFunRelTol, maxEval=maxEval)
+  obj$close() #free memory
+  
+  #FINALIZING RESULTS
+  # Retrieve estimated integral and error (scaled to avoid overflow)
+  estimated_integral <- integration_result$integral
+  estimated_error <- integration_result$error
+  
+  #Obtain the correct likelihood value (Adjust with scaling)
+  log_likelihood <- log(estimated_integral) + scale  
 
-#OVERVIEW OF RESTRICTIONS
-#nU/nC 1  2  3  4  5  6
-# 1	   1  1  1  1  1  1
-# 2   NA  2  1  1  1  1
-# 3   NA NA  6  2  2  2
-# 4   NA NA NA 12  3  3
-# 5   NA NA NA NA 20  4
-# 6   NA NA NA NA NA 25
+  # Calculate unadjusted error range
+  deviation_range <- estimated_integral + c(-1, 1) * estimated_error
 
- if(verbose) {
-   print(paste0("lower=",paste0(prettyNum(lower),collapse="/")))
-   print(paste0("upper=",paste0(prettyNum(upper),collapse="/")))
-
-   #Inititate progressbar if maxEval given
-   progcount = 1  #counter
-   if( maxEval>0 ) progbar <- txtProgressBar(min = 0, max = maxEval, style = 3) #create progress bar
- }
- 
- 
- foo <- cubature::adaptIntegrate(liktheta, lowerLimit = lower , upperLimit = upper , tol = reltol, maxEval=maxEval)#10000)
- if(verbose && maxEval>0) cat("\n") #skip line after progressbar
- obj$close() #free memory
- 
- #Postvalues (need to scale values back)
- val <- foo$integral #estimated integral
- err <- foo$error #estimated absolute error of integral calculation (this is not relative)
- 
- #Take full integration into account (scales with comb)
- val <- comb*val
- #err <- comb*err #error does not scale with comb
- 
- #Adjust with likelihood-scaling (done last)
- loglik = log(val)-scale #adjust to get loglik
- dev <- val + c(-1,1)*foo$error #unadjusted error
- logdev = log(dev) - scale #adjusted error (log-scale)
- dev = exp(-scale)*dev #same as exp(loglikError) (non-logged)
- return(list(loglik=loglik, logdeviation=logdev, margL=val,deviation=dev,nEvals=foo[[3]],scale=scale))
+  # Adjust the error range for log-scale likelihood (Adjust with scaling)
+  log_deviation_range <- log(deviation_range) + scale  # Log-scale adjusted error range
+ # exp(scale)*deviation_range (un-logged)
+  
+  return(list(loglik=log_likelihood, logdeviation=log_deviation_range, nEvals=nEvals,scale=scale))
 }
+
 

@@ -1,6 +1,5 @@
 SUGGESTIONS:
  - Also perform model search under Hp (alternative choice).
- - Include progressbar for Model validation when time consuming (check time for 1 allele and use this)
  - Adding new functionality: EFM remembers all used settings when closed (as for CaseSolver). 
    Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies, more??
  - Include ordinary scale of LR (at least for qualitative model)?
@@ -13,19 +12,79 @@ KNOWN ISSUES (TROUBLESHOOT):
 
 Future version:
  - Add the possibility to define a prior for the PHvar param.
+ - Make a scroller for generateData panel to enable the possibility to generate data with many markers.
 
-
-EuroForMix v4.0.9 (Release date: 2024-05-24)
+EuroForMix v4.1.0 (Release date: 2024-11-05)
 =============================================
- - Changed STRIDER-path to "https://strider.online/frequencies/xml"
- - For relationship calculations:
-    - Require that all markers are typed for a related reference (throws a warning if not)
-	- Introduction of new relationship model: If ibd is given but no related reference index is given, the last two unknowns will be assumed specified relationship.
+ - A new presearch algorithm is carried out before MLE optimization (and INT and MCMC calculations).
+	- The presearch spans a set of mixture proportion parameter vectors and calculates the likelihood for each outcome.
+	- The top "nDone" (req. optimizations) sets from the presearch is used as starting points for the optimization. 
+		- This causes it to avoid random startpoints and hence "random results". Seed will not have any effect.
+	- Notes: 
+		- Less than "nDone" optimizations can happen when no other likely startpoints are found.
+		- The optimization is now more robust (more likely to find the global solution).
+	
+ - Faster likelihood calculations: 
+	- A new implementation restricts the genotype outcome based on information from the presearch 
+	- The restriction criterion is based on a threshold (default=1e-6, selected through development validation).
+		- The threshold can be changed under Optimization->"Set threshold for genotype restriction".
+		- Threshold value set by user added under "Optimalisation setting" in the Report text file.
+		- A warning is given in the R console if it is recommended to lower the threshold value.
+		- Threshold value=0 means no restriction (full genotype outcome used).
+
+ - Faster and more effiecient deconvolution and model validation calculations:
+	- Carried out in EFMfastengine C++ code utilizing the restriction and the v4 algorithm.
+	- The algorithm utilizes full parallelization thanks to "declaring the reduction" into vectors.
+	- Note: Joint Deconvolved profiles no longer accessible. List elements "Table 1" and "rankGi" from deconvolve is now empty.
+
+ - Modified MCMC method:
+	- Restricts the mixture proportions for the unknown (unrelated) contributors.
+	- A parameter will be assumed as known (fixated) if its corresponding StdErr<0.001, and will not be part of the MCMC. 
+		- These are typically parameters estimated close to zero (boundary estimates).
+ 
+ - Modified integral method (Bayes Factor) where the limits of the mixture proportion integrals are correctly defined.
+	- The defined limit for the integration was set as a deviation of 2 instead of 3 (too wide earlier).
+	- Scale returned from getParamLimits is now based on the maximum likelihood value (and not the absolute value of this)
+	- Integration of a stutter proportion (and mixture proportion) variable will not be carried out if the width of the integral is less than 0.01.
+	- NOTE: Integral method is not always calculated correctly when defining relationship in the hypotheses (depends on size of component).
+
+ - Added functions:
+    - exportDataFromProject: Exporting evidence and reference profiles and frequency data in project to EFM compatible files.
+	- freqs_listToTable: Convert frequencies in list format to a freqency table.
+	- prepareCobj: Wrapper function to create and prepare the C++ object (fill data and prepare structure)
+	- Helpfunctions (hidden):
+		- .preSearch: Performs the presearch of Mixture proportion (Mx) set.
+		- .getMxOutcome: Obtaining the outcome of Mx proportion sets to traverse in the presearch.
+		- .getMxValid: Make sure that the Mx vector is correct order (restricting the unknown unrelated).
+		- .checkMxValid: Check that the Mx vector is correct order (restricting the unknown unrelated).
+		- .getFittedParams: Prepares output of fitted parameters in MLE (after optimization).
+		- .getDataToPlotProfile: Obtaining data for showing model contribution in "plotTop" plots.
+
+ - Replaced functions due to being outdated (now requires plotly installed):
+	- plotTopEPG now calls plotTopEPG2
+	- plotTopLUS now calls plotTopMPS
+
+ - Minor notes:
+	- URL link to STRidER was changed to https://strider.online/frequencies/xml.
+	- Degradation and stutter parameters are now log-transformed instead of logit transformed in the optimization domain.
+		- The degradation parameter can now have estimated values greater than one.
+		- The stutter proportion parameters was restricted to not exceeding one.
+	- The test environment now calls the C++ function "calcGenoWeightsMax" instead of "loglik" because loglik requires restriction function to be called first.	
+	- Adding a test for the integral expression for mixture proportions (test_integrals.R).
+	- In calcMLE function: Arguments Seed and delta will no longer have any effect since a pre-search used instead of random start points.
+	- Removing a few options in toolbar of the EFM GUI which are no longer in use.
+	- In efm function: Adding version to a project. Also printing the version of a project when loading it (if found).
+	- In create report (efm_createReport.R):
+		- Time of created report now given in whole seconds instead of decimals of seconds.
+		- Get only version number of R when printing out the R-version.
+	
+ - Fixed bug: Only for v4.0 (not earlier).
+	- AMEL was wrongly calculated when using a stutter model: Fixed in (EFMfastengine.cpp) by applying NumStutterModelsMAX to m_possibleContributionsPerContributor.
 
 EuroForMix v4.0.8 (Release date: 2023-08-21)
 =============================================
  - Fixed bug with non-contributor test, occuring when having rare alleles of known non-contributors under Hd.
-	- Added lines in calcTippet:L75-L82
+	- Added lines in calcTippet:L75-L82.
  - Improved README file: Easier information to get started. Inspired by work of https://github.com/magnusdv/forrel
 
 EuroForMix v4.0.7 (Release date: 2023-05-30)

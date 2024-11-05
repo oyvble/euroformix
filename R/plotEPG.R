@@ -2,7 +2,7 @@
 #' @author Oyvind Bleka
 #' @description EPG plotter created by Oskar Hansson.
 #' @details Plots peak height with corresponding allele for one sample for a given kit.
-#' @param Data List of adata- and hdata-elements.
+#' @param Data List of adata- and hdata-elements ("samples")
 #' @param kitname Short name of kit: See supported kits with getKit()
 #' @param threshT The detection threshold can be shown in gray in the plot.
 #' @param refcond condition on a list$refname$locname$adata of reference alleles which are labeled in EPG

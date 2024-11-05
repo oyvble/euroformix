@@ -1,8 +1,8 @@
 #' @title prepareC
 #' @author Oyvind Bleka
-#' @description Used for preparing C++ calls
+#' @description Preparing C++ calls (structure data into vectors)
 #' @param nC Number of contributors in model.
-#' @param samples A List with samples which for each samples has locus-list elements with list elements adata and hdata. 'adata' is a qualitative (allele) data vector and 'hdata' is a quantitative (peak heights) data vector.
+#' @param samples A list of samples (evidence) with structure [[samplename]][[locus]] = list(adata,...)
 #' @param popFreq A list of allele frequencies for a given population.
 #' @param refData Reference objects has locus-list element [[i]] with a list element 'r' which contains a 2 long vector with alleles for each references.
 #' @param condOrder Specify conditioning references from refData (must be consistent order). For instance condOrder=(0,2,1,0) means that we restrict the model such that Ref2 and Ref3 are respectively conditioned as 2. contributor and 1. contributor in the model. 
@@ -331,7 +331,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     nGenos[m] = round( nAlleles[m]*(nAlleles[m]+1)/2) #number of genotypes (one contributor)
     nJointGenos[m] = nGenos[m]^nUnknowns[m] #get number of joint combinations
     
-    #KINSHIP MODULE
+    #KINSHIP MODULE (also possible if knownRel=NULL and ibd given)
     if(!is.null(knownRel) && ibd0[1]<1 ) {
        av = unlist(refData[[loc]][[knownRel]])
        if(length(av)>0) {
@@ -365,9 +365,6 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     #length(basepairLong)==sum(nAlleles)
   }
 
-  #Create a warning/note when there is a typed related
-  if(any(relGind>=0) && !all(relGind>=0)) warning("WARNING: Missing markers for the typed related should be deselected to avoid wrong LR!") 
-  
    #Prepare output
    c = list(nStutterModels=as.integer(nStutterModels),nMarkers=as.integer(nLocs),nAlleles=as.integer(nAlleles),
           startIndMarker_nAlleles=as.integer(startIndMarker_nAlleles),startIndMarker_nAllelesReps=as.integer(startIndMarker_nAllelesReps), 
@@ -383,8 +380,8 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
    c$useDEG=useDEG #check of whether to use DEG
    c$genoList=genoList #add genotype list
    c$refNamesCond = refNamesCond #add reference names that are conditoned on (correct order)
-   c$hasKinship = as.integer(any(relGind>=0)) #check if kinship were defined
-   if(c$hasKinship==0 && ibd0[1]<1) c$hasKinship = as.integer(2) #set as model variant 2
+   c$hasKinship = any(relGind>=0) #check if kinship were defined
+   
    #Additional objects required for non-fast version (calcloglik_allcomb/calcloglik_cumprob)
    #Stutters: Only required stutter shifts are stored (in simlar from/to vectors)
    c$nStutters <- rep(0L,nLocs) #init as zero
@@ -409,5 +406,6 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
    c$stuttFromInd <- as.integer(c$stuttFromInd)
    c$stuttToInd <- as.integer(c$stuttToInd)
    c$startIndMarker_nStutters = as.integer( c(0,cumsum(c$nStutters)) )
+   c$maxThreads = as.integer(0) #include default value
   return(c)
 }

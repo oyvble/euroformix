@@ -82,9 +82,9 @@ test_that("check maximum likelihood Hd (unrelated):", {
   expect(round(mle$fit$loglik,s0), -167.102) #-167.322 if instead D3S1358 is used
   
   #CHECK Cumulative probs    
-  #paste0(round(valid$ProbObs,s0),collapse = ",")
+# paste0(round(valid$ProbObs,s0),collapse = ",")
   valid = validMLEmodel(mle,kit=kit0,createplot=FALSE,verbose = FALSE)
-  compareValid(valid$ProbObs,c(0.665,0.957,0.665,0.242,0.253,0.29,0.051,0.039,0.003,0.55,0.857,0.541,0.323,0.463,0.423,0.293,0.472,0.781,0.336,0.484,0.323,0.457,0.759,0.992,0.241))
+  compareValid(valid$ProbObs,c(0.665,0.957,0.665,0.242,0.253,0.29,0.052,0.039,0.003,0.55,0.857,0.541,0.323,0.463,0.423,0.293,0.472,0.781,0.336,0.484,0.323,0.457,0.759,0.992,0.241))
   
   #Calculate deconvolution (DC):
   DC = deconvolve(mle)

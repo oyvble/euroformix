@@ -21,9 +21,9 @@ calcLRmcmc(
 )
 }
 \arguments{
-\item{mlefitHp}{A fitted object returned from contLikMLE (under Hp)}
+\item{mlefitHp}{A fitted object returned from calcMLE (under Hp)}
 
-\item{mlefitHd}{A fitted object returned from contLikMLE (under Hd)}
+\item{mlefitHd}{A fitted object returned from calcMLE (under Hd)}
 
 \item{niter}{Number of samples in the MCMC-sampling.}
 
@@ -39,7 +39,7 @@ calcLRmcmc(
 
 \item{niterTune}{Number of samples for tuning delta in the MCMC-sampling.}
 
-\item{diffSeed}{Seed difference}
+\item{diffSeed}{Seed difference between Hp and Hd}
 
 \item{verbose}{Whether progress should be printed}
 
@@ -54,7 +54,7 @@ A list with different LR statistics from the MCMC based simulations
 A function for calculating LR from MCMC simulations
 }
 \details{
-Returns a conservative (quantile) LR or a Full Bayesian based LR
+Returns a conservative (quantile) LR or an estimated Bayesian Factor
 }
 \author{
 Oyvind Bleka
