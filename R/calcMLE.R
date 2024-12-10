@@ -49,6 +49,7 @@
 #' plotTopEPG2(mlefit)
 #' }
 
+
 calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef = NULL, kit=NULL,DEG=TRUE,BWS=TRUE,FWS=TRUE,
   AT=50,pC=0.05,lambda=0.01,fst=0,knownRel=NULL,ibd=NULL,minF=NULL,normalize=TRUE,steptol = 1e-4,nDone=3,delta=1,difftol=0.01,
   seed=NULL,verbose=FALSE,priorBWS=NULL,priorFWS=NULL, maxThreads=0, adjQbp = FALSE, resttol=1e-6) {
@@ -85,7 +86,7 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   np = (nC+1) + DEG + BWS + FWS  #obtain number of parameters
   if(!DEG) meanbp = NULL
   #obtain expected startpoints of (PHexp,PHvar,DegSlope)
-  th0 <- fitgammamodel(y=sumY,x=meanbp,niter=10,delta=delta,offset=0,scale=1) 
+  th0 <- fitgammamodel(y=sumY,x=meanbp,niter=10,delta=1,offset=0,scale=1) 
   thetaPresearch = th0
   thetaPresearch[2] = max(thetaPresearch[2],0.2) #use minimum 0.2 in PHvar in presearch
   if(!DEG) thetaPresearch = c(thetaPresearch,1)
@@ -226,17 +227,21 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
     if(verbose) print("Optimizing done. Proceeding with post-calculations...")
     
     #Ensure that MxResult is correct order for the unknowns
+    largePhi = 1000 #impute with this value if nan or inf (may affect hessian)
+    maxPhi[is.nan(maxPhi)] = largePhi  #Handle that Mx-part of phi can have odd values on Mx-zero-boundaries
     thetahatFull = .convBack(maxPhi,nC, modTypes) #OBTAIN FULL PARAMETER LENGTH    
     thetahatUnknowns = .getThetaUnknowns(thetahatFull,nC,modTypes,inclLastMx=TRUE)
     thetahatUnknowns[1:nC] = .getMxValid(thetahatUnknowns[1:nC],nC,c$nU,c$hasKinship)
-    validPhi = .getPhi(thetahatUnknowns[-nC],nC,modTypes) #ensure a valid phi (convert back)
-    if(verbose && any(abs(validPhi-maxPhi) > 1e-6)) print("NOTE: Optimized Mx solution was reordred in order to be valid!")
-    maxPhi = validPhi #set as valid phi
-    
+    maxPhi = .getPhi(thetahatUnknowns[-nC],nC,modTypes) #ensure a valid phi (convert back)
+    maxPhi[is.infinite(maxPhi) | is.nan(maxPhi)] = largePhi  #Handle that Mx-part of phi can have odd values on Mx-zero-boundaries
+    #if(verbose && any(abs(validPhi-maxPhi) > 1e-6)) print("NOTE: Optimized Mx solution was reordred in order to be valid!")
+
     #CALCULATE COVARIANCE MATRIX:
     maxHessian = numDeriv::hessian(negloglikYphi,maxPhi,progressbar=FALSE)
     #maxHessian2 = Rdistance::secondDeriv(maxPhi,negloglikYphi,progressbar=FALSE)
-    maxSigma = MASS::ginv(maxHessian) #Use Pseudoinverse
+    try({ #Avoid crash just in case maxHessian  is not valid
+      maxSigma = MASS::ginv(maxHessian) #Use Pseudoinverse
+    })
     thetahat2 = .convBack(maxPhi,nC, modTypes) #OBTAIN FULL PARAMETER LENGTH    obj$loglik(as.numeric(thetahat2) );   #repeat this to calc marker specific values for the MLE params
     obj$loglik(as.numeric(thetahat2) ); #repeat one more time to evaluate the "correct" likelihood
     #NOTE THAT HERE IT IS POSSIBLE TO CALL obj$calcGenoWeightsMax to get best precision.

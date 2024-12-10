@@ -14,6 +14,15 @@ Future version:
  - Add the possibility to define a prior for the PHvar param.
  - Make a scroller for generateData panel to enable the possibility to generate data with many markers.
 
+CHECK:
+- Fixed bug in validMLEmodel (L121). Crashed when number of markers was less than number of alleles (for a marker).
+
+
+EuroForMix v4.1.1 (Release date: 2024-11-18)
+=============================================
+ - In calcMLE function (L230-L244):
+	- More robust handling when Mx-solution is on zero-boundary (phiMax modified). Avoids crash.
+
 EuroForMix v4.1.0 (Release date: 2024-11-05)
 =============================================
  - A new presearch algorithm is carried out before MLE optimization (and INT and MCMC calculations).
