@@ -33,7 +33,7 @@ efm = function(envirfile=NULL) {
  objnameMarkerSettings = c("threshv","pCv","lamv","fstv") #get object names for marker settings (optMarkerSetup)
  
  #DEFAULT SETTINGS
- maxUsetup <- 4  #GUI-Restriction on maximum number of unknowns
+ maxKsetup <- 5  #GUI-Restriction on maximum number of unknowns
  nDone0 = 3 #number of required MLE optimizations (converged)
  steptol0 = 1e-4 #tolerance threshold of step size in MLE optimizations
  difftol0 = 0.01 #tolerance threshold for accepting "similar log-likelihood values" in MLE optimization
@@ -1104,8 +1104,8 @@ suppressWarnings({
       }
     }
     if(tooMany) {
-      gWidgets2::gmessage("Too many alleles where given for a genotype in a reference profile. Must be a maximum of 2.","Error in data",icon="error")
-      return(NULL)
+      gWidgets2::gmessage("More than 2 alleles where given for a genotype in a reference profile. Make sure this is correct.","Special occasion in data",icon="info")
+      #return(NULL)
     }
     if(hasOL) { 
       bool = gWidgets2::gconfirm("OL allele observed in any of the markers. Please check data and import again. Do you still want to import the data where these are automatically removed?","Error in data")
@@ -2000,7 +2000,7 @@ suppressWarnings({
     tabmodelMODhd[which(rsel==refSel),1]  <- gWidgets2::gcheckbox(text=rsel,container=tabmodelMODhd,checked=!(type=="EVID")) #references under Hd (not checked if evidnece)
     }
     
-    Krange <- 0:4 #default Contr range
+    Krange <- 0:maxKsetup #default Contr range (now depends on setting specified first in script)
     #specify number of unknowns
     if(!type%in%c("DC","GEN")) {
     tabmodelMODhp[nRefs+1,1] <- gWidgets2::glabel(text="#unknowns (Hp): ",container=tabmodelMODhp)
@@ -2272,7 +2272,7 @@ suppressWarnings({
     res = get("resEVID",envir=mmTK)
     MLEopt <- get("optMLE",envir=mmTK) 
     INTopt <- get("optINT",envir=mmTK) 
-    LRobs = NULL    
+    LRobs = res$log10LRmle
     if(type=="INT") LRobs = res$intLR$log10LR #obtain LR based from Bayes Factor
 
     #obtain results and store tippet statistics
@@ -2285,7 +2285,7 @@ suppressWarnings({
   storeLRvalues = function(set) { 
     #obtain calculated LR values with helpfunction (different variants based on MLE)
     obj = calcLRmle(set$mlefit_hp,set$mlefit_hd) 
-    resEVID <- list(LRmle=obj$LR,LRlap=obj$LRlap,LRi=obj$LRmarker,LRupper=obj$LRupper,adjLRmle=obj$LRadj) 
+    resEVID <- list(LRmle=obj$LR,log10LRmle=obj$log10LR,LRlap=obj$LRlap,LRi=obj$LRmarker,LRupper=obj$LRupper,adjLRmle=obj$LRadj) 
     assign("resEVID",resEVID,envir=mmTK) #store EVID calculations for showing later (also report)
     return(resEVID)
   }
@@ -2472,88 +2472,90 @@ suppressWarnings({
       plotTop(mlefit_hd) #UPDATED v2.2.0
     } )
 
-#ADD EASY MODE
+    #ADD EASY MODE
     if(get("optSetup",envir=mmTK)$easyMode) {
-     gWidgets2::enabled(tabmleA3[1,1]) <- FALSE #deactivate MCMC
-     #gWidgets2::enabled(tabmleA3[4,1]) <- FALSE #deactivate Model fitted PH
+      gWidgets2::enabled(tabmleA3[1,1]) <- FALSE #deactivate MCMC
+      #gWidgets2::enabled(tabmleA3[4,1]) <- FALSE #deactivate Model fitted PH
     }
     if( !is.null(mlefit_hp) ) { #used only for weight-of-evidence
-     tabmleB = gWidgets2::glayout(spacing=0,container=(tabMLEtmp[1,2] <-gWidgets2::gframe("Estimates under Hp",container=tabMLEtmp,expand=TRUE,fill=TRUE)),expand=TRUE,fill=TRUE) 
-     tableMLE(mlefit_hp,tabmleB)
-     tabmleB3 = gWidgets2::glayout(spacing=0,container=(tabmleB[3,1] <-gWidgets2::gframe("Further Action",container=tabmleB))) 
-     tabmleB3[1,1] <- gWidgets2::gbutton(text="MCMC simulation",container=tabmleB3,handler=function(h,...) { doMCMC(mlefit_hp) } )
-     tabmleB3[2,1] <- gWidgets2::gbutton(text="Deconvolution",container=tabmleB3,handler=function(h,...) {  doDC(mlefit_hp) }  )
-     tabmleB3[3,1] <- gWidgets2::gbutton(text="Model validation",container=tabmleB3,handler=function(h,...) { doValidMLE(mlefit_hp,"Hp") } )
-     tabmleB3[4,1] <- gWidgets2::gbutton(text="Model fitted P.H.",container=tabmleB3,handler=function(h,...) { 
+      tabmleB = gWidgets2::glayout(spacing=0,container=(tabMLEtmp[1,2] <-gWidgets2::gframe("Estimates under Hp",container=tabMLEtmp,expand=TRUE,fill=TRUE)),expand=TRUE,fill=TRUE) 
+      tableMLE(mlefit_hp,tabmleB)
+      tabmleB3 = gWidgets2::glayout(spacing=0,container=(tabmleB[3,1] <-gWidgets2::gframe("Further Action",container=tabmleB))) 
+      tabmleB3[1,1] <- gWidgets2::gbutton(text="MCMC simulation",container=tabmleB3,handler=function(h,...) { doMCMC(mlefit_hp) } )
+      tabmleB3[2,1] <- gWidgets2::gbutton(text="Deconvolution",container=tabmleB3,handler=function(h,...) {  doDC(mlefit_hp) }  )
+      tabmleB3[3,1] <- gWidgets2::gbutton(text="Model validation",container=tabmleB3,handler=function(h,...) { doValidMLE(mlefit_hp,"Hp") } )
+      tabmleB3[4,1] <- gWidgets2::gbutton(text="Model fitted P.H.",container=tabmleB3,handler=function(h,...) { 
        plotTop(mlefit_hp) #UPDATED v2.2.0
-     } )
+      } )
 
-    #ADD EASY MODE
-     if(get("optSetup",envir=mmTK)$easyMode) {
-      gWidgets2::enabled(tabmleB3[1,1]) <- FALSE #deactivate MCMC
-      #gWidgets2::enabled(tabmleB3[4,1]) <- FALSE #deactivate Model fitted PH
-     }
+      #ADD EASY MODE
+      if(get("optSetup",envir=mmTK)$easyMode) {
+        gWidgets2::enabled(tabmleB3[1,1]) <- FALSE #deactivate MCMC
+        #gWidgets2::enabled(tabmleB3[4,1]) <- FALSE #deactivate Model fitted PH
+      }
     }
 
 
     fixmsg <- "The specified model could not explain the data.\nPlease re-specify the model."
-    if(is.infinite(mlefit_hd$fit$loglik)) gWidgets2::gmessage(fixmsg,title="Wrong model specification",icon="error")
-
-    if(type=="EVID")  if(!is.infinite(mlefit_hd$fit$loglik) && is.infinite(mlefit_hp$fit$loglik)) gWidgets2::gmessage(fixmsg,title="Wrong model specification",icon="error")
+    if(is.infinite(mlefit_hd$fit$loglik)) gWidgets2::gmessage(fixmsg,title="Wrong model specification (No model found for Hd)",icon="error")
+    if(type=="EVID")  if(!is.infinite(mlefit_hd$fit$loglik) && is.infinite(mlefit_hp$fit$loglik)) gWidgets2::gmessage(fixmsg,title="Wrong model specification (No model found for Hp)",icon="error")
 
     if( !is.null(mlefit_hp) ) { #used only for weight-of-evidence
-     tabmleC = gWidgets2::glayout(spacing=5,container=(tabMLEtmp[1,3] <-gWidgets2::gframe("",container=tabMLEtmp))) 
-     resLR <- get("resEVID",envir=mmTK) #get EVID calculations 
+      tabmleC = gWidgets2::glayout(spacing=5,container=(tabMLEtmp[1,3] <-gWidgets2::gframe("",container=tabMLEtmp))) 
+      resLR <- get("resEVID",envir=mmTK) #get EVID calculations 
      
       #CREATING NEW LAYOUT:
-     lrobs = format(log10(resLR$LRmle),digits=dec) #obtain LR-value to show
-     lrupper = format(log10(resLR$LRupper),digits=dec)
-     tabmleC1 = gWidgets2::glayout(spacing=0,container=(tabmleC[1,1] <-gWidgets2::gframe("Joint LR",container=tabmleC))) 
-     tabmleC1[1,1] =  gWidgets2::glabel(text=paste0("log10LR=",lrobs),container=tabmleC1)
-  
-     lrobs_subsourcetxt = format(log10(resLR$adjLRmle),digits=dec) #obtain sub-source LR
-     #helptext(tabmleC1[1,1],paste0("Sub-source log10LR=",lrobs_subsourcetxt) )      
-     tabmleC1[2,1] =  gWidgets2::glabel(text=paste0("Upper boundary=",lrupper),container=tabmleC1)
-
-     #LR-per locus layout (create button): SHOW IN separate window
-     tabmleC1[3,1] =  gWidgets2::gbutton(text="Show LR per-marker",container=tabmleC1, handler=function(h,...) {
+      lrobs = format(resLR$LRmle,digits=dec) #obtain LR-value to show
+      log10lrobs = resLR$log10LRmle
+      if(is.null(log10lrobs)) log10lrobs = log10(resLR$LRmle)
+      log10lrobs = format(log10lrobs,digits=dec) #obtain LR-value to show
+      lrupper = format(log10(resLR$LRupper),digits=dec)
+      tabmleC1 = gWidgets2::glayout(spacing=0,container=(tabmleC[1,1] <-gWidgets2::gframe("Joint LR",container=tabmleC))) 
+      tabmleC1[1,1] =  gWidgets2::glabel(text=paste0("LR=",lrobs),container=tabmleC1)
+      tabmleC1[2,1] =  gWidgets2::glabel(text=paste0("log10LR=",log10lrobs),container=tabmleC1)
+      #lrobs_subsourcetxt = format(log10(resLR$adjLRmle),digits=dec) #obtain sub-source LR
+      #helptext(tabmleC1[3,1],paste0("Sub-source log10LR=",lrobs_subsourcetxt) )      
+      tabmleC1[3,1] =  gWidgets2::glabel(text=paste0("Upper boundary=",lrupper),container=tabmleC1)
+      
+      #LR-per locus layout (create button): SHOW IN separate window
+      tabmleC1[4,1] =  gWidgets2::gbutton(text="Show LR per-marker",container=tabmleC1, handler=function(h,...) {
        sig0 = 2
        LRmarker = resLR$LRi #obtain Locus specific LR:
        outD = cbind(Marker=names(LRmarker), LR=format(LRmarker,digits=sig0),log10LR=format(log10(LRmarker),digits=sig0))
        dbwin <- gWidgets2::gwindow("LR per-marker", visible=FALSE)#,height=mwH)
        tab <- gWidgets2::gdf(NAtoSign(outD) ,container=dbwin) #create table
        gWidgets2::visible(dbwin) <- TRUE
-     })
-     
-     #We show weight-of-evidence
-     tabmleD = gWidgets2::glayout(spacing=5,container=(tabmleC[3,1] <-gWidgets2::gframe("Further",container=tabmleC))) 
-     #tabmleD[1,1] <- gWidgets2::gbutton(text="Optimize more",container=tabmleD,handler=function(h,...) { refreshTabMLE(type)  } )
-     tabmleD[1,1] <- gWidgets2::gbutton(text="LR sensitivity",container=tabmleD,handler=function(h,...) { simLR(mlefit_hp,mlefit_hd) } ) 
-     tabmleD[2,1] <- gWidgets2::gbutton(text="Bayes Factor",container=tabmleD,handler=function(h,...) { doINT() } )  #trigger integer alculation
-     if(get("optSetup",envir=mmTK)$easyMode) gWidgets2::enabled(tabmleD[2,1]) <- FALSE #deactivate 
-     helptext(tabmleD[1,1],"Calculates the conservative LR based on MCMC simulations. Also giving an estimate of Bayes Factor")
-     helptext(tabmleD[2,1],"Calculates the Full Bayesian LR (Bayes Factor) using the Integrated approach")
-     
-     #postanalysis
-     tabmleF = gWidgets2::glayout(spacing=3,container=(tabmleC[2,1] <-gWidgets2::gframe("Non-contributor analysis",container=tabmleC))) 
-     tippets <- setdiff(set$knownref_hd,set$knownref_hp)  #known non-contributors under Hd but not Hp (index)
-     if(!is.null(tippets)) {
-       refNames = names(set$refData[[1]]) #need to know the names
-       tN <- refNames[tippets] #tippet names
-       tabmleF[1,1] <- gWidgets2::glabel( "Select reference to\nreplace with non-contributor:",container=tabmleF)
-       tabmleF[2,1] <- gWidgets2::gcombobox( items=tN ,container=tabmleF)
-       tabmleF[3,1] <- gWidgets2::gbutton(text="Sample MLE based",container=tabmleF,handler=function(x) {
+      })
+      
+      #We show weight-of-evidence
+      tabmleD = gWidgets2::glayout(spacing=5,container=(tabmleC[3,1] <-gWidgets2::gframe("Further",container=tabmleC))) 
+      #tabmleD[1,1] <- gWidgets2::gbutton(text="Optimize more",container=tabmleD,handler=function(h,...) { refreshTabMLE(type)  } )
+      tabmleD[1,1] <- gWidgets2::gbutton(text="LR sensitivity",container=tabmleD,handler=function(h,...) { simLR(mlefit_hp,mlefit_hd) } ) 
+      tabmleD[2,1] <- gWidgets2::gbutton(text="Bayes Factor",container=tabmleD,handler=function(h,...) { doINT() } )  #trigger integer alculation
+      if(get("optSetup",envir=mmTK)$easyMode) gWidgets2::enabled(tabmleD[2,1]) <- FALSE #deactivate 
+      helptext(tabmleD[1,1],"Calculates the conservative LR based on MCMC simulations. Also giving an estimate of Bayes Factor")
+      helptext(tabmleD[2,1],"Calculates the Full Bayesian LR (Bayes Factor) using the Integrated approach")
+      
+      #postanalysis
+      tabmleF = gWidgets2::glayout(spacing=3,container=(tabmleC[2,1] <-gWidgets2::gframe("Non-contributor analysis",container=tabmleC))) 
+      tippets <- setdiff(set$knownref_hd,set$knownref_hp)  #known non-contributors under Hd but not Hp (index)
+      if(!is.null(tippets)) {
+        refNames = names(set$refData[[1]]) #need to know the names
+        tN <- refNames[tippets] #tippet names
+        tabmleF[1,1] <- gWidgets2::glabel( "Select reference to\nreplace with non-contributor:",container=tabmleF)
+        tabmleF[2,1] <- gWidgets2::gcombobox( items=tN ,container=tabmleF)
+        tabmleF[3,1] <- gWidgets2::gbutton(text="Sample MLE based",container=tabmleF,handler=function(x) {
          doTippet(tipind=which(refNames==gWidgets2::svalue(tabmleF[2,1])),type="MLE")  #get tip-index in refData
-       })
-       tabmleF[4,1] <- gWidgets2::gbutton(text="Sample Bayesian based",container=tabmleF,handler=function(x) { 
+        })
+        tabmleF[4,1] <- gWidgets2::gbutton(text="Sample Bayesian based",container=tabmleF,handler=function(x) { 
          doTippet(tipind=which(refNames==gWidgets2::svalue(tabmleF[2,1])),type="INT")  #get tip-index in refData
-       })
-       helptext(tabmleF[3,1],"Replaces the POI with a random man and calculates the LR using the MLE approach")
-       helptext(tabmleF[4,1],"Replaces the POI with a random man and calculates the Bayes Factor using the Integrated approach")
-       if(get("optSetup",envir=mmTK)$easyMode) gWidgets2::enabled(tabmleF[4,1]) <- FALSE #deactivate tippets for bayesian approach
-     } #end if tippets
-     
-     tabmleD[3,1] <- gWidgets2::gbutton(text="Create report",container=tabmleD,handler=function(h,...) { efm_createReport(mmTK,type)})
+        })
+        helptext(tabmleF[3,1],"Replaces the POI with a random man and calculates the LR using the MLE approach")
+        helptext(tabmleF[4,1],"Replaces the POI with a random man and calculates the Bayes Factor using the Integrated approach")
+        if(get("optSetup",envir=mmTK)$easyMode) gWidgets2::enabled(tabmleF[4,1]) <- FALSE #deactivate tippets for bayesian approach
+    } #end if tippets
+      
+      tabmleD[3,1] <- gWidgets2::gbutton(text="Create report",container=tabmleD,handler=function(h,...) { efm_createReport(mmTK,type)})
     }
     if(type=="DB") tabmleA3[2,2] <- gWidgets2::gbutton(text="Search Database",container=tabmleA3,handler=function(h,...) { doDBsearch("QUAN")} )
 
@@ -2581,14 +2583,24 @@ suppressWarnings({
     topRanked = DCtables[[1]] #get top ranked table
     ncol = ncol(topRanked)
     numRefs = (ncol-1)/3 #number of references to export
+    topGenos = topRanked[,3*(seq_len(numRefs)-1) + 2,drop=FALSE] #obtain all genotypes
+    maxA = max(sapply(strsplit(topGenos,"/"),length)) #obtain max number of alleles
+    emptyAlleles = rep(NA,maxA) #template to store the alleles (can be more than 2)
     outtab = NULL #get outtabe
-    for(r in seq_len(numRefs)) {
-      genos = topRanked[,3*(r-1) + 2] #obtain genotypes
-      genos =  t(matrix(unlist(strsplit(genos,"/")),nrow=2)) #obtain alleles per genotyes
-      new = cbind(paste0("C",r),topRanked[,1],genos)
-      outtab = rbind(outtab,new)
+    for(refIdx in 1:numRefs) {
+      # refIdx=1
+      genos = topGenos[,refIdx] #obtain genotypes
+      genosSplit = strsplit(genos,"/")
+      for(marker in names(genosSplit)) {
+        #      marker=names(genosSplit)[1]
+        geno = genosSplit[[marker]]
+        alleles = emptyAlleles #obtain empty
+        alleles[seq_along(geno)] = geno #insert
+        newrow = c(paste0("C",refIdx),marker,alleles)
+        outtab = rbind(outtab,newrow)
+      }
     }
-    colnames(outtab) = c("SampleName","Marker","Allele 1","Allele 2")
+    colnames(outtab) = c("SampleName","Marker",paste("Allele",1:maxA))
     tableSaver(outtab,"csv")
   }
   

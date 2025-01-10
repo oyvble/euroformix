@@ -1,0 +1,15 @@
+SampleName,Marker,Allele1,Allele2,Allele3
+ref1,D3S1358,18,16,
+ref1,VWA,17,17,
+ref1,D16S539,10,11,12
+ref1,D2S1338,26,19,
+ref1,D19S433,13.2,15.2,
+ref1,TH 01,8,6,
+ref1,FGA,24,20,
+ref2,VWA,16,18,
+ref2,D16S539,10,11,
+ref2,D2S1338,22,24,
+ref2,D19S433,13,14,
+ref2,TH 01,7,9.3,
+ref2,FGA,25,19,
+ref2,D3S1358,14,14,

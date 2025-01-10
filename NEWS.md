@@ -2,7 +2,6 @@ SUGGESTIONS:
  - Also perform model search under Hp (alternative choice).
  - Adding new functionality: EFM remembers all used settings when closed (as for CaseSolver). 
    Following could be stored: Options in toolbar,  Selected Kit, Selected population frequencies, more??
- - Include ordinary scale of LR (at least for qualitative model)?
  - For PHexp plots (plotTopEPG2):
 	- Add allele frequency to hover labels (easy to hightlight)
 	- Add LR value of each marker as text label (under marker name, or after)
@@ -14,9 +13,31 @@ Future version:
  - Add the possibility to define a prior for the PHvar param.
  - Make a scroller for generateData panel to enable the possibility to generate data with many markers.
 
-CHECK:
-- Fixed bug in validMLEmodel (L121). Crashed when number of markers was less than number of alleles (for a marker).
 
+EuroForMix v4.2.0 (Release date: 2025-01-10)
+=============================================
+ - Adding the possibility to condition on references with tri-alleles:
+	- Storing alleles which are exceeding allele index 2 is stored in a triAllele vector (prepareC:L321-L328)
+		- Structuring the information of triAlleles in a vector with three elements: markerIdx,alleleIdx,contributorIdx.
+	- Modification in EFMfastengine.cpp and getContributionIndices.cpp
+		- Structuring triAlles to all markers (L790-L812),
+		- Adding allele-contribution for triAlleles for known references (L172-L179). Utilizes a new function: getContributionIndicesAllele.		
+	- Other modifications to support triAlleles:
+		- In prepareC-L319: Removing restriction that "References can't have more than two alleles!"
+		- In efm:L1108: Removing restriction that imported references cannot have more than two alleles (comment out). 
+		- In deconvolve:L96-L114: Adding triAlleles to top genotype of known reference 
+		- In efm:L2579-L2603, updating helpfunction f_saveDCasRef.
+	- Note: 
+		- The triAllele will not provide any stutter product when the forward stutter model is assumed (technical limiation).
+		- The genotype including triAllele(s) cannot have more than 2 equal alleles (not possible for references with "homozygous tri-alleles")
+		- It is not possible condition on references with triAlleles when calculating Qual.LR or generating new samples.
+	- Added tests: Including 1-4 triAlleles (two contributors). Also shared.
+ - In the Joint LR result of EFM GUI: Also including the non-logged version of the LR 
+ - Fixing the issue that very small LR results causes log10LR=-Inf:
+	- Updated calcLRmle function by utilizing the .getSmallNumber helpfunction
+	- In efm:L2288: Adding log10LRmle from calcLRmle function	
+ - Fixed color of markers in plotTopEpg2 (L90+L158): Did not obtain marker specific genotypeProbs
+ - Changing maximum number of contributors to specify in a hypothesis to 5 instead of 4 (efm-L36)
 
 EuroForMix v4.1.1 (Release date: 2024-11-18)
 =============================================

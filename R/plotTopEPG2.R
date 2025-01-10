@@ -78,21 +78,22 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRU
       AT1 <- AT #temporary on analytical threshold
       if(!is.null(AT) && length(AT)>1 ) AT1 = AT[ toupper(names(AT))%in%locs ][1]  #extract dye specific AT
       
-      dfs = df[df$Sample==sample & df$Marker%in%locs,] #extract subset 
-      if(dyeYmax) ymax1 = ymaxscale*max( na.omit( c(minY,AT1,as.numeric(unlist( strsplit(dfs$EXP,"/") )),dfs$Height) ) )  #get max 
+      #obtain df for specific dye (several markers)
+      dfDye = df[df$Sample==sample & df$Marker%in%locs,] #extract subset 
+      if(dyeYmax) ymax1 = ymaxscale*max( na.omit( c(minY,AT1,as.numeric(unlist( strsplit(dfDye$EXP,"/") )),dfDye$Height) ) )  #get max 
     
       p = plotly::plot_ly(colors=col0,mode="lines",height=h0) #df,x = ~bp,y=~Height,type="scatter",mode="markers",colors=markerCol,name=~Allele)
-      for(j in 1:nrow(dfs))  p = plotly::add_trace(p,x =dfs$bp[j] + 1*c( -1/4,0,1/4),y =c(0,dfs$Height[j],0 ),name=as.character(dfs$Allele[j]),type = "scatter" , mode = "lines", fill = "tozeroy",fillcolor=col0,showlegend = FALSE,color=factor(1))
+      for(j in 1:nrow(dfDye))  p = plotly::add_trace(p,x =dfDye$bp[j] + 1*c( -1/4,0,1/4),y =c(0,dfDye$Height[j],0 ),name=as.character(dfDye$Allele[j]),type = "scatter" , mode = "lines", fill = "tozeroy",fillcolor=col0,showlegend = FALSE,color=factor(1))
       if(!is.null(AT1)) p <- plotly::add_lines(p,x = bprng, y = rep(AT1,2),color=factor(1),line=list(dash = 'dot',width=2),showlegend = FALSE)
       
       for(loc in locs) { #for each loci: color name for different probabilities 
-        pGvec = dfs$genoProb
+        pGmarker = dfDye$genoProb[dfDye$Marker==loc] #genotype prob (whole marker)
         markerCol = "black" 
-        if( length(pGvec)>0 ) {
-          prob = min(as.numeric(pGvec)) #get smallest marginal prob
-          if( prob>=.95 ) {
+        if( length(pGmarker)>0 ) {
+          probGeno = min(as.numeric(pGmarker)) 
+          if( probGeno>=.95 ) {
             markerCol = "forestgreen"
-          } else if(prob>=.9) {
+          } else if(probGeno>=.9) {
             markerCol = "orange"
           } else {
             markerCol = "red"
@@ -100,15 +101,15 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRU
         }
         p = plotly::add_annotations(p, x=poslocs[which(loc==locs)] ,y=ymax1,text=loc,showarrow=FALSE,font = list(color = markerCol,family = 'Gravitas One',size = locsize0))  #ADD LOCI NAMES
       } #end for each loci
-      p = plotly::add_annotations(p, x=dfs$bp,y=rep(0,nrow(dfs)),text=dfs$Allele,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-10)  #ADD ALLELE NAMES
+      p = plotly::add_annotations(p, x=dfDye$bp,y=rep(0,nrow(dfDye)),text=dfDye$Allele,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-10)  #ADD ALLELE NAMES
       if(nrefs>0) {
-         p = plotly::add_annotations(p, x=dfs$bp,y=rep(0,nrow(dfs)),text=dfs$reftxt,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-25)  #ADD ALLELE NAMES
+         p = plotly::add_annotations(p, x=dfDye$bp,y=rep(0,nrow(dfDye)),text=dfDye$reftxt,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-25)  #ADD ALLELE NAMES
          if(dyeidx ==1) p = plotly::add_annotations(p, x=rep(bprng[2],2),y=c(ymax1-ymax1/10*(1:nrefs)),text= paste0("Label ",1:nrefs,": ",refNames),showarrow=FALSE,font = list(colors = 1,family = 'sans serif',size = 15),xshift=0,xanchor = 'right')  #ADD ALLELE NAMES
       }
       if(dyeidx ==length(dyes)) p = plotly::add_annotations(p, x=rep(bprng[2],2),y=c(ymax1-ymax1/10*(1:length(mx))),text=mxtxt,showarrow=FALSE,font = list(colors = 1,family = 'sans serif',size = 15),xshift=0,xanchor = 'right')  #ADD ALLELE NAMES
     
       #ADD EXPECTATIONS
-      Ev = strsplit(dfs$EXP,"/") #extract
+      Ev = strsplit(dfDye$EXP,"/") #extract
       shapeList = list()  #add opacity shapes
     
       cc = 1 #counter
@@ -116,7 +117,7 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRU
        Ev2 = c(0,Ev[[i]])
        for(j in 1:length(Ev[[i]])) { #for each contributor 
         if(Ev2[j+1]==Ev2[j]) next #skip if equal
-        shapeList[[cc]] = list(type = "rect",fillcolor = col1[j], line = list(color = col1[j],width=0.1), opacity = transdeg,x0 =dfs$bp[i]-1/3, x1 = dfs$bp[i]+1/3,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
+        shapeList[[cc]] = list(type = "rect",fillcolor = col1[j], line = list(color = col1[j],width=0.1), opacity = transdeg,x0 =dfDye$bp[i]-1/3, x1 = dfDye$bp[i]+1/3,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
         cc = cc + 1
        }
       }
@@ -145,22 +146,22 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRU
     if(!is.null(AT) && length(AT)>1 ) AT1 = AT[ toupper(names(AT))%in%locs ][1]  #extract dye specific AT
     
     poslocs = loctab[,2] #get corresponding positions
-    dfs = df[df$Marker%in%locs,] #extract df subset 
-    dfs_unique = unique( subset(dfs,select=c("Marker","Allele","bp","reftxt") ) ) #get unique outcome
-    if(dyeYmax) ymax1 = ymaxscale*max(na.omit( c(minY,AT1,dfs$Height, max(as.numeric(unlist(strsplit(dfs$EXP,"/")))) ) ))  #get max 
+    dfDye = df[df$Marker%in%locs,] #extract df subset 
+    dfDye_unique = unique( subset(dfDye,select=c("Marker","Allele","bp","reftxt") ) ) #get unique outcome
+    if(dyeYmax) ymax1 = ymaxscale*max(na.omit( c(minY,AT1,dfDye$Height, max(as.numeric(unlist(strsplit(dfDye$EXP,"/")))) ) ))  #get max 
     
-    p = plotly::plot_ly(dfs,type = "bar",height=h0, colors=repcols,showlegend = FALSE)
-    p = plotly::add_trace(p,x=~bp,y=~Height,name=~Sample,showlegend = FALSE,color=~Sample,hoverlabel=list(font=list(size=14),namelength=1000,namecolor="black"),text =~Allele) #dfs,x = ~bp,y=~Height,type="scatter",mode="markers",colors=markerCol,name=~Allele)
+    p = plotly::plot_ly(dfDye,type = "bar",height=h0, colors=repcols,showlegend = FALSE)
+    p = plotly::add_trace(p,x=~bp,y=~Height,name=~Sample,showlegend = FALSE,color=~Sample,hoverlabel=list(font=list(size=14),namelength=1000,namecolor="black"),text =~Allele) #dfDye,x = ~bp,y=~Height,type="scatter",mode="markers",colors=markerCol,name=~Allele)
     if(!is.null(AT1)) p = plotly::add_segments(p,x = bprng[1], xend = bprng[2], y = AT1, yend = AT1,color=factor(1),line=list(dash = 'dot',width=2),showlegend = FALSE)
     
     for(loc in locs) { #for each loci: color name for different probabilities 
-      markerCol = "black"
-      pGvec = dfs$genoProb
-      if( length(pGvec)>0 ) {
-        prob = min(as.numeric(pGvec)) #get smallest marginal prob
-        if( prob>=.95 ) {
+      pGmarker = dfDye$genoProb[dfDye$Marker==loc] #genotype prob (whole marker)
+      markerCol = "black" 
+      if( length(pGmarker)>0 ) {
+        probGeno = min(as.numeric(pGmarker)) 
+        if( probGeno>=.95 ) {
           markerCol = "forestgreen"
-        } else if(prob>=.9) {
+        } else if(probGeno>=.9) {
           markerCol = "orange"
         } else {
           markerCol = "red"
@@ -168,22 +169,22 @@ plotTopEPG2 <- function(MLEobj,DCobj=NULL,kit=NULL,dyeYmax=TRUE,plotRepsOnly=TRU
       }
       p = plotly::add_annotations(p, x=poslocs[which(loc==locs)] ,y=ymax1,text=loc,showarrow=FALSE,font = list(color = markerCol,family = 'Gravitas One',size = locsize0))  #ADD LOCI NAMES
     } #end for each loci
-    p = plotly::add_annotations(p, x=dfs_unique$bp,y=rep(0,nrow(dfs_unique)),text=dfs_unique$Allele,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-10)  #ADD ALLELE NAMES
+    p = plotly::add_annotations(p, x=dfDye_unique$bp,y=rep(0,nrow(dfDye_unique)),text=dfDye_unique$Allele,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-10)  #ADD ALLELE NAMES
     if(nrefs>0) {
-       p = plotly::add_annotations(p, x=dfs_unique$bp,y=rep(0,nrow(dfs_unique)),text=dfs_unique$reftxt,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-25)  #ADD ALLELE NAMES
+       p = plotly::add_annotations(p, x=dfDye_unique$bp,y=rep(0,nrow(dfDye_unique)),text=dfDye_unique$reftxt,showarrow=FALSE,font = list(color = 1,family = 'sans serif',size = txtsize0),yshift=-25)  #ADD ALLELE NAMES
        if(dyeidx ==1) p = plotly::add_annotations(p, x=rep(bprng[2],2),y=c(ymax1-ymax1/10*(1:nrefs)),text= paste0("Label ",1:nrefs,": ",refNames),showarrow=FALSE,font = list(colors = 1,family = 'sans serif',size = 15),xshift=0,xanchor = 'right')  #ADD ALLELE NAMES
     }
     if(dyeidx ==length(dyes)) p = plotly::add_annotations(p, x=rep(bprng[2],2),y=c(ymax1-ymax1/10*(1:length(mx))),text= mxtxt,showarrow=FALSE,font = list(colors = 1,family = 'sans serif',size = 15),xshift=0,xanchor = 'right')  #ADD ALLELE NAMES
     
     #ADD EXPECTATIONS
-    Ev = strsplit(dfs$EXP,"/") #extract
+    Ev = strsplit(dfDye$EXP,"/") #extract
     shapeList = list()  #add opacity shapes
     cc = 1 #counter
     for(i in 1:length(Ev)) {
      Ev2 = c(0,Ev[[i]])
      for(j in 1:length(Ev[[i]])) { #for each contributor 
       if(Ev2[j+1]==Ev2[j]) next #skip if equal
-      shapeList[[cc]] = list(type = "rect",fillcolor = col1[j], line = list(color = col1[j],width=0.1), opacity = transdeg,x0 =dfs$bp[i]-1/2, x1 = dfs$bp[i]+1/2,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
+      shapeList[[cc]] = list(type = "rect",fillcolor = col1[j], line = list(color = col1[j],width=0.1), opacity = transdeg,x0 =dfDye$bp[i]-1/2, x1 = dfDye$bp[i]+1/2,y0 = Ev2[j], y1 = Ev2[j+1])#,xref="x", yref = "y")
       cc = cc + 1
      }
     }

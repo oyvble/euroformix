@@ -118,6 +118,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
   if(!is.null(ibd)) ibd0 = ibd #assign
     
   #PREPARE DATA VECTORS:
+  triAlleleVector = NULL
   nAlleles <- nPotStutters <- nRepMarkers <- rep(0,nLocs) #num alleles and extra potential stutters  
   QalleleIndex <- rep(-1,nLocs) #default is no dropout
   YvecLong <- FvecLong <- DvecLong <- numeric()
@@ -129,12 +130,12 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
   }
   basepairLong <- numeric() #base pair information
   nTypedLong <- maTypedLong <- numeric() #= rep(0,nLocs)  #number of typed (total)
-  alleleNames <- alleleNamesALL <- NULL #store name of all alleles
+  alleleNames <- alleleNamesALL <- NULL #store name of both observed alleles and potential alleles
   
   nJointGenos <- nGenos <- nUnknowns <- nKnowns <- rep(0L,nLocs) #number ofgenotypes (also joint) to traverse
   genoList = list() #store alleles in genotypes
-  for(m in seq_len(nLocs)) { #m=2
-    loc = locs[m] #extract locus
+  for(markerIdx in seq_len(nLocs)) { #markerIdx=2
+    loc = locs[markerIdx] #extract locus
     freqAll = popFreq[[loc]] #get freqs
     
     #Look on observations
@@ -143,12 +144,12 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     for(rep in repNames) {
       if(loc%in%locs_evids[[rep]]) repNamesMarker = c(repNamesMarker, rep)
     } 
-    nRepMarkers[m] = length(repNamesMarker) #number of replicates
+    nRepMarkers[markerIdx] = length(repNamesMarker) #number of replicates
     
     #Then check the observed Peaks for each replicate (check AT)
-    rep_alleles = lapply(samples[repNamesMarker], function(x) x[[loc]]$adata[x[[loc]]$hdata>=ATv[m]])
+    rep_alleles = lapply(samples[repNamesMarker], function(x) x[[loc]]$adata[x[[loc]]$hdata>=ATv[markerIdx]])
     alleles = unique(unlist(rep_alleles)) #get alleles
-    nAlleles[m] = length(alleles) #store number of unique alleles
+    nAlleles[markerIdx] = length(alleles) #store number of unique alleles
     
     #Check if alleles are in LUS format (i.e. contains the _ separation symbol):   
     isLUS <- FALSE
@@ -169,19 +170,19 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
         })        
       }
     }
-    if(isSTRING) nStutterModels[m] = 0 #set number of stutter models to zero
+    if(isSTRING) nStutterModels[markerIdx] = 0 #set number of stutter models to zero
 
     #Creating a matrix for the peaks per replicate given per row
-    yv = matrix(0,ncol= nAlleles[m],nrow=nRepMarkers[m],dimnames = list(repNamesMarker,alleles)) #create PH-matrix
+    yv = matrix(0,ncol= nAlleles[markerIdx],nrow=nRepMarkers[markerIdx],dimnames = list(repNamesMarker,alleles)) #create PH-matrix
     for(rep in repNamesMarker) {
       locDat = samples[[rep]][[loc]]
-      indUse = locDat$hdata>=ATv[m] #check those to use
+      indUse = locDat$hdata>=ATv[markerIdx] #check those to use
       if(any(indUse)) yv[rep, match(locDat$adata[indUse],alleles)] = locDat$hdata[indUse] #insert PHs
     }
     
     #Obtain allele frequences
     freqs = as.numeric()
-    if( nAlleles[m] > 0) { #IF ANY ALLELES TO use (NOT EMPTY LOCI)
+    if( nAlleles[markerIdx] > 0) { #IF ANY ALLELES TO use (NOT EMPTY LOCI)
       newA = alleles[!alleles%in%names(freqAll)] #new alleles
       if(length(newA)>0) {
         newA = setNames(rep(minF,length(newA)),newA)
@@ -198,22 +199,22 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     addQ = Qfreq>0 #Q-allele freq must be at last 0
     
     dropinWeight = numeric() #init empty
-    if( nAlleles[m]>0 ) { #IF ANY ALLELES TO KEEP (NOT EMPTY LOCI)
+    if( nAlleles[markerIdx]>0 ) { #IF ANY ALLELES TO KEEP (NOT EMPTY LOCI)
       FvecLong = c(FvecLong , freqs) #add freqs for obsalleles
-      freqs2 = t(replicate(nRepMarkers[m],freqs)) #span out for each replicate
+      freqs2 = t(replicate(nRepMarkers[markerIdx],freqs)) #span out for each replicate
       if(length(freqs)==1) freqs2 = t(freqs2) #need to rotate if only one allele in frequency
-      dropinWeight = log(freqs2) + log(pCv[m]) + dexp(yv-ATv[m],rate=lambdav[m],log=TRUE)
+      dropinWeight = log(freqs2) + log(pCv[markerIdx]) + dexp(yv-ATv[markerIdx],rate=lambdav[markerIdx],log=TRUE)
       dropinWeight[is.infinite(dropinWeight)] = -1e+100 ##insert large negative number
     } 
     if(addQ) {
-      QalleleIndex[m] = nAlleles[m] #last index is the Q-allele (adjusted for C++)
+      QalleleIndex[markerIdx] = nAlleles[markerIdx] #last index is the Q-allele (adjusted for C++)
       FvecLong = c(FvecLong , Qfreq) #add freq for dropout
       
       #Add zero to last column (for Q-alleles)
-      insZeros = rep(0,nRepMarkers[m]) #insert number of zeros
+      insZeros = rep(0,nRepMarkers[markerIdx]) #insert number of zeros
       yv = cbind(yv , insZeros) #add  zero PH as last column (Q-alleles)
       dropinWeight = cbind(dropinWeight,insZeros) #add  zero dropinweigt as last column (Q-alleles)
-      nAlleles[m] = nAlleles[m] + 1 #number of alleles to traverse in genotypes (observed + dropout)
+      nAlleles[markerIdx] = nAlleles[markerIdx] + 1 #number of alleles to traverse in genotypes (observed + dropout)
     } 
     DvecLong = c(DvecLong , as.numeric(dropinWeight)) #Add drop-in weights
     YvecLong = c(YvecLong , as.numeric(yv)) #add PHs for obs alleles
@@ -257,7 +258,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     #Prepare BWstutter/FWstutter relations:
     #isNum = !any(is.na(av)) #check if allele is num
     #isNum = isNum && (BWS || FWS) #also
-    nPotStutters[m] = 0  #number of potential stutters (Alleles not part of av). Default is none
+    nPotStutters[markerIdx] = 0  #number of potential stutters (Alleles not part of av). Default is none
     BWalleles <- FWalleles <- NULL
     if( (BWS || FWS) && !isSTRING) {
       if(isLUS) { #CHECK FIRST IF LUS
@@ -269,29 +270,29 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
         if(FWS) FWalleles = as.character(as.numeric(allelesNotQ)+1)
       }
       PSalleles = setdiff(c(BWalleles,FWalleles),alleles)
-      alleles2 = c(alleles,PSalleles) #include potientials stutters in additional to all
-      nPotStutters[m] = length(PSalleles) #get number of potential stutters (all dropout)
+      allelesAll = c(alleles,PSalleles) #include potientials stutters in additional to all
+      nPotStutters[markerIdx] = length(PSalleles) #get number of potential stutters (all dropout)
       
-      BWto = match( BWalleles,alleles2,nomatch=0 )-1 #get indices where each allele gives BW contribution to
-      FWto = match( FWalleles,alleles2,nomatch=0 )-1 #get indices where each allele gives FW contribution to
+      BWto = match( BWalleles,allelesAll,nomatch=0 )-1 #get indices where each allele gives BW contribution to
+      FWto = match( FWalleles,allelesAll,nomatch=0 )-1 #get indices where each allele gives FW contribution to
       if(!FWS) FWto = rep(-1,length(BWalleles)) #not used
-      BWfrom = match(as.character(alleles2),BWalleles,nomatch=0)-1 #get index of what allele it receive stutter from  (Allele 1=index0)
-      FWfrom = match(as.character(alleles2),FWalleles,nomatch=0)-1 #get index of what allele it receive stutter from  (Allele 1=index0)
+      BWfrom = match(as.character(allelesAll),BWalleles,nomatch=0)-1 #get index of what allele it receive stutter from  (Allele 1=index0)
+      FWfrom = match(as.character(allelesAll),FWalleles,nomatch=0)-1 #get index of what allele it receive stutter from  (Allele 1=index0)
       
     } else { #ELSE IF STUTTER NOT USED
       BWto <- FWto <- rep(-1,length(allelesNotQ)) 
       BWfrom <- FWfrom <- rep(-1,length(alleles))  
-      alleles2 = alleles #copy allele names
+      allelesAll = alleles #copy allele names
     }
     if(addQ) {  #last index is dummy variable (Dropout doesn't stutter). THerefor need QalleleIndex to not be used
       BWto = c(BWto, -1)
       FWto = c(FWto, -1) 
     }
     alleleNames = c(alleleNames, alleles) #store alleles (including potential stutters
-    alleleNamesALL = c(alleleNamesALL, alleles2) #store alleles (including potential stutters
+    alleleNamesALL = c(alleleNamesALL, allelesAll) #store alleles (including potential stutters
     
     #Obtain number of typed alleles (may include Q-alelle):
-    tmp <- rep(0, nAlleles[m])
+    tmp <- rep(0, nAlleles[markerIdx])
     typedRefs = unique( c(which(condOrder>0),knownRef,knownRel) ) #get unique of typed referneces
     for(k in typedRefs) { #for each typed refs
       av = unlist(refData[[loc]][[k]])
@@ -307,29 +308,40 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     #Obtain conditional genotypes; Assign genotypes of known references to knownGind-matrix
     #assign references to knownGind-matrix by values of Glist
     Gmat = numeric() #Obtain genotype index matrix: vectorized upper triangular (1,1),(1,2),...,(1,n),(2,2),(2,3),...,(2,n),....,(n,n)  
-    for(i in 1:nAlleles[m]) Gmat = rbind(Gmat, cbind( alleles[rep(i,nAlleles[m] - i + 1)], alleles[i:nAlleles[m]] ))
+    for(i in 1:nAlleles[markerIdx]) Gmat = rbind(Gmat, cbind( alleles[rep(i,nAlleles[markerIdx] - i + 1)], alleles[i:nAlleles[markerIdx]] ))
     
     if(!is.null(condOrder) && any(condOrder>0) && MAXnRefs>0) {
       refDataLoc = refData[[loc]][refNamesAll] #obtain correct order of references
       for(k in seq_along(refNamesAll)) { #for each typed refs
-        if(k>length(condOrder) || condOrder[k]==0) next
+        if(k>length(condOrder) || condOrder[k]==0) next #skip if not conditioned on
         av = unlist(refDataLoc[[k]])
         if(length(av)==0) next 
         if(length(av)==1) av = rep(av,2) #impute if exactly one allele
-        if(length(av)>2) stop("References can't have more than two alleles!") 
+        if(length(av)>2) { #stop("References can't have more than two alleles!")
+          if(max(table(av))>2) stop("References can't have more than two identical alleles!")
+          #Possible to include this information as a tri-allele stored in a separate variable
+          additionalAlleles = av[-(1:2)] #obtain remaining alleles
+          for(additionalAllele in additionalAlleles) {
+          #  additionalAllele = additionalAlleles[1]
+            triAlleleIndex = which(alleles==additionalAllele) #get index of triallele
+            if(length(triAlleleIndex)==0) triAlleleIndex =  which(alleles==Qallele) #it is a Q-allele if not found 
+            triAlleleInfo = c(markerIdx,triAlleleIndex,condOrder[k])-1 #storing marker index, allele index and contr idx (adj -1)
+            triAlleleVector = c(triAlleleVector,triAlleleInfo) #Append to long vector
+          }
+        }
         av[!av%in%alleles] = Qallele #convert non-observed to Q-allele
         Gind1 <- av[1]==Gmat[,1] & av[2]==Gmat[,2]
         Gind2 <- av[2]==Gmat[,1] & av[1]==Gmat[,2]
         GindUse =  which(Gind1 | Gind2) #obtain genottype index to use
         if(length(GindUse)==0) stop(paste0("At marker ",loc,": A reference profile was recorded with a rare allele not in evidence. 
 			This error occur when the evidence contains all alleles in the frequency database. Please improve frequency database to enable calculation."))
-        knownGind[condOrder[k],m] = GindUse - 1 #subtract with one since we work from 0-indice
+        knownGind[condOrder[k],markerIdx] = GindUse - 1 #subtract with one since we work from 0-indice
       }
     }
-    nKnowns[m] = sum(knownGind[,m] > -1)  #obtain number of known
-    nUnknowns[m] = nC - nKnowns[m] #obtain number of unknowns for marker
-    nGenos[m] = round( nAlleles[m]*(nAlleles[m]+1)/2) #number of genotypes (one contributor)
-    nJointGenos[m] = nGenos[m]^nUnknowns[m] #get number of joint combinations
+    nKnowns[markerIdx] = sum(knownGind[,markerIdx] > -1)  #obtain number of known
+    nUnknowns[markerIdx] = nC - nKnowns[markerIdx] #obtain number of unknowns for marker
+    nGenos[markerIdx] = round( nAlleles[markerIdx]*(nAlleles[markerIdx]+1)/2) #number of genotypes (one contributor)
+    nJointGenos[markerIdx] = nGenos[markerIdx]^nUnknowns[markerIdx] #get number of joint combinations
     
     #KINSHIP MODULE (also possible if knownRel=NULL and ibd given)
     if(!is.null(knownRel) && ibd0[1]<1 ) {
@@ -340,7 +352,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
          av[!av%in%alleles] = Qallele #convert non-observed to Q-allele
          Gind1 <- av[1]==Gmat[,1] & av[2]==Gmat[,2]
          Gind2 <- av[2]==Gmat[,1] & av[1]==Gmat[,2]
-         relGind[m] = which(Gind1 | Gind2) - 1 #subtract with one since we work from 0-indice
+         relGind[markerIdx] = which(Gind1 | Gind2) - 1 #subtract with one since we work from 0-indice
        } 
     }
     ##############################################################
@@ -351,7 +363,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     FWtoLong = c(FWtoLong, FWto) #last index is dummy variable (Dropout doesn't stutter). THerefor need QalleleIndex
     BWfromLong = c(BWfromLong, BWfrom) #last index is dummy variable (Dropout doesn't stutter).
     FWfromLong = c(FWfromLong, FWfrom) #last index is dummy variable (Dropout doesn't stutter). THerefor need QalleleIndex
-  } #end for each rows
+  } #end for each marker
   startIndMarker_nAlleles <- c(0,cumsum(nAlleles)) #get observed alleles start position of marker in long vector
   startIndMarker_nAllelesTot <- c(0,cumsum(nAlleles+nPotStutters)) #get observed alleles start position of marker in long vector
   startIndMarker_nAllelesReps <- c(0,cumsum(nAlleles*nRepMarkers)) #get observed alleles start position of marker in long vector
@@ -381,25 +393,26 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
    c$genoList=genoList #add genotype list
    c$refNamesCond = refNamesCond #add reference names that are conditoned on (correct order)
    c$hasKinship = any(relGind>=0) #check if kinship were defined
+   c$triAlleles = as.integer(triAlleleVector)
    
    #Additional objects required for non-fast version (calcloglik_allcomb/calcloglik_cumprob)
    #Stutters: Only required stutter shifts are stored (in simlar from/to vectors)
    c$nStutters <- rep(0L,nLocs) #init as zero
    c$stuttFromInd <-  c$stuttToInd <- c$stuttParamInd <- integer()
-   for(m in 1:nLocs) {
-     for(a in 1:nAlleles[m]) { #traverse only "observed alleles"
-       aind = startIndMarker_nAlleles[m] + a #obtain allele index
+   for(markerIdx in 1:nLocs) {
+     for(alleleIdx in 1:nAlleles[markerIdx]) { #traverse only "observed alleles"
+       aind = startIndMarker_nAlleles[markerIdx] + alleleIdx #obtain allele index
        if(BWS && BWtoLong[aind]>(-1)) { #add BW-stutter contr
-         c$stuttFromInd = c(c$stuttFromInd,a-1) #indicate allele index of where STUTTER FROM
+         c$stuttFromInd = c(c$stuttFromInd,alleleIdx-1) #indicate allele index of where STUTTER FROM
          c$stuttToInd = c(c$stuttToInd, BWtoLong[aind]) #indicate allele index of where STUTTER FROM
          c$stuttParamInd = c(c$stuttParamInd,0L) #stutter type "0"
-         c$nStutters[m] = c$nStutters[m] + 1L #increment
+         c$nStutters[markerIdx] = c$nStutters[markerIdx] + 1L #increment
        }
        if(FWS && FWtoLong[aind]>(-1)) { #add BW-stutter contr
-         c$stuttFromInd = c(c$stuttFromInd,a-1) #indicate allele index of where STUTTER FROM
+         c$stuttFromInd = c(c$stuttFromInd,alleleIdx-1) #indicate allele index of where STUTTER FROM
          c$stuttToInd = c(c$stuttToInd,FWtoLong[aind]) #indicate allele index of where STUTTER FROM
          c$stuttParamInd = c(c$stuttParamInd,1L) #stutter type "1"
-         c$nStutters[m] = c$nStutters[m] + 1L #increment
+         c$nStutters[markerIdx] = c$nStutters[markerIdx] + 1L #increment
        }
      }
    }

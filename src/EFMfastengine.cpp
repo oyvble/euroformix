@@ -63,8 +63,7 @@ class EFMmarker { //Each marker is treated separately
 	int m_NumReps; //number of replicates	
 	
 	Col<int> m_knownContributorGenotypes; //The genotype index for the known contributors (m_NOK length)
-	Col<int> m_unknownContributorPower; //indicates which contributorPower value to begin iterate with (used in getContributionIndices)
-	uvec m_contributionIndicesConditionedKnowns; //(numberOfModeledAlleles+nPotentialStutter); //this is the lookup indices to return
+	Col<int> m_unknownContributorPower; //indicates which contributorPower value to begin iterate with (used in getContributionIndices)	
 	int m_possibleContributionsPerContributor; //this is the (3/6/10)^NOC outcome of compact matrix
 	
 	//STORAGE OF LARGE OBJECTS:	
@@ -77,16 +76,20 @@ class EFMmarker { //Each marker is treated separately
 	//Storage of relationship params
 	int m_relGind;
 	vector<double> m_ibd;
-
+	
+	//Include special contribution for conditional references: 
+	umat m_triAlleles; //A matrix specifying a 3rd allele. col1=Alleleposition and col2=contributor number. Implemented from v4.1.2
+	
 	//The constructor prepares the variables with necessary data (arguments in constructor)
 	public:
 	size_t m_nJointCombREST; //restricted genotype outcome (<=nGeno1p^m_NOU)
 	size_t m_nJointCombFULL; //full genotype outcome (nGeno1p^m_NOU)
+	uvec m_contributionIndicesConditionedKnowns; //(numberOfModeledAlleles+nPotentialStutter); //this is the lookup indices to return
 
 	EFMmarker(int markerIndex, int NumReps, int NumAlleles, int startIndMarker_nAlleles, int startIndMarker_nAllelesReps, vector<double> peaksLong, vector<double> freqsLong, vector<double> dropLong, 
 		double nTypedLong, vector<double> maTypedLong, vector<int> BWtoLong, vector<int> FWtoLong, 
 		int NumPotStutters, int startIndMarkerTot, int QalleleIndex, double pC, double fst, double AT, double lambda,
-		int NOK, vector<int> GindKnownLong, int relGindLong, vector<double> ibdLong) {
+		int NOK, vector<int> GindKnownLong, int relGindLong, vector<double> ibdLong, umat triAlleles) {
 
 		//Gprob = *Gprob1U; //set genotype probability of 1st unknown
 		m_NumReps = NumReps; //set number of replicates
@@ -102,6 +105,7 @@ class EFMmarker { //Each marker is treated separately
 		m_QalleleIndex = QalleleIndex;
 		m_ibd = ibdLong;
 		m_relGind = relGindLong;
+		m_triAlleles = triAlleles; 
 		
 		//Following are NumAlleles*NumReps long
 		m_peaks.zeros(NumReps,NumAlleles); //init vector
@@ -163,7 +167,16 @@ class EFMmarker { //Each marker is treated separately
 			//Informing the known contributors (update allele lookup indices for these)		
 			if( k < m_NOK && m_knownContributorGenotypes[k] > -1) { //obtain value ("-1" means missing marker)
 				m_contributionIndicesConditionedKnowns = getContributionIndices(m_knownContributorGenotypes[k], 1,m_outG1allele,m_QalleleIndex,m_NumStutterModels, &(m_BWto[0]),&(m_FWto[0]), 
-															m_NumGenos1p, m_contributionIndicesConditionedKnowns, contributorPower);				
+															m_NumGenos1p, m_contributionIndicesConditionedKnowns, contributorPower);
+							
+				//ADDING (OPTIONAL) TRI-ALLELE CONTRIBUTION HERE:
+				for(uword row=0; row<m_triAlleles.n_rows; row++) {
+					int contrIdx = m_triAlleles(row,1); //obtain contribution index
+					if(contrIdx==k) { //when same contribution:
+						m_contributionIndicesConditionedKnowns = getContributionIndicesAllele(m_triAlleles(row,0),m_QalleleIndex,m_NumStutterModels, &(m_BWto[0]),&(m_FWto[0]), m_contributionIndicesConditionedKnowns, contributorPower);
+						//Rcpp::Rcout << m_contributionIndicesConditionedKnowns << "\n";
+					}							
+				}
 				knownsCounter++; //count if non-missing
 			} else {				
 				m_unknownContributorPower[unknownsCounter] = pow(m_possibleContributionsPerContributor,k); //aligning position of unknown here
@@ -487,10 +500,7 @@ class EFMclass {
 	mat m_EvidWeights; //Evidence weight is stored globally here (also includes potential stutters)
 	mat m_contrMatPerAllele;  //contribution matrix per allele (stored here for use in modelValidation as well)
 	vector<double> m_modelValidParams; //Copy of different kinds of necessary parameters used in modelValidation)
-	
-	//Extra for returning
-	//vec m_genoWeightsAllMarkers; //used to return genotype weights (across all markers)
-	
+		
 	public: 
 	vec m_loglikMarkers; //stored for later access (directly to R)	
 	//vec m_loglikMarkersGenos; //stored for later access (directly to R).
@@ -531,12 +541,14 @@ class EFMclass {
 		//PREPARE EVIDENCE MATRIX
 		//Step 1: Prepare contribution matrix without stutters (Mix-prop and degradation)		
 		vec contrWithMx = m_contrMat0*Mx; //get Mx contribution (no degrad)		
+		
+		
 		Row<double> degScale = shape0 * exp(m_basepairLong * loggedBeta); //vectorized ARMA scale with shape0
 		m_contrMatPerAllele = contrWithMx * degScale; //degScale; //an outer matrix product (gives matrix). Contribution per allele (column-wise)		
 		//Note: contrMatPerAllele is a (out0 x m_NumAllelesTot) matrix (inclues Q-allele but not potential stutters)
 		//Rcpp::Rcout << m_basepairLong << "\n";
 		//Rcpp::Rcout << contrWithMx << "\n";
-		
+				
 		//Step 2: Modify contribution matrix wrt stutters (produce contrMat1 using m_lookUpMat): In same step: Calculate weight-of-evidence matrix
 		//Parallelize over all alleles in total (utilizing many threads)		
 		#pragma omp parallel for //default(none) shared(EvidWeights,m_TotalNumAllelesPS, m_contrMat0,m_lookUpMat, xiB, xiF,m_NumStutterModels, BWfrom,FWfrom,m_NumCombOut1,m_AT,scale0,const1,const2 ) 
@@ -735,7 +747,7 @@ class EFMclass {
 		vector<double> nTypedLong, vector<double> maTypedLong, vector<double> basepairLong, 
 		vector<int> BWfromLong, vector<int> FWfromLong, vector<int> BWtoLong, vector<int> FWtoLong,
 		vector<int> NumPotStutters, vector<int> startIndMarker_nAllelesTot, vector<int> QalleleIndex, vector<double> pC, vector<double> fst, vector<double> AT, vector<double> lambda,
-		int NOK, vector<int> GindKnownLong,  vector<int> relGindLong, vector<double> ibdLong) {
+		int NOK, vector<int> GindKnownLong,  vector<int> relGindLong, vector<double> ibdLong, vector<int> triAlleles) {
 				
 		m_NumStutterModels = NumStutterModels;
 		m_NumMarkers = NumMarkers; 
@@ -775,11 +787,37 @@ class EFMclass {
 		m_basepairLong.set_size(TotalNumAlleles); //init
 		for(int a=0; a < TotalNumAlleles; a++)  m_basepairLong[a] = basepairLong[a]; //copy to vector (need other vector type)
 		
+		//structure information about tri-alleles: 
+		vector<umat> triAllelesPerMarker; //create vector structure to store triAlleles matrix per marker
+		umat triAllelesEmpty(0,2); //init empty object (in case of none)
+		umat triAlleles1row(1,2); //init empty object (in case of none)		
+		int nTriAlleles = triAlleles.size()/3; //obtain size of vector and adjust for number of elements	
+		int elemIdxCounter = 0; //Used to iterate over the elements
+		for(int m=0; m< NumMarkers; m++) {
+			umat triAlleleTmp = triAllelesEmpty; //set as empty by default if no data
+			for(int idx=elemIdxCounter; idx<nTriAlleles; idx++) { //traverse each row in new matrix				
+				int marker = triAlleles[3*idx]; //Obtain marker index
+				if(marker==m) { //Store object 
+					umat newRow = triAlleles1row; 
+					newRow(0,0) = triAlleles[3*idx+1];
+					newRow(0,1) = triAlleles[3*idx+2];					
+					triAlleleTmp = join_cols(triAlleleTmp,newRow); //append row
+					elemIdxCounter++; //remember to update this as well
+				} else if(marker>m) {
+					break; //stop loop if marker exceed
+				}
+			}
+			//Rcpp::Rcout << triAlleleTmp << "\n";
+			triAllelesPerMarker.push_back(triAlleleTmp); //insert to vector
+		}
+			
 		//Prepare EFMmarker object
 		for(int m=0; m< NumMarkers; m++) {
-			EFMmarker *marker = new EFMmarker(m, NumRepsMarkers[m], NumAlleles[m], startIndMarker_nAlleles[m],startIndMarker_nAllelesReps[m], peaksLong, freqsLong, dropLong, nTypedLong[m], maTypedLong, BWtoLong, FWtoLong, NumPotStutters[m], startIndMarker_nAllelesTot[m], QalleleIndex[m], pC[m], fst[m], AT[m], lambda[m], NOK, GindKnownLong,  relGindLong[m], ibdLong ); //prepare new marker
+			EFMmarker *marker = new EFMmarker(m, NumRepsMarkers[m], NumAlleles[m], startIndMarker_nAlleles[m],startIndMarker_nAllelesReps[m], peaksLong, freqsLong, dropLong, nTypedLong[m], maTypedLong, BWtoLong, FWtoLong, NumPotStutters[m], startIndMarker_nAllelesTot[m], QalleleIndex[m], pC[m], fst[m], AT[m], lambda[m], NOK, GindKnownLong,  relGindLong[m], ibdLong, triAllelesPerMarker[m]); //prepare new marker
 			EFMmarkerv.push_back(*marker); //insert marker information to vector (push back gives correct marker order)
-		}		
+		}
+		
+		
 	}
 };
 
@@ -801,11 +839,11 @@ class ExposedClass {
 			vector<int> BWfromLong, vector<int> FWfromLong, vector<int> BWtoLong, vector<int> FWtoLong,
 			vector<int> NumPotStutters, vector<int> startIndMarker_nAllelesTot, vector<int> QalleleIndex, 
 			vector<double> pC, vector<double> fst, vector<double> AT, vector<double> lambda, int NOK, vector<int> GindKnownLong, 
-			vector<int> relGindLong, vector<double> ibdLong, int maxThreads) {
+			vector<int> relGindLong, vector<double> ibdLong, vector<int> triAlleles, int maxThreads) {
 				
 			m_maxThreads = maxThreads; //copy
 			efmStorage = new EFMclass(NumStutterModels, NumMarkers, NumRepsMarkers, NumAlleles, startIndMarker_nAlleles, startIndMarker_nAllelesReps, peaksLong, freqsLong, dropLong, nTypedLong, maTypedLong, basepairLong, 
-			BWfromLong, FWfromLong, BWtoLong, FWtoLong, NumPotStutters, startIndMarker_nAllelesTot, QalleleIndex, pC, fst, AT, lambda, NOK, GindKnownLong, relGindLong, ibdLong);			
+			BWfromLong, FWfromLong, BWtoLong, FWtoLong, NumPotStutters, startIndMarker_nAllelesTot, QalleleIndex, pC, fst, AT, lambda, NOK, GindKnownLong, relGindLong, ibdLong, triAlleles);			
 			//efmStorage.push_back(*efm); //store EFMclass object			
 		}
 		

@@ -44,3 +44,19 @@ uvec getContributionIndices(int genotypeCombinationIndex, int numberOfContributo
   
   return contributionIndices;	
 }
+
+uvec getContributionIndicesAllele(uword alleleIndex1, int alleleIndexOfDropouts,  int numStutterModels, int *BWto, int *FWto, uvec contributionIndices, Col<int> contributorPower ) {	
+	bool hasNumStutterModels1 = numStutterModels > 0; //save as variable since used twice
+	bool hasNumStutterModels2 = numStutterModels > 1; //save as variable since used twice
+	uword alleleIndexOfDropouts0 = alleleIndexOfDropouts; //convert to uword
+
+	//THIS IS INNER FUNCTION (updateContributionCombinationIndices)
+	int contributorIndex = 0; //always the case here
+	contributionIndices[alleleIndex1] += contributorPower[contributorIndex];
+	if(hasNumStutterModels1 && (alleleIndex1 != alleleIndexOfDropouts0) && !hasNumStutterModels2) {
+		//if(hasNumStutterModels2) {  contributionIndices[ FWto[alleleIndex1] ] += 6 * contributorPower[contributorIndex];
+		contributionIndices[ BWto[alleleIndex1] ] +=  3 * contributorPower[contributorIndex];
+	} //END INNER FUNCTION
+
+	return contributionIndices;	
+}

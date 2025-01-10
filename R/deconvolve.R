@@ -46,6 +46,7 @@ deconvolve = function(mlefit,alpha=0.99,maxlist=1000,signif=4,checkCalcs=FALSE){
   #Step 2) Obtaining Deconvolved Genotype  results
   contrcn <- paste0("C",1:nC) #column name of contributors
   topRankcn <-  c("TopGenotype","probability","ratioToNextGenotype") #names for each contributor
+  nTriAlleles = length(c$triAlleles)/3 #used to include tri-allele for knowns
   
   #OUTPUT VARIABLES
   #deconvlisti <- list() #stored full list (truncated on maxlist)
@@ -54,7 +55,7 @@ deconvolve = function(mlefit,alpha=0.99,maxlist=1000,signif=4,checkCalcs=FALSE){
   toplist <- list()
   table2 <- table3 <- table4 <- numeric()
   for(markerIdx in seq_along(c$markerNames)) { #extract info in c relevant for each markers:
-# markerIdx=5;   print(markerIdx)
+# markerIdx=7;   print(markerIdx)
     loc = c$markerNames[markerIdx] #obtain locus name
     DCmarg <- DCmargList[[loc]] #obtain marginals
     Gset1 = paste0(c$genoList[[loc]][,1],"/",c$genoList[[loc]][,2])
@@ -92,6 +93,26 @@ deconvolve = function(mlefit,alpha=0.99,maxlist=1000,signif=4,checkCalcs=FALSE){
     }
     toplist[[loc]] <- tab
     
+    #Adding possible tri-alleles to table:
+    if(nTriAlleles>0) {
+      vectorElemsStartInds = 3*(seq_len(nTriAlleles)-1) + 1 #obtain element range in triAllele vector 
+      markerInds = c$triAlleles[vectorElemsStartInds] + 1 #Obtain allele indices (long allelename vector)
+      isThisMarker = markerInds==markerIdx
+      if(any(isThisMarker)) { #if at least one element was within the range
+        for(elemIdx in which(isThisMarker)) { #we traverse the elements for this marker
+#          elemIdx = which(isThisMarker)[1]
+          startIndAlleles = c$startIndMarker_nAlleles[markerIdx]
+          triAlleleIdx =  c$triAlleles[vectorElemsStartInds[elemIdx]+1] + 1
+          contrIdx =  c$triAlleles[vectorElemsStartInds[elemIdx]+2] + 1
+          triAllele = c$alleleNames[startIndAlleles+triAlleleIdx]
+          genotypeWithTriAllele = paste0(toplist[[loc]][1,contrIdx],"/",triAllele) #obtain added genotype
+          toplist[[loc]][1,contrIdx] = genotypeWithTriAllele #UPDATING
+          deconvlistic[[loc]][[contrcn[contrIdx]]][1,1] = genotypeWithTriAllele #UPDATING
+          deconvlistica[[loc]][[contrcn[contrIdx]]] = rbind(c(triAllele,1),deconvlistica[[loc]][[contrcn[contrIdx]]]) #UPDATING
+        }
+      } 
+    }
+    
     #Add to tables:
     table2 <- rbind(table2, c(toplist[[loc]]) )
     space <- cbind("","","","")
@@ -109,12 +130,12 @@ deconvolve = function(mlefit,alpha=0.99,maxlist=1000,signif=4,checkCalcs=FALSE){
       tmp <- deconvlistica[[loc]][[cc]]
       toprange <-  which( tmp$Probability > (1-alpha)) #get most likely ones
       newrow <- tmp[toprange,,drop=F]
-      newrow[,2] <- signif(newrow[,2],signif)
+      newrow[,2] <- signif(as.numeric(newrow[,2]),signif)
       newrows <- as.matrix(cbind(cc,loc,newrow))
       table4 <- rbind(table4,newrows,space)
     }
     colnames(table3)[1:2] <- colnames(table4)[1:2] <- c("Contr.","Locus")
-  } #end for each loci
+  } #end for each marker
   colnames(table2) <- paste0(topRankcn,"_",c(t(replicate(length( topRankcn),contrcn))))
   rownames(table2) <- c$markerNames
   

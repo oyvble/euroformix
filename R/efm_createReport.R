@@ -197,7 +197,9 @@ efm_createReport = function(mmTK, type="EVID",save=TRUE) { #function for storing
     #txt1 <- paste0("MLE (sub-sub source): log10LR=",myform(log10(res$LRmle)))
     #txt2 <- paste0("MLE (sub source): log10LR=",myform(log10(res$adjLRmle))) 
     txt1 <- paste0("LR=",myform(res$LRmle))
-    txt2 <- paste0("log10LR=",myform(log10(res$LRmle))) 
+    log10LRmle = res$log10LRmle
+    if(is.null(log10LRmle)) log10LRmle = log10(res$LRmle)
+    txt2 <- paste0("log10LR=",myform(log10LRmle)) 
     txt3 <- paste0("Upper boundary: log10LR=",myform(log10(res$LRupper)))
     #txt4 <- paste0("log10LR (Laplace approximation)=",log10(res$LRlap)) 
     txt4 <- paste0(paste0(names(res$LRi),colps,colps,myform(res$LRi)),collapse="\n")

@@ -610,6 +610,7 @@
       PIlow = PIlow[-Qidx]
       PIup = PIup[-Qidx]
     }
+    #Obtaining genotypeProbabilties (same for whole marker)
     genoProb = min(as.numeric(topGlist[[loc]][2,])) #get smallest prob
     
     for(ss in seq_len(nReps)) {
