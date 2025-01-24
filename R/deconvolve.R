@@ -129,6 +129,7 @@ deconvolve = function(mlefit,alpha=0.99,maxlist=1000,signif=4,checkCalcs=FALSE){
       #Obtain alleles
       tmp <- deconvlistica[[loc]][[cc]]
       toprange <-  which( tmp$Probability > (1-alpha)) #get most likely ones
+      if(length(toprange)==0) next #skip if none
       newrow <- tmp[toprange,,drop=F]
       newrow[,2] <- signif(as.numeric(newrow[,2]),signif)
       newrows <- as.matrix(cbind(cc,loc,newrow))

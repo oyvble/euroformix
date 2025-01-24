@@ -13,6 +13,15 @@ Future version:
  - Add the possibility to define a prior for the PHvar param.
  - Make a scroller for generateData panel to enable the possibility to generate data with many markers.
 
+- Faster Non-contributor tests by optimizing the calcMLE function (update genoWeights, skip preSearch, modelValid and DCcalc)
+
+
+EuroForMix v4.2.1 (Release date: 2025-01-24)
+=============================================
+ - Fixing an issue when the model is not converging and throws an error for the model validation .
+	- Fixed in validMLEmodel (L41-L43) by allowing NaN values (forced as 0).
+	- Also causing the deconvolution to fail (fixed in deconvolve:L132)
+	- The issue was triggered when doing Automatic model search when setting a too low NOC and having replicates.
 
 EuroForMix v4.2.0 (Release date: 2025-01-10)
 =============================================

@@ -38,8 +38,9 @@ validMLEmodel <- function(mlefit,kit=NULL,plottitle="PP-plot",alpha=0.01,createp
   pval <- 1-pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1) #one sided p-value
   
   #Must indicate the values below the line (Symmetry)
-  ind <- cumprobi[ord]<cumunif #those below the line (two-sided p-value)
+  ind <- which(cumprobi[ord]<cumunif) #those below the line (two-sided p-value)
   pval[ind] <- pbeta(cumprobi[ord],N*cumunif,N-N*cumunif+1)[ind] #calculate pval in opposite direction
+  pval[is.nan(pval)] = 0
   #cumprobi<qbeta(alpha/2,N*cumunif,N-N*cumunif+1) | cumprobi<qbeta(1-alpha/2,N*cumunif,N-N*cumunif+1)
   outside <- pval[ord2] < (alpha2/2) #criterion outside region (divide by 2 to get two-sided)
   tab = cbind(tab,pvalue=pval[ord2],Significant=outside) #update table
