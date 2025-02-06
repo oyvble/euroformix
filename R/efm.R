@@ -1628,16 +1628,16 @@ suppressWarnings({
    tabLay[5,2] =  gWidgets2::gbutton("Quit",container=tabLay, handler=function(h,...) gWidgets2::dispose(subwin) )
    tabLay[5,1] =  gWidgets2::gbutton("Evaluate",container=tabLay, handler=function(h,...) {
      #Set range of number of contributors (NOC):
-     NOC = gWidgets2::svalue(tabLay[1,2]) #get number of outcome
-     if(grepl("-",NOC)) { #if separator is included
-       tmp = as.integer(unlist(strsplit(NOC,"-")))
-       NOC = as.integer(tmp[1]:tmp[2])
-     } else if(grepl(",",NOC)) { #if otehr separator is included
-       NOC = as.integer(unlist(strsplit(NOC,",")))
+     NOCrange = gWidgets2::svalue(tabLay[1,2]) #get number of outcome
+     if(grepl("-",NOCrange)) { #if separator is included
+       tmp = as.integer(unlist(strsplit(NOCrange,"-")))
+       NOCrange = as.integer(tmp[1]:tmp[2])
+     } else if(grepl(",",NOCrange)) { #if otehr separator is included
+       NOCrange = as.integer(unlist(strsplit(NOCrange,",")))
      }
-     if(length(NOC)==1) NOC = as.integer(NOC)
-     if( length(NOC)==0 || !is.integer(NOC) || any(NOC<minNOC) || any(NOC>5) ) {
-       gWidgets2::gmessage("The number of contributors was not correctly specified (or exceeded 5). Please respecify!")
+     if(length(NOCrange)==1) NOCrange = as.integer(NOCrange)
+     if(length(NOCrange)==0 || !is.integer(NOCrange) || any(NOCrange<minNOC) || any(NOCrange>6) ) {
+       gWidgets2::gmessage("The number of contributors was not correctly specified (or exceededs 6). Please respecify!")
        return(NULL) #return from function
      }
      #Set outcome of optional models:
@@ -1657,7 +1657,7 @@ suppressWarnings({
      
      txt1 = paste0("POI=",POInames)
      if(minNOC>1) txt1 = paste0(txt1,"\nConditionals=",paste0(condnames,collapse="/"))
-     txt1 = paste0(txt1,"\nNumber of contributors={",paste(NOC,collapse=","),"}")
+     txt1 = paste0(txt1,"\nNumber of contributors={",paste(NOCrange,collapse=","),"}")
      txt1 = paste0(txt1,"\n\nModel combinations:") #
      txt1 = paste0(txt1,"\nDegrad: ",paste(booltxt[bool%in%modelDEG],collapse="/") ) 
      txt1 = paste0(txt1,"\nBW stutter: ",paste(booltxt[bool%in%modelBWS],collapse="/") ) 
@@ -1668,7 +1668,7 @@ suppressWarnings({
      if(!evalBool) return(NULL) #return if not evaluating    
      
      #FIND OPTIMAL MODEL (use settings under Hd):
-     searchList <- contLikSearch(NOC,modelDEG,modelBWS,modelFWS,set$samples,set$popFreq,set$refData,set$condOrder_hd, knownRefPOI,set$prC, opt$nDone,set$threshT,set$fst,set$lambda,opt$delta, set$kit,TRUE,opt$difftol,set$knownRel,set$ibd, set$minFreq, set$normalize, set$priorBWS, set$priorFWS, opt$seed, opt$maxThreads, opt$alpha, opt$steptol, set$adjQbp)
+     searchList <- contLikSearch(NOCrange,modelDEG,modelBWS,modelFWS,set$samples,set$popFreq,set$refData,set$condOrder_hd, knownRefPOI,set$prC, opt$nDone,set$threshT,set$fst,set$lambda,opt$delta, set$kit,TRUE,opt$difftol,set$knownRel,set$ibd, set$minFreq, set$normalize, set$priorBWS, set$priorFWS, opt$seed, opt$maxThreads, opt$alpha, opt$steptol, set$adjQbp, opt$resttol)
      AIC = searchList$outtable[,2] #obtain crietion
      optimInd = which.max(AIC)[1] #get index of optimal model. Use simpler model if "Tie"
      
@@ -1735,7 +1735,7 @@ suppressWarnings({
       tab[1,1 + nSamples + which(rsel==refSel)] <- gWidgets2::glabel(text=rsel,container=tab) #name of reference
       for(loc in locs) { #for each locus
        adata = unlist(refData[[rsel]][[loc]])#$adata
-       exist <- !is.null(adata) && length(adata)==2 #check if allele exists (assume duploid!)
+       exist <- !is.null(adata) && length(adata)>=2 #check if allele exists (assume duploid!)
        tab[1+which(loc==locs),1 + nSamples + which(rsel==refSel)]  <- gWidgets2::gcheckbox(text="",container=tab,checked=exist)
        if(!exist) gWidgets2::enabled(tab[1+which(loc==locs),1 + nSamples + which(rsel==refSel)]) <- FALSE #deactivate non-existing locus
       }

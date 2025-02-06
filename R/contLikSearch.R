@@ -31,10 +31,11 @@
 #' @param alpha The significance level used for the envelope test (validMLEmodel). Default is 0.01
 #' @param steptol Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).
 #' @param adjQbp Indicate whether fragmenth length of Q-allele is based on averaged weighted with frequencies
+#' @param resttol Restriction tolerance used to restrict genotype outcome. 0=No restriction, 1=Full restriction.
 #' @return A list with fitted models, and table results for the defined model outcome
 #' @export
 
-contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE, samples=NULL,popFreq=NULL,refData=NULL,condOrder=NULL,knownRefPOI=NULL, prC=0,nDone=2,threshT=50,fst=0,lambda=0,delta=1,kit=NULL,verbose=TRUE,difftol=0.01,knownRel=NULL,ibd=c(1,0,0),minF=NULL,normalize=TRUE,priorBWS=NULL,priorFWS=NULL,seed=NULL,maxThreads=0, alpha=0.01, steptol=1e-3, adjQbp = FALSE){
+contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWstutt=FALSE, samples=NULL,popFreq=NULL,refData=NULL,condOrder=NULL,knownRefPOI=NULL, prC=0,nDone=3,threshT=50,fst=0,lambda=0,delta=1,kit=NULL,verbose=TRUE,difftol=0.01,knownRel=NULL,ibd=c(1,0,0),minF=NULL,normalize=TRUE,priorBWS=NULL,priorFWS=NULL,seed=NULL,maxThreads=0, alpha=0.01, steptol=1e-4, adjQbp = FALSE, resttol=1e-6){
 
   minNOC = 1 #minimum number of contributors to evaluate
   if(!is.null(condOrder)) minNOC = sum(condOrder>0) + 1 #minium NOC must exceed number of conditionals 
@@ -52,7 +53,7 @@ contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWst
 
   #Define known non-contributors
   knownNonContrHp = which(condhp==0)
-  if(length(knownNonContrHp)) knownNonContrHp = NULL
+  if(length(knownNonContrHp)==0) knownNonContrHp = NULL
   knownNonContrHd = c(knownNonContrHp,knownRefPOI)
   
   #Spanning model outcome (based on model settings):
@@ -100,9 +101,9 @@ contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWst
     }
     
     if(verbose) print("Evaluating Hp:")
-    hpfit <- hpfitList[[row]] <- calcMLE(NOC,samples,popFreq,refData,condhp,knownNonContrHp,kit,DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd,minF,normalize,steptol,nDone,delta,difftol,seed,verbose,priorBWS,priorFWS,maxThreads,adjQbp)
+    hpfit <- hpfitList[[row]] <- calcMLE(NOC,samples,popFreq,refData,condhp,knownNonContrHp,kit,DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd,minF,normalize,steptol,nDone,delta,difftol,seed,verbose,priorBWS,priorFWS,maxThreads,adjQbp,resttol)
     if(verbose) print("Evaluating Hd:")
-    hdfit <- hdfitList[[row]] <- calcMLE(NOC,samples,popFreq,refData,condhd,knownNonContrHd,kit,DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd,minF,normalize,steptol,nDone,delta,difftol,seed,verbose,priorBWS,priorFWS,maxThreads,adjQbp)
+    hdfit <- hdfitList[[row]] <- calcMLE(NOC,samples,popFreq,refData,condhd,knownNonContrHd,kit,DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd,minF,normalize,steptol,nDone,delta,difftol,seed,verbose,priorBWS,priorFWS,maxThreads,adjQbp,resttol)
   
     hpSignif <- hdSignif <- NA #default is no values
     if(!is.infinite(hpfit$fit$loglik)) {
@@ -116,7 +117,8 @@ contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWst
     LR = (hpfit$fit$loglik - hdfit$fit$loglik)/log(10) #obtain log10 LR
     loglik = hdfit$fit$loglik
     adjloglik = loglik - length(hdfit$fit$thetahat) #penalty by number of params
-    MxPOI = signif(hpfit$fit$thetahat2[knownRefPOI],2) #extract estimated mix proportion
+    POIcompontent = condhp[knownRefPOI] #obtain component of POI
+    MxPOI = signif(hpfit$fit$thetahat2[POIcompontent],2) #extract estimated mix proportion
     
     newrow = c(round(c(loglik,adjloglik,LR),2),MxPOI,hpSignif,hdSignif) #new row in table
     outtable[row,] = newrow  #store data 

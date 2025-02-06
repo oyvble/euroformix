@@ -233,7 +233,18 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
     thetahatUnknowns = .getThetaUnknowns(thetahatFull,nC,modTypes,inclLastMx=TRUE)
     thetahatUnknowns[1:nC] = .getMxValid(thetahatUnknowns[1:nC],nC,c$nU,c$hasKinship)
     maxPhi = .getPhi(thetahatUnknowns[-nC],nC,modTypes) #ensure a valid phi (convert back)
-    maxPhi[is.infinite(maxPhi) | is.nan(maxPhi)] = largePhi  #Handle that Mx-part of phi can have odd values on Mx-zero-boundaries
+
+    #NEED TO CHECK IF ANY INFINITE ON PHI-estimate (FILL IN WITH LARGE NUMBER)
+    if(nC>1) {   #Handle that Mx-part of phi can have odd values on Mx-zero-boundaries
+      isMxRange = 1:(nC-1) #obtain range of Mx
+      fillAsInf = is.infinite(maxPhi[isMxRange]) | is.nan(maxPhi[isMxRange])
+      maxPhi[isMxRange[fillAsInf]] = largePhi #gives Mx=0
+    }
+    if(any(modTypes[-1])) { #check if any stutter model used:
+      isStuttRange = nC + 1 + as.integer(modTypes[1]) + which(modTypes[-1]) #get Stutter range
+      fillAsInf = is.infinite(maxPhi[isStuttRange]) | is.nan(maxPhi[isStuttRange])
+      maxPhi[isStuttRange[fillAsInf]] = -largePhi #Gives StuttProp=0
+    }
     #if(verbose && any(abs(validPhi-maxPhi) > 1e-6)) print("NOTE: Optimized Mx solution was reordred in order to be valid!")
 
     #CALCULATE COVARIANCE MATRIX:

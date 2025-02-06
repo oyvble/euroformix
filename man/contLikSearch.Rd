@@ -15,7 +15,7 @@ contLikSearch(
   condOrder = NULL,
   knownRefPOI = NULL,
   prC = 0,
-  nDone = 2,
+  nDone = 3,
   threshT = 50,
   fst = 0,
   lambda = 0,
@@ -32,8 +32,9 @@ contLikSearch(
   seed = NULL,
   maxThreads = 0,
   alpha = 0.01,
-  steptol = 0.001,
-  adjQbp = FALSE
+  steptol = 1e-04,
+  adjQbp = FALSE,
+  resttol = 1e-06
 )
 }
 \arguments{
@@ -94,6 +95,8 @@ contLikSearch(
 \item{steptol}{Argument used in the nlm function for faster return from the optimization (tradeoff is lower accuracy).}
 
 \item{adjQbp}{Indicate whether fragmenth length of Q-allele is based on averaged weighted with frequencies}
+
+\item{resttol}{Restriction tolerance used to restrict genotype outcome. 0=No restriction, 1=Full restriction.}
 }
 \value{
 A list with fitted models, and table results for the defined model outcome
