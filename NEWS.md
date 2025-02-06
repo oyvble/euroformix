@@ -22,7 +22,7 @@ EuroForMix v4.2.2 (Release date: 2025-02-06)
    - Caused by wrong maxPhi impute when it was infinite (need to separate on Mx and stutter prop for the impute).
 
  - Fixing bugs in contLikSearch function:
-   - Component of POI was not correct when extracting the Mx.
+   - Component of POI was not correct when extracting the Mx (could cause wrong Mx values).
    - At L56 where knownNonContrHp was set as NULL even if not supposed to. 
 	 - This caused differences against ordinary calculations when including references that are not conditioned on.
    - Allowing the model search to go up to 6 contributors.
