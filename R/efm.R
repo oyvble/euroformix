@@ -2505,11 +2505,11 @@ suppressWarnings({
       resLR <- get("resEVID",envir=mmTK) #get EVID calculations 
      
       #CREATING NEW LAYOUT:
-      lrobs = format(resLR$LRmle,digits=dec) #obtain LR-value to show
+      lrobs = resLR$LRmle
       log10lrobs = resLR$log10LRmle
       if(is.null(log10lrobs)) log10lrobs = log10(resLR$LRmle)
-      log10lrobs = format(log10lrobs,digits=dec) #obtain LR-value to show
-      lrupper = format(log10(resLR$LRupper),digits=dec)
+      log10lrobs = round(log10lrobs,2) #obtain LR-value to show
+      lrupper = round(log10(resLR$LRupper),2)
       tabmleC1 = gWidgets2::glayout(spacing=0,container=(tabmleC[1,1] <-gWidgets2::gframe("Joint LR",container=tabmleC))) 
       tabmleC1[1,1] =  gWidgets2::glabel(text=paste0("LR=",lrobs),container=tabmleC1)
       tabmleC1[2,1] =  gWidgets2::glabel(text=paste0("log10LR=",log10lrobs),container=tabmleC1)

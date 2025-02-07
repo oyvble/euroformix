@@ -16,6 +16,18 @@ Future version:
 - Faster Non-contributor tests by optimizing the calcMLE function (update genoWeights, skip preSearch, modelValid and DCcalc)
 
 
+EuroForMix v4.2.3 (Release date: 2025-02-07)
+=============================================
+ - Improved how LR is presented when the model under Hp or/and Hd is not fitting the data.
+   - Always showing two decimal points for log10LR.
+   - In calcMLE-L321: Set logLik=-Inf if logLik reached .Machine$double.xmax.
+   - Modifying .getSmallNumber to include special situations (LR=1, LR=0 and LR=NaN).
+   
+ - Fixing crash in calcMLE if all start values gave logLik=-Inf values (happens if model does not fit the data):
+   - calcMLE-L163: Adding "if(length(maxL)==0) maxL = -Inf"
+   - calcMLE-L172: Adding !is.na(valdiff) 
+   - calcMLE-L182: Use seq_len(nrow(bestPreSearchParams))
+    
 EuroForMix v4.2.2 (Release date: 2025-02-06)
 =============================================
  - Fixing crash in calcMLE when stutter-proportion was very close to zero and required a impute

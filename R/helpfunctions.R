@@ -389,6 +389,13 @@
 
 #helpfunction to get small number from log-value
 .getSmallNumber = function(logval,sig0=2,scientific="e") {
+  if(is.nan(logval)) {
+    return(NaN) #return NAN if not able to calculate
+  } else if(is.infinite(logval)) {
+    return(0)
+  } else if(round(logval,sig0)==0) {
+    return(1)
+  }
   log10base = logval/log(10) #convert to 10 base
   power = floor(log10base) #get power number
   remainder = log10base - power

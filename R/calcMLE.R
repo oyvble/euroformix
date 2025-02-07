@@ -161,6 +161,7 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   logLiks = bestPreSearchParams[,ncol(bestPreSearchParams)]
   maxIdx = which.max(logLiks)
   maxL <- logLiks[maxIdx]
+  if(length(maxL)==0) maxL = -Inf #insert in case of none found
   thetaStart = .getThetaUnknowns(bestPreSearchParams[maxIdx,],nC,modTypes) #obtain start value of theta
   
   phi0 = .getPhi(thetaStart,nC,modTypes) #Note:Remove restrictive
@@ -168,7 +169,7 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
     negLikVal <- negloglikYphi(phi=phi0,FALSE)   #check if start value was accepted
   })[3] #obtain time in seconds
   valdiff = abs(negLikVal+maxL) #get loglik diff
-  if(!is.nan(valdiff) && valdiff>difftol) print("WARNING: The performed restriction may give inaccurate likelihood values. You should reduce the restriction threshold.")
+  if(!is.nan(valdiff) && !is.na(valdiff) && valdiff>difftol) print("WARNING: The performed restriction may give inaccurate likelihood values. You should reduce the restriction threshold.")
   
   #Show upper expected time:
   expectedTimeProgress0 = timeOneCall*maxIterProgress
@@ -178,7 +179,7 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   
   #TRAVERSE
   maxPhi <- rep(NA,np) #Set as NULL to recognize if able to be estimated
-  for(startParamIdx in 1:nrow(bestPreSearchParams))  {
+  for(startParamIdx in seq_len(nrow(bestPreSearchParams)))  {
 #    startParamIdx=1
     thetaStart = .getThetaUnknowns(bestPreSearchParams[startParamIdx,],nC,modTypes) #obtain params to use
 
@@ -316,8 +317,11 @@ calcMLE = function(nC,samples,popFreq, refData=NULL, condOrder = NULL, knownRef 
   
   detSIGMA = determinant(fit$thetaSigma)$mod[1] #calculate determinant
   if((is.na(detSIGMA) || is.infinite(detSIGMA)) && verbose) print("WARNING: The model is probably overstated, please reduce the model and fit it again!") 
-  #laplace approx:
+  
+  #laplace approx and handle if maxL is maximum size:
+  if(abs(maxL)== .Machine$double.xmax) maxL = -Inf #its infinite
   logmargL <- 0.5*(np*log(2*pi)+detSIGMA) + maxL #get log-marginalized likelihood
+  if(is.na(logmargL)) logmargL = -Inf #special handle here
   
   nUnknown = c$nU - as.integer(c$hasKinship) #number of Mx params to be restricted
   if(nUnknown>1) { #adjust if more than 1 unknown 
