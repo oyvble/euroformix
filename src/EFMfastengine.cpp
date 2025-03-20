@@ -34,7 +34,7 @@ using namespace std;
 
 class EFMmarker { //Each marker is treated separately
 	private: 
-	int m_NumGenos1p; //number of genotypes for 1 contributor 
+	size_t m_NumGenos1p; //number of genotypes for 1 contributor 
 	umat m_outG1allele; //allele index per genotype outcome	
 
 	//DATA VARIABLES
@@ -127,7 +127,7 @@ class EFMmarker { //Each marker is treated separately
 		//Rcpp::Rcout << m_dropinweight << "\n";
 
 		//Create contribution matrix (1 genotype):
-		m_NumGenos1p = int(NumAlleles*(NumAlleles + 1) / 2); //get number of Genotype outcome		
+		m_NumGenos1p = (size_t) (NumAlleles*(NumAlleles + 1) / 2); //get number of Genotype outcome		
 		m_outG1allele.set_size(m_NumGenos1p,2); //init nG1x2 matrix (allele names as indices 0,...,nA-1)
 		int cc = 0; //counter oveer all genotypes
 		for (int i = 0; i < NumAlleles; i++) {
@@ -193,7 +193,6 @@ class EFMmarker { //Each marker is treated separately
 		m_nJointCombREST = m_nJointCombFULL; //init as same (can avoid restriction steps)			
 		m_genoWeightsHighest.set_size(m_nJointCombFULL); //init genotyping vector (+ dropin weights) that is scaled with evidence matrix
 		m_genoWeightsHighest.fill(-1000000); //insert some very small number (genotype weights must be higher than this)
-		//m_genoWeightsHighest.ones( m_nJointCombFULL ); //init dynamic genotyping vector (used in peeling off genotypes). Zero is lowest (non-logged)
 
 		//Store index of where Y is positive (may be irregular)
 		vector<uvec> hasPosY_list; //init vector with uvec objects. 
@@ -207,7 +206,7 @@ class EFMmarker { //Each marker is treated separately
 			rowvec maTypedvec = m_NumTypedAllele; //Creating copy of counter (per allele)
 			double nTyped = m_NumTypedTot; //creating copy of total counter
 			
-			int genotypePower = 1; //don't think about known contributors here
+			size_t genotypePower = 1; //don't think about known contributors here
 			double genoProd = 1; //genotype probability
 			int UgindPrev=0;
 			int aindR=0;
@@ -337,7 +336,7 @@ class EFMmarker { //Each marker is treated separately
 		
 		//Copy values over to the arma structure afterwards:
 		mat marginalGenoWeightsUnknowns(m_NOU,m_NumGenos1p,fill::zeros); 
-		for(int genoIdx=0; genoIdx < m_NumGenos1p; genoIdx++) {
+		for(size_t genoIdx=0; genoIdx < m_NumGenos1p; genoIdx++) {
 			for(int contributorIndex=0; contributorIndex < m_NOU; contributorIndex++) { //loop over all contributors		
 				marginalGenoWeightsUnknowns(contributorIndex,genoIdx) = sumVector[genoIdx*m_NOU + contributorIndex];
 			}

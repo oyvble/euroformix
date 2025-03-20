@@ -340,7 +340,8 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     }
     nKnowns[markerIdx] = sum(knownGind[,markerIdx] > -1)  #obtain number of known
     nUnknowns[markerIdx] = nC - nKnowns[markerIdx] #obtain number of unknowns for marker
-    nGenos[markerIdx] = round( nAlleles[markerIdx]*(nAlleles[markerIdx]+1)/2) #number of genotypes (one contributor)
+    nGenos[markerIdx] =  round( nAlleles[markerIdx]*(nAlleles[markerIdx]+1)/2) #number of genotypes (one contributor)
+    #nGenos[markerIdx] ==  nrow(Gmat) #number of genotypes (one contributor)
     nJointGenos[markerIdx] = nGenos[markerIdx]^nUnknowns[markerIdx] #get number of joint combinations
     
     #KINSHIP MODULE (also possible if knownRel=NULL and ibd given)
@@ -376,7 +377,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
     basepairLong = rep(0,sum(nAlleles)) #no base pair information (all zero)
     #length(basepairLong)==sum(nAlleles)
   }
-
+  
    #Prepare output
    c = list(nStutterModels=as.integer(nStutterModels),nMarkers=as.integer(nLocs),nAlleles=as.integer(nAlleles),
           startIndMarker_nAlleles=as.integer(startIndMarker_nAlleles),startIndMarker_nAllelesReps=as.integer(startIndMarker_nAllelesReps), 
@@ -388,7 +389,7 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
            dropinProb=as.numeric(pCv),fst=as.numeric(fstv), AT=as.numeric(ATv),lambda=as.numeric(lambdav),
            knownGind=as.integer(knownGind),NOK=as.integer(NOK), alleleNames=alleleNames,alleleNamesALL=alleleNamesALL, repNames=repNames,
            ibd=as.numeric(ibd0),relGind=as.integer(relGind), nC=as.integer(nC),nKnowns=as.integer(nKnowns),nUnknowns=as.integer(nUnknowns),
-           nJointGenos=as.integer(nJointGenos),startIndMarker_nJointGenos=as.integer(startIndMarker_nJointGenos))
+           nJointGenos=nJointGenos,startIndMarker_nJointGenos=startIndMarker_nJointGenos)
    c$useDEG=useDEG #check of whether to use DEG
    c$genoList=genoList #add genotype list
    c$refNamesCond = refNamesCond #add reference names that are conditoned on (correct order)

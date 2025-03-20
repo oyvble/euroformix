@@ -16,6 +16,18 @@ Future version:
 - Faster Non-contributor tests by optimizing the calcMLE function (update genoWeights, skip preSearch, modelValid and DCcalc)
 
 
+EuroForMix v4.2.4 (Release date: 2025-03-20)
+=============================================
+ - In function tableReader: Including argument "fill = TRUE" to allow for missing filling in text files.
+	- This occured when exporting data from GeneMapper IDX v1.7.
+
+ - Fixing issue when evaluating with 5 unknowns having at least 11 observed alleles: Possibly overflow with integer variable (C++).
+	- In getContributionIndices (use size_t for genotypeCombinationIndex argument).
+	- In EFMfastengine:prepareMarker (use size_t for all variables involved in operation to get genotypeindex).
+	- In prepareC: Variables nJointGenos and startIndMarker_nJointGenos are no longer converted to integer.
+		- Since this caused overflow leading to NA values.
+		- Note: The variables are not used anywhere in the code, and hence this change is not imporant.
+
 EuroForMix v4.2.3 (Release date: 2025-02-07)
 =============================================
  - Improved how LR is presented when the model under Hp or/and Hd is not fitting the data.
@@ -45,7 +57,7 @@ EuroForMix v4.2.2 (Release date: 2025-02-06)
 
 EuroForMix v4.2.1 (Release date: 2025-01-24)
 =============================================
- - Fixing an issue when the model is not converging and throws an error for the model validation .
+ - Fixing an issue when the model is not converging and throws an error for the model validation.
 	- Fixed in validMLEmodel (L41-L43) by allowing NaN values (forced as 0).
 	- Also causing the deconvolution to fail (fixed in deconvolve:L132)
 	- The issue was triggered when doing Automatic model search when setting a too low NOC and having replicates.

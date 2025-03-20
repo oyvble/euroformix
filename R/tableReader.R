@@ -9,7 +9,7 @@
 
  tableReader=function(filename, header=TRUE, delims = c("\t",",",";")) {
    
-  reader = function(delim) read.table(filename,header=header,sep=delim,as.is=TRUE,row.names=NULL,check.names = FALSE,comment.char = "") 
+  reader = function(delim) read.table(filename,header=header,sep=delim,as.is=TRUE,row.names=NULL,check.names = FALSE,comment.char = "", fill = TRUE) 
   #NOTES: check.names=FALSE important for avoiding . for spaces.  comment.char is remove to handle '#'
   for(delim in delims) {
     tab = reader(delim)
