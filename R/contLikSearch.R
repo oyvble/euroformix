@@ -101,7 +101,7 @@ contLikSearch = function(NOC=2:3, modelDegrad=FALSE,modelBWstutt=FALSE,modelFWst
     }
     
     if(verbose) print("Evaluating Hp:")
-    hpfit <- hpfitList[[row]] <- calcMLE(NOC,samples,popFreq,refData,condhp,knownNonContrHp,kit,DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd,minF,normalize,steptol,nDone,delta,difftol,seed,verbose,priorBWS,priorFWS,maxThreads,adjQbp,resttol)
+    hpfit <- hpfitList[[row]] <- calcMLE(NOC,samples,popFreq,refData,condhp,knownNonContrHp,kit,DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd=c(1,0,0),minF,normalize,steptol,nDone,delta,difftol,seed,verbose,priorBWS,priorFWS,maxThreads,adjQbp,resttol)
     if(verbose) print("Evaluating Hd:")
     hdfit <- hdfitList[[row]] <- calcMLE(NOC,samples,popFreq,refData,condhd,knownNonContrHd,kit,DEG,BWS,FWS,threshT,prC,lambda,fst,knownRel,ibd,minF,normalize,steptol,nDone,delta,difftol,seed,verbose,priorBWS,priorFWS,maxThreads,adjQbp,resttol)
   
