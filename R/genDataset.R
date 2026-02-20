@@ -141,7 +141,7 @@ genDataset = function(nC,popFreq,mu=1000,sigma=0.1,sorted=FALSE,threshT=50,refDa
     
     #Simulate drop-in
     pos <- ceiling(log(1e-16)/log(prC0)) #get number of possible dropins
-    if(length(pos)>1) { #dropin done last
+    if(pos>1) { #dropin done last
      prCvec <- c(1-prC0/(1-prC0),prC0^(1:pos))
      nDI <- sample(0:pos,size=1,prob=prCvec,replace=TRUE) #number of dropin
      if(nDI>0) {
