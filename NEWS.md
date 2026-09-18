@@ -1,3 +1,6 @@
+IMPORTANT:
+ - The relationship calculation possibly defined under Hd is slightly wrong when applying a theta-correction.
+
 SUGGESTIONS:
  - Also perform model search under Hp (alternative choice).
  - Adding new functionality: EFM remembers all used settings when closed (as for CaseSolver). 
@@ -12,9 +15,25 @@ KNOWN ISSUES (TROUBLESHOOT):
 Future version:
  - Add the possibility to define a prior for the PHvar param.
  - Make a scroller for generateData panel to enable the possibility to generate data with many markers.
+ - Faster Non-contributor tests by optimizing the calcMLE function (update genoWeights, skip preSearch, modelValid and DCcalc)
 
-- Faster Non-contributor tests by optimizing the calcMLE function (update genoWeights, skip preSearch, modelValid and DCcalc)
+- Fractional threshold as a possibility (priority this).
+ -> DNAstatistX: also uses data below AT (useful??)
 
+
+EuroForMix v4.2.6 (Release date: 2026-18-09)
+=============================================
+- Fixed bugs:
+	- genDataset L144: Dropin was never possible to generate (thanks to Kai Budrikas).
+	- efm_createReport L94-L97: Fixing the possibly missing "known non-contributing reference(s)" under Hp by removing the if statement.
+	- prepareC L78: Fixing issue of assigning conditional reference names under a calculated hypothesis. 
+		- Wrong indexing could occur when not conditioning on all references.
+		- This issue only affects the "Model fitted P.H." plots which could show wrong Mx to the conditional reference (plotTopEPG2/plotTopMPS2).
+	
+- Minor changes:
+	- Indicate percentages instead of decimals for shown Mixture proportion in plotTopEPG2(L47) and plotTopMPS2(L29)
+	- Commenting out printout about frequency of new alleles (efm:L1042)
+	
 EuroForMix v4.2.5 (Release date: 2025-27-10)
 =============================================
 - Added function calcCommonLR to calculate the LR of common unknowns between two mixtures:

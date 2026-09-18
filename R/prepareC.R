@@ -75,7 +75,11 @@ prepareC = function(nC,samples,popFreq, refData, condOrder, knownRef, kit,BWS,FW
   
   if(!is.null(condOrder)) {
     if(any(condOrder>MAXnRefs) ) stop("Indicated contributors not found!")
-    refNamesCond = refNamesAll[condOrder] #obtain reference names to condition on
+    nCond = sum(condOrder>0)
+    refNamesCond = rep(NA,nCond)
+    for(r in seq_along(refNamesAll)) {
+      if(condOrder[r]>0) refNamesCond[condOrder[r]] = refNamesAll[r] #insert ref name
+    }
   }
 
   #Indicate number of stutter models

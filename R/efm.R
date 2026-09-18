@@ -1039,7 +1039,7 @@ suppressWarnings({
         tmp <- popFreq[[locind]]
         popFreq[[locind]] <- c(tmp, rep(minFreq,length(newA)))
         names(popFreq[[locind]]) <- c(names(tmp),newA) #add unique
-        print(paste0("In locus ",loc,": Allele(s) ",newA," was inserted with min. frequency ",prettyNum(minFreq)))
+    #    print(paste0("In locus ",loc,": Allele(s) ",newA," was inserted with min. frequency ",prettyNum(minFreq)))
         for(j in 1:length(newA)) { #for each unique allele in popFreq:
          okAind <- which(subA[,k]==newA[j]) #find matching alleles in subA[okSind]
          if(length(okAind)==0) next

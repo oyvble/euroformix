@@ -91,10 +91,8 @@ efm_createReport = function(mmTK, type="EVID",save=TRUE) { #function for storing
     txt <- paste0("\n\n-------Hypothesis ",hyp,"---------")
     txt <- paste0(txt,"\nNumber of contributors: ",model$nC) #Number of contributors
     txt <- paste0(txt,"\nKnown contributors: ",paste0(names(model$refData[[1]])[which(model$condOrder>0)],collapse="/")) #conditional references
-    if(hyp=="Hd") {
-      if(length(model$knownRef)>0) txt <- paste0(txt,"\nKnown non-contributors: ",paste0(names(model$refData[[1]])[model$knownRef],collapse="/")) #conditional references
-      if(length(model$knownRel)>0) txt <- paste0(txt,"\nAssumed relationship: Last contributor is a ",names(model$ibd)[1]," to reference ",names(model$knownRel)) #Relationship
-    }
+    if(length(model$knownRef)>0) txt <- paste0(txt,"\nKnown non-contributors: ",paste0(names(model$refData[[1]])[model$knownRef],collapse="/")) #conditional references
+    if(length(model$knownRel)>0) txt <- paste0(txt,"\nAssumed relationship: Last contributor is a ",names(model$ibd)[1]," to reference ",names(model$knownRel)) #Relationship
     return(txt)
   }
   

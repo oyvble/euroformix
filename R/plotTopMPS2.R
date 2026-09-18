@@ -26,7 +26,7 @@ plotTopMPS2 = function(MLEobj,DCobj=NULL,grpsymbol="_",locYmax=TRUE,options=NULL
   col0 = "#0000007F" #color of all peak heights (is gray colored)
   col1 = .getContrCols(0.3) #get contribution colors
   mx = MLEobj$fit$thetahat2[grep("Mix",names(MLEobj$fit$thetahat2))]
-  mxtxt = paste0("Contr.C",1:length(mx),"(",names(col1)[1:length(mx)],")=",signif(mx,3))
+  mxtxt = paste0("Contr.C",1:length(mx),"(",names(col1)[1:length(mx)],")=",round(mx*100,1),"%")
   AT = MLEobj$model$AT
   refNames = MLEobj$prepareC$refNamesCond #obtain reference name of conditionals
   nrefs = length(refNames)
